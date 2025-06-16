@@ -1,5 +1,6 @@
 import os
 import pathlib
+import unicodedata
 
 def list_comic_files(folder, extensions=None):
     """Retourne la liste des fichiers comics dans un dossier."""
@@ -7,14 +8,20 @@ def list_comic_files(folder, extensions=None):
         extensions = ('.cbz', '.cbr', '.pdf', '.epub')
     return [f for f in os.listdir(folder) if f.lower().endswith(extensions)]
 
-def scan_comic_files(folder, recursive):
+def scan_comic_files(folder, recursive=False):
     """Scans a folder for comic files and returns their metadata."""
     supported_ext = {'.pdf', '.epub', '.cbz', '.cbr'}
     files = []
     iterator = pathlib.Path(folder).rglob('*') if recursive else pathlib.Path(folder).glob('*')
     for p in sorted(iterator):
         if p.suffix.lower() in supported_ext:
-            size_mb = round(p.stat().st_size / (1024*1024), 2)
+            try:
+                # Normalize path to NFC (macOS standard)
+                p_norm = pathlib.Path(unicodedata.normalize('NFC', str(p)))
+                size_mb = round(p_norm.stat().st_size / (1024*1024), 2)
+            except FileNotFoundError:
+                # Optionally log: print(f"[WARN] File not found: {p}")
+                continue
             files.append({
                 'path': p,
                 'name': p.stem,

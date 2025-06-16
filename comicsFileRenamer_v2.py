@@ -19,6 +19,7 @@ import pathlib
 import requests
 from collections import defaultdict
 import subprocess
+import re
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QVBoxLayout,
@@ -94,45 +95,138 @@ class FileTable(QTableWidget):
         self.customContextMenuRequested.connect(self._show_context_menu)
 
     def dragEnterEvent(self, event):
+        # Accept internal app drag or external files with supported extensions
         if event.mimeData().hasFormat('application/x-comic-meta'):
             event.acceptProposedAction()
+        elif event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            for url in urls:
+                if url.isLocalFile():
+                    ext = os.path.splitext(url.toLocalFile())[1].lower()
+                    if ext in ('.pdf', '.epub', '.cbz', '.cbr'):
+                        event.acceptProposedAction()
+                        return
+            event.ignore()
+        else:
+            event.ignore()
 
     def dragMoveEvent(self, event):
         event.accept()
 
     def dropEvent(self, event):
-        pos = event.position().toPoint() if hasattr(event, "position") else event.pos()
-        row = self.rowAt(pos.y())
-        if row < 0:
+        # Internal drag & drop (DnD rename)
+        if event.mimeData().hasFormat('application/x-comic-meta'):
+            pos = event.position().toPoint() if hasattr(event, "position") else event.pos()
+            row = self.rowAt(pos.y())
+            if row < 0:
+                return
+            payload = event.mimeData().data('application/x-comic-meta').data().decode()
+            print(f"[DEBUG][DnD] Payload: {payload}")
+            # Try to parse the payload as "Series - Num - Title (Year)"
+            # Use similar cleaning as in _rename_selected
+            parts = payload.split(' - ', 2)
+            if len(parts) < 3:
+                print("[DEBUG][DnD] Split failed, parts:", parts)
+                return
+            series, num, rest = parts
+            # Extract title and year if present
+            title = rest
+            y = ''
+            m = re.match(r"^(.*)\s+\((\d{4})\)$", rest)
+            if m:
+                title = m.group(1)
+                y = m.group(2)
+            def format_num(n):
+                try:
+                    n_int = int(n)
+                    return f"{n_int:02d}"
+                except Exception:
+                    return str(n)
+            def clean(s):
+                return re.sub(r"[^\w\s'\u2019\-\_()]", '', str(s), flags=re.UNICODE).strip()
+            base = f"{clean(series)} - {format_num(num)} - {clean(title)}"
+            if y:
+                base += f" ({y})"
+            f = self.main.files[row]
+            ext = f['ext'].lstrip('.')
+            new_name = f"{base}.{ext}"
+            new_path = pathlib.Path(f['folder']) / new_name
+            confirm = QMessageBox.question(
+                self,
+                'Rename',
+                f"Rename file to:\n{new_name}?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if confirm == QMessageBox.Yes:
+                try:
+                    if not os.path.exists(f['path']):
+                        QMessageBox.critical(self, "Erreur", f"Le fichier source n'existe pas:\n{f['path']}")
+                        return
+                    if new_path.exists():
+                        QMessageBox.critical(self, "Erreur", f"Un fichier nommé '{new_name}' existe déjà dans ce dossier.")
+                        return
+                    os.rename(f['path'], new_path)
+                    self.main._load_files(f['folder'])
+                except Exception as e:
+                    QMessageBox.critical(self, "Rename Error", str(e))
             return
-        payload = event.mimeData().data('application/x-comic-meta').data().decode()
-        print(f"[DEBUG][DnD] Payload: {payload}")
-        parts = payload.split(' - ', 2)
-        if len(parts) != 3:
-            print("[DEBUG][DnD] Split failed, parts:", parts)
+
+        # External file drop (from Finder, etc.)
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            supported_exts = ('.pdf', '.epub', '.cbz', '.cbr')
+            files_to_add = []
+            for url in urls:
+                if url.isLocalFile():
+                    file_path = url.toLocalFile()
+                    ext = os.path.splitext(file_path)[1].lower()
+                    if ext in supported_exts:
+                        files_to_add.append(file_path)
+            if not files_to_add:
+                QMessageBox.warning(self, "Format non supporté", "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.")
+                return
+            op = "déplacer" if (event.dropAction() == Qt.MoveAction or (event.keyboardModifiers() & Qt.ShiftModifier)) else "copier"
+            msg = f"Voulez-vous {op} les fichiers suivants dans le dossier actif ?\n\n" + "\n".join(os.path.basename(f) for f in files_to_add)
+            if QMessageBox.question(self, "Ajouter des fichiers", msg, QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:
+                return
+            dest_folder = self.main.files[0]['folder'] if self.main.files else self.main.settings.value('last_folder', '')
+            if not dest_folder:
+                QMessageBox.critical(self, "Erreur", "Aucun dossier actif pour l'import.")
+                return
+            import shutil
+            for src in files_to_add:
+                # Vérifie que le fichier existe
+                if not os.path.exists(src):
+                    QMessageBox.critical(self, "Erreur", f"Le fichier source n'existe pas :\n{src}")
+                    continue
+                # Nettoie le nom du fichier (enlève les caractères interdits)
+                base_name = os.path.basename(src).replace('/', '_')
+                # Coupe le nom si trop long (255 caractères max sur la plupart des FS)
+                if len(base_name) > 255:
+                    name, ext = os.path.splitext(base_name)
+                    base_name = name[:250-len(ext)] + ext
+                dest = os.path.join(dest_folder, base_name)
+                try:
+                    if op == "déplacer":
+                        shutil.move(src, dest)
+                    else:
+                        shutil.copy2(src, dest)
+                except Exception as e:
+                    # Vérifie si le fichier destination existe malgré l'exception
+                    if os.path.exists(dest):
+                        QMessageBox.warning(
+                            self,
+                            "Avertissement",
+                            f"Le fichier a été copié, mais une exception a été levée :\n{e}\n\nSource: {src}\nDestination: {dest}"
+                        )
+                    else:
+                        QMessageBox.critical(
+                            self,
+                            "Erreur",
+                            f"Erreur lors de l'ajout de {base_name} :\n{e}\n\nSource: {src}\nDestination: {dest}"
+                        )
+            self.main._load_files(dest_folder)
             return
-        # On garde le nom tel quel (avec parenthèses)
-        base = payload
-        f = self.main.files[row]
-        clean = lambda s: ''.join(c for c in s if c.isalnum() or c in '-_ ()').strip()
-        base = clean(base)
-        new_name = f"{base}.{f['ext']}"
-        new_path = pathlib.Path(f['folder']) / new_name
-        confirm = QMessageBox.question(
-            self,
-            'Rename',
-            f"Rename file to:\n{new_name}?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        if confirm == QMessageBox.Yes:
-            try:
-                if not os.path.exists(f['path']):
-                    QMessageBox.critical(self, "Erreur", f"Le fichier source n'existe pas:\n{f['path']}")
-                    return
-                os.rename(f['path'], new_path)
-                self.main._load_files(f['folder'])
-            except Exception as e:
-                QMessageBox.critical(self, "Rename Error", str(e))
 
     def _cell_changed(self, item):
         if getattr(self.main, '_populating', False) or item.column() != 0:
@@ -425,7 +519,25 @@ class ComicRenamer(QWidget):
 
     def _choose_folder(self):
         current_folder = self.settings.value('last_folder', '')
-        dialog = QFileDialog(self, 'Select Folder', current_folder)
+        # Ajout d'une boîte de dialogue personnalisée pour proposer /Volumes
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Sélection du dossier")
+        msg.setText("Où souhaitez-vous commencer la navigation ?")
+        btn_volumes = msg.addButton("Disques externes (/Volumes)", QMessageBox.ActionRole)
+        btn_last = msg.addButton("Dernier dossier utilisé", QMessageBox.ActionRole)
+        btn_home = msg.addButton("Dossier personnel", QMessageBox.ActionRole)
+        btn_cancel = msg.addButton(QMessageBox.Cancel)
+        msg.exec()
+        if msg.clickedButton() == btn_volumes:
+            start_dir = "/Volumes"
+        elif msg.clickedButton() == btn_last and current_folder:
+            start_dir = current_folder
+        elif msg.clickedButton() == btn_home:
+            start_dir = str(pathlib.Path.home())
+        else:
+            return  # Cancelled
+
+        dialog = QFileDialog(self, 'Select Folder', start_dir)
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly, True)
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)  # <-- This enables the "Up" button
@@ -439,7 +551,9 @@ class ComicRenamer(QWidget):
     def _load_files(self, folder):
         self._populating = True
         self.file_table.blockSignals(True)
-        self.files = scan_comic_files(folder, self.recursive_cb.isChecked())
+        # Filter out files whose name starts with '.'
+        all_files = scan_comic_files(folder, self.recursive_cb.isChecked())
+        self.files = [f for f in all_files if not f['name'].startswith('.')]
         self.file_table.clearContents()
         self.file_table.setRowCount(len(self.files))
         for r, f in enumerate(self.files):
@@ -543,6 +657,13 @@ class ComicRenamer(QWidget):
 
         provider = PROVIDERS[self._source]
 
+        def format_num(n):
+            try:
+                n_int = int(n)
+                return f"{n_int:02d}"
+            except Exception:
+                return str(n)
+
         if self._source == 'ComicVine':
             series = txt.rsplit(' (', 1)[0]
             lst = sorted(self.issues_by_series[series], key=lambda x: ((x.get('cover_date') or ''), x.get('issue_number') or ''))
@@ -550,8 +671,9 @@ class ComicRenamer(QWidget):
             for r, it in enumerate(lst):
                 t = it.get('name') or 'Untitled'
                 n = it.get('issue_number') or '?'
+                n_fmt = format_num(n)
                 y = (it.get('cover_date') or '')[:4]
-                val = f"{series} - {n} - {t} ({y})"
+                val = f"{series} - {n_fmt} - {t} ({y})"
                 itm = QTableWidgetItem(val)
                 itm.setData(Qt.UserRole, it)
                 self.album_table.setItem(r, 0, itm)
@@ -563,8 +685,9 @@ class ComicRenamer(QWidget):
                 s = alb.get('serie_name', '')
                 t = alb.get('album_name', alb.get('nomAlbum', ''))
                 n = alb.get('album_number', alb.get('numeroAlbum', ''))
+                n_fmt = format_num(n)
                 y = extract_year(alb.get('date', '') or alb.get('dateAlbum', ''))
-                val = f"{s} - {n} - {t} ({y})"
+                val = f"{s} - {n_fmt} - {t} ({y})"
                 itm = QTableWidgetItem(val)
                 itm.setData(Qt.UserRole, alb)
                 self.album_table.setItem(r, 0, itm)
@@ -627,19 +750,41 @@ class ComicRenamer(QWidget):
         num = meta.get('album_number') or meta.get('issue_number') or ''
         title = meta.get('album_name') or meta.get('name') or ''
         y = extract_year(meta.get('date') or meta.get('cover_date') or '')
-        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in '-_ ()').strip()
-        base = f"{clean(series)} - {str(num).zfill(3)} - {clean(title)}"
+        # Format number on two digits if it's a number
+        def format_num(n):
+            try:
+                n_int = int(n)
+                return f"{n_int:02d}"
+            except Exception:
+                return str(n)
+        num_fmt = format_num(num)
+        # Only keep allowed characters: unicode letters, numbers, spaces, apostrophes, hyphens, underscores, parentheses
+        def clean(s):
+            print(f"[DEBUG] clean() input: {repr(s)}")
+            cleaned = re.sub(r"[^\w\s'\u2019\-\_()]", '', str(s), flags=re.UNICODE).strip()
+            print(f"[DEBUG] clean() output: {repr(cleaned)}")
+            return cleaned
+        print(f"[DEBUG] series before clean: {repr(series)}")
+        print(f"[DEBUG] num before clean: {repr(num)}")
+        print(f"[DEBUG] title before clean: {repr(title)}")
+        base = f"{clean(series)} - {num_fmt} - {clean(title)}"
         if y:
             base += f" ({y})"
-        new_name = f"{base}.{f['ext']}"
+        print(f"[DEBUG] base filename after clean: {repr(base)}")
+        # Ensure extension does not have a leading dot
+        ext = f['ext'].lstrip('.')
+        new_name = f"{base}.{ext}"
         new_path = pathlib.Path(f['folder']) / new_name
         msg = f"Rename file to:\n{new_name}?"
+        if new_path.exists():
+            QMessageBox.critical(self, "Erreur", f"Un fichier nommé '{new_name}' existe déjà dans ce dossier.")
+            return
         if QMessageBox.question(self, 'Rename', msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             try:
-                if not os.path.exists(f['path']):
+                if not os.path.exists(str(f['path'])):
                     QMessageBox.critical(self, "Erreur", f"Le fichier source n'existe pas:\n{f['path']}")
                     return
-                os.rename(f['path'], new_path)
+                os.rename(str(f['path']), str(new_path))
                 self._load_files(f['folder'])
             except Exception as e:
                 QMessageBox.critical(self, 'Rename Error', str(e))
@@ -702,7 +847,7 @@ class ComicRenamer(QWidget):
             QMessageBox.warning(self, "Erreur", "Impossible de déterminer le nom de la série.")
             return
         # Clean up names
-        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in '-_ ()').strip()
+        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in "-_(),' ").strip()
         style_clean = clean(style)
         serie_clean = clean(serie_name)
         new_folder_name = f"[{style_clean}] {serie_clean}" if style_clean else serie_clean
@@ -769,7 +914,15 @@ class DroppableLineEdit(QLineEdit):
             event.acceptProposedAction()
 
     def dropEvent(self, event):
-        self.setText(event.mimeData().text())
+        raw_text = event.mimeData().text()
+        # Remove all text within () or []
+        text = re.sub(r'\(.*?\)|\[.*?\]', '', raw_text)
+        # Keep unicode letters, numbers, spaces, apostrophes, hyphens, and underscores
+        # Use regex with re.UNICODE and add explicit ' to the allowed set
+        text = re.sub(r"[^\w\s'\-_]", '', text, flags=re.UNICODE)
+        # Collapse multiple spaces and strip
+        text = re.sub(r'\s+', ' ', text).strip()
+        self.setText(text)
         event.acceptProposedAction()
 
 if __name__ == "__main__":

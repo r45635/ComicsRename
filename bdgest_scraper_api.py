@@ -21,6 +21,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import datetime
+import concurrent.futures
 
 LOGIN_URL = "https://online.bdgest.com/login"
 ALBUMS_URL = (
@@ -33,6 +34,15 @@ def _log(text, log_path):
             f.write(f"[{datetime.datetime.now().isoformat()}] {text}\n")
             f.flush()
 
+def _get_soup(text, debug=False):
+    try:
+        from bs4 import BeautifulSoup
+        return BeautifulSoup(text, "lxml")
+    except Exception as e:
+        if debug:
+            print("[WARN][BDGest] lxml parser not available, falling back to html.parser:", e)
+        return BeautifulSoup(text, "html.parser")
+
 def get_csrf_token(session, debug=False, verbose=False, log_path=None, max_retries=2):
     for attempt in range(max_retries):
         r = session.get(LOGIN_URL, timeout=10)
@@ -40,7 +50,7 @@ def get_csrf_token(session, debug=False, verbose=False, log_path=None, max_retri
         if debug:
             print(f"[DEBUG][BDGest] GET {LOGIN_URL} status={r.status_code}")
             _log(r.text if verbose else r.text[:1000] + "...", log_path)
-        soup = BeautifulSoup(r.text, "html.parser")
+        soup = _get_soup(r.text, debug=debug)
         token = soup.find("input", {"name": "csrf_token_bdg"})
         if token:
             if debug:
@@ -92,6 +102,10 @@ def login_bdgest(session, username, password, debug=False, verbose=False, log_pa
         return False
 
 def fetch_album_details(album_url, session, debug=False, verbose=False, log_path=None):
+    if not album_url:
+        if debug:
+            print("[WARN][fetch_album_details] album_url is empty or None.")
+        return {}
     if debug:
         print(f"[DEBUG][fetch_album_details] Fetching URL: {album_url}")
     _log(f"GET {album_url}", log_path)
@@ -104,7 +118,7 @@ def fetch_album_details(album_url, session, debug=False, verbose=False, log_path
         print(f"[DEBUG][fetch_album_details] Response length: {len(resp.text)}")
         print(f"[DEBUG][fetch_album_details] HTML snippet:\n{resp.text[:500]}")
 
-    soup = BeautifulSoup(resp.text, "lxml")
+    soup = _get_soup(resp.text, debug=debug)
     details = {}
 
     col_infos = soup.find("div", class_="col-infos")
@@ -154,7 +168,7 @@ def fetch_album_details(album_url, session, debug=False, verbose=False, log_path
         print(f"[DEBUG][fetch_album_details] Final details: {details}")
     return details
 
-def fetch_albums(session, term, debug=True, verbose=False, log_path=None):
+def fetch_albums(session, term, debug=True, verbose=False, log_path=None, fetch_details=True, max_workers=4):
     url = ALBUMS_URL.format(requests.utils.quote(term))
     _log(f"GET {url}", log_path)
     if debug:
@@ -163,7 +177,7 @@ def fetch_albums(session, term, debug=True, verbose=False, log_path=None):
     _log(f"GET {url} status={resp.status_code}", log_path)
     _log(resp.text if verbose else resp.text[:1000] + "...", log_path)
 
-    soup = BeautifulSoup(resp.text, "lxml")
+    soup = _get_soup(resp.text, debug=debug)
     albums = []
     table = soup.find("table", class_="table-albums-mid")
     if not table:
@@ -207,17 +221,19 @@ def fetch_albums(session, term, debug=True, verbose=False, log_path=None):
             "cover_url": cover_img,
             "album_url": album_url,
         }
-
-        if debug:
-            print(f"[DEBUG][BDGest] Fetching details for: {album_url}")
-
-        # Les infos détaillées sont placées dans une sous-clé 'details'
-        details = fetch_album_details(album_url, session, debug=debug, verbose=verbose, log_path=log_path)
-        album["details"] = details
-
-        if debug:
-            print(f"[DEBUG][BDGest] Album final structure: {album}")
         albums.append(album)
+
+    if fetch_details and albums:
+        def fetch_one(album):
+            details = fetch_album_details(album["album_url"], session, debug=debug, verbose=verbose, log_path=log_path)
+            album["details"] = details
+            return album
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            albums = list(executor.map(fetch_one, albums))
+    else:
+        for album in albums:
+            album["details"] = {}
 
     if debug:
         print(f"[DEBUG][BDGest] {len(albums)} albums found.")
