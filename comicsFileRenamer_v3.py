@@ -33,6 +33,9 @@ from PySide6.QtGui import QPixmap, QDrag, QAction
 from utils import scan_comic_files, load_bdgest_credentials, extract_year
 from bdgest_scraper_api import get_bdgest_series
 
+# Import internationalization system
+from i18n import tr, set_language, get_current_language, get_supported_languages
+
 # ---------- Providers (API abstraction layer) ----------
 class MetadataProvider:
     def search_series(self, query):
@@ -175,13 +178,13 @@ class ComicVineProvider(MetadataProvider):
         api_key = settings.value('comicvine_api', '')
         return search_comicvine_series(query, api_key=api_key) if api_key else search_comicvine_series(query)
 
-    def search_albums(self, volume_id):
+    def search_albums(self, volume_id, debug=False):
         from comicVine_scraper_api import get_comicvine_volume_issues, get_comicvine_issue_details
         settings = QSettings("ComicsRename", "App")
         api_key = settings.value('comicvine_api', '')
         
         # Get basic volume and issues data
-        issues_list = get_comicvine_volume_issues(volume_id, api_key=api_key, debug=True) if api_key else get_comicvine_volume_issues(volume_id, debug=True)
+        issues_list = get_comicvine_volume_issues(volume_id, api_key=api_key, debug=debug) if api_key else get_comicvine_volume_issues(volume_id, debug=debug)
         
         if not issues_list:
             return []
@@ -191,9 +194,10 @@ class ComicVineProvider(MetadataProvider):
         for issue in issues_list[:20]:  # Limit to first 20 issues to avoid too many API calls
             issue_id = issue.get('id')
             if issue_id:
-                print(f"[DEBUG] Fetching details for issue {issue_id}...")
+                if debug:
+                    print(f"[DEBUG] Fetching details for issue {issue_id}...")
                 # Get detailed information for this issue
-                details = get_comicvine_issue_details(issue_id, api_key=api_key, debug=False) if api_key else get_comicvine_issue_details(issue_id, debug=False)
+                details = get_comicvine_issue_details(issue_id, api_key=api_key, debug=debug) if api_key else get_comicvine_issue_details(issue_id, debug=debug)
                 
                 # Merge basic issue data with detailed data
                 enriched_issue = {
@@ -244,7 +248,8 @@ class ComicVineProvider(MetadataProvider):
                 # Fallback for issues without ID
                 enriched_issues.append(issue)
         
-        print(f"[DEBUG] Enriched {len(enriched_issues)} issues with detailed information")
+        if debug:
+            print(f"[DEBUG] Enriched {len(enriched_issues)} issues with detailed information")
         return enriched_issues
 
 PROVIDERS = {
@@ -298,12 +303,12 @@ class FileTable(QTableWidget):
             if row < 0:
                 return
             payload = event.mimeData().data('application/x-comic-meta').data().decode()
-            print(f"[DEBUG][DnD] Payload: {payload}")
+            # print(f"[DEBUG][DnD] Payload: {payload}")  # Debug disabled by default
             # Try to parse the payload as "Series - Num - Title (Year)"
             # Use similar cleaning as in _rename_selected
             parts = payload.split(' - ', 2)
             if len(parts) < 3:
-                print("[DEBUG][DnD] Split failed, parts:", parts)
+                # print("[DEBUG][DnD] Split failed, parts:", parts)  # Debug disabled by default
                 return
             series, num, rest = parts
             # Extract title and year if present
@@ -330,22 +335,22 @@ class FileTable(QTableWidget):
             new_path = pathlib.Path(f['folder']) / new_name
             confirm = QMessageBox.question(
                 self,
-                'Rename',
-                f"Rename file to:\n{new_name}?",
+                tr("dialogs.rename_confirmation.title"),
+                tr("dialogs.rename_confirmation.file_message", new_name=new_name),
                 QMessageBox.Yes | QMessageBox.No
             )
             if confirm == QMessageBox.Yes:
                 try:
                     if not os.path.exists(f['path']):
-                        QMessageBox.critical(self, "Erreur", f"Le fichier source n'existe pas:\n{f['path']}")
+                        QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_not_exists", path=f['path']))
                         return
                     if new_path.exists():
-                        QMessageBox.critical(self, "Erreur", f"Un fichier nommé '{new_name}' existe déjà dans ce dossier.")
+                        QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_already_exists", name=new_name))
                         return
                     os.rename(f['path'], new_path)
                     self.main._load_files(f['folder'])
                 except Exception as e:
-                    QMessageBox.critical(self, "Rename Error", str(e))
+                    QMessageBox.critical(self, tr("messages.errors.rename_error"), str(e))
             return
 
         # External file drop (from Finder, etc.)
@@ -360,7 +365,7 @@ class FileTable(QTableWidget):
                     if ext in supported_exts:
                         files_to_add.append(file_path)
             if not files_to_add:
-                QMessageBox.warning(self, "Format non supporté", "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.")
+                QMessageBox.warning(self, tr("messages.warnings.unsupported_format"), tr("messages.errors.unsupported_format"))
                 return
             op = "déplacer" if (event.dropAction() == Qt.MoveAction or (event.keyboardModifiers() & Qt.ShiftModifier)) else "copier"
             msg = f"Voulez-vous {op} les fichiers suivants dans le dossier actif ?\n\n" + "\n".join(os.path.basename(f) for f in files_to_add)
@@ -368,13 +373,13 @@ class FileTable(QTableWidget):
                 return
             dest_folder = self.main.files[0]['folder'] if self.main.files else self.main.settings.value('last_folder', '')
             if not dest_folder:
-                QMessageBox.critical(self, "Erreur", "Aucun dossier actif pour l'import.")
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.no_active_folder"))
                 return
             import shutil
             for src in files_to_add:
                 # Vérifie que le fichier existe
                 if not os.path.exists(src):
-                    QMessageBox.critical(self, "Erreur", f"Le fichier source n'existe pas :\n{src}")
+                    QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_not_exists", path=src))
                     continue
                 # Nettoie le nom du fichier (enlève les caractères interdits)
                 base_name = os.path.basename(src).replace('/', '_')
@@ -399,8 +404,8 @@ class FileTable(QTableWidget):
                     else:
                         QMessageBox.critical(
                             self,
-                            "Erreur",
-                            f"Erreur lors de l'ajout de {base_name} :\n{e}\n\nSource: {src}\nDestination: {dest}"
+                            tr("messages.errors.error"),
+                            tr("messages.errors.add_file_error", file=base_name, error=str(e), source=src, dest=dest)
                         )
             self.main._load_files(dest_folder)
             return
@@ -416,8 +421,8 @@ class FileTable(QTableWidget):
         new_path = pathlib.Path(f['folder']) / f"{new_name}.{f['ext']}"
         confirm = QMessageBox.question(
             self,
-            'Rename',
-            f"Rename file to:\n{new_path.name}?",
+            tr("dialogs.rename_confirmation.title"),
+            tr("dialogs.rename_confirmation.file_message", new_name=new_path.name),
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
@@ -470,7 +475,7 @@ class AlbumTable(QTableWidget):
         it = self.itemAt(event.pos())
         if not it:
             return
-        print(f"[DEBUG][DnD] Drag value: {it.text()}")
+        # print(f"[DEBUG][DnD] Drag value: {it.text()}")  # Debug disabled by default
         mime = QMimeData()
         mime.setData('application/x-comic-meta', QByteArray(it.text().encode()))
         drag = QDrag(self)
@@ -491,10 +496,22 @@ class AlbumTable(QTableWidget):
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, settings=None):
         super().__init__(parent)
-        self.setWindowTitle("Paramètres")
+        self.setWindowTitle(tr("dialogs.settings.title"))
         self.layout = QFormLayout(self)
 
         self.settings = settings or QSettings("ComicsRename", "App")
+        
+        # Language selection
+        self.language_combo = QComboBox()
+        supported_langs = get_supported_languages()
+        current_lang = get_current_language()
+        
+        for code, name in supported_langs.items():
+            self.language_combo.addItem(name, code)
+            if code == current_lang:
+                self.language_combo.setCurrentText(name)
+        
+        self.layout.addRow(tr("dialogs.settings.language_label"), self.language_combo)
 
         self.provider_combo = QComboBox()
         self.provider_combo.addItems(["BDGest", "ComicVine"])
@@ -502,7 +519,7 @@ class SettingsDialog(QDialog):
         idx = self.provider_combo.findText(default_provider)
         if idx >= 0:
             self.provider_combo.setCurrentIndex(idx)
-        self.layout.addRow("Provider par défaut :", self.provider_combo)
+        self.layout.addRow(tr("ui.labels.provider") + " :", self.provider_combo)
 
         self.debug_cb = QCheckBox()
         self.debug_cb.setChecked(self.settings.value('debug', 'false') == 'true')
@@ -513,20 +530,40 @@ class SettingsDialog(QDialog):
         self.layout.addRow("Verbose mode", self.verbose_cb)
 
         self.bdgest_user = QLineEdit(self.settings.value('bdgest_user', ''))
-        self.layout.addRow("BDGest Username", self.bdgest_user)
+        self.layout.addRow(tr("dialogs.settings.username"), self.bdgest_user)
         self.bdgest_pass = QLineEdit(self.settings.value('bdgest_pass', ''))
         self.bdgest_pass.setEchoMode(QLineEdit.Password)
-        self.layout.addRow("BDGest Password", self.bdgest_pass)
+        self.layout.addRow(tr("dialogs.settings.password"), self.bdgest_pass)
 
         self.comicvine_api = QLineEdit(self.settings.value('comicvine_api', ''))
-        self.layout.addRow("ComicVine API Key", self.comicvine_api)
+        self.layout.addRow(tr("dialogs.settings.api_key"), self.comicvine_api)
 
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
         self.layout.addRow(self.buttonBox)
+        
+        # Connect language change
+        self.language_combo.currentTextChanged.connect(self._on_language_changed)
+    
+    def _on_language_changed(self):
+        """Handle language change"""
+        selected_code = self.language_combo.currentData()
+        if selected_code and selected_code != get_current_language():
+            set_language(selected_code)
+            # Show message about restart requirement
+            QMessageBox.information(
+                self, 
+                "Language Change", 
+                "Language will be applied after restarting the application."
+            )
 
     def accept(self):
+        # Save language first
+        selected_code = self.language_combo.currentData()
+        if selected_code:
+            set_language(selected_code)
+            
         self.settings.setValue("default_provider", self.provider_combo.currentText())
         self.settings.setValue("debug", 'true' if self.debug_cb.isChecked() else 'false')
         self.settings.setValue("verbose", 'true' if self.verbose_cb.isChecked() else 'false')
@@ -539,9 +576,14 @@ class SettingsDialog(QDialog):
 class ComicRenamer(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Comic Renamer - Multi-Source")
+        self.setWindowTitle(tr("app.title"))
         self.resize(1400, 800)
         self.settings = QSettings("ComicsRename", "App")
+        
+        # Initialize debug/verbose early to avoid AttributeError
+        self.debug = self.settings.value('debug', 'false') == 'true'
+        self.verbose = self.settings.value('verbose', 'false') == 'true'
+        
         self.default_provider = self.settings.value("default_provider", "BDGest")
         self.provider_combo = QComboBox()
         self.provider_combo.addItems(["BDGest", "ComicVine"])
@@ -584,16 +626,16 @@ class ComicRenamer(QWidget):
         self.source_combo = QComboBox()
         self.source_combo.addItems(['ComicVine', 'BDGest'])
         self.search_bar = DroppableLineEdit()
-        self.search_btn = QPushButton('Search')
-        self.dir_btn = QPushButton('Change Folder')
+        self.search_btn = QPushButton(tr("ui.buttons.search"))
+        self.dir_btn = QPushButton(tr("ui.buttons.browse"))
         self.recursive_cb = QCheckBox('Recursive')
-        self.series_name_cb = QCheckBox('SeriesName')  # New checkbox for BDGest series search
-        self.series_name_cb.setToolTip("Rechercher uniquement dans les noms de séries (BDGest uniquement)")
+        self.series_name_cb = QCheckBox(tr("ui.labels.series_name_mode"))  # New checkbox for BDGest series search
+        self.series_name_cb.setToolTip(tr("ui.tooltips.series_name_mode"))
         self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest
         self.settings_btn = QPushButton("⚙️")
         self.settings_btn.setFixedWidth(30)
-        self.settings_btn.setToolTip("Application Settings")
-        self.rename_btn = QPushButton('Rename Selected')
+        self.settings_btn.setToolTip(tr("ui.tooltips.settings"))
+        self.rename_btn = QPushButton(tr("ui.buttons.rename"))
         for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):
             ctrl.addWidget(w)
         layout.addLayout(ctrl)
@@ -608,7 +650,7 @@ class ComicRenamer(QWidget):
         self.folder_display = EditableFolderLineEdit(main_window=self)
         # Add the rename folder button
         self.folder_rename_btn = QPushButton("✎")
-        self.folder_rename_btn.setToolTip("Renommer le dossier avec le nom de la série sélectionnée")
+        self.folder_rename_btn.setToolTip(tr("ui.tooltips.rename_folder"))
         self.folder_rename_btn.setFixedWidth(30)
         self.folder_rename_btn.setEnabled(False)  # Disabled by default
         self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)
@@ -700,9 +742,7 @@ class ComicRenamer(QWidget):
         ac = self.settings.value('album_cols')
         if ac:
             self.album_table.setColumnWidth(0,int(ac))
-        # Restore debug/verbose for next dialog open
-        self.debug = self.settings.value('debug', 'false') == 'true'
-        self.verbose = self.settings.value('verbose', 'false') == 'true'
+        # Note: debug/verbose are now initialized earlier in __init__
         if folder and pathlib.Path(folder).exists():
             self._load_files(folder)
 
@@ -850,23 +890,26 @@ class ComicRenamer(QWidget):
             from comicVine_scraper_api import search_comicvine_series, search_comicvine_issues
             volumes = search_comicvine_series(q)
             if volumes:
-                print(f"[DEBUG][UI] {len(volumes)} volumes found for '{q}'")
+                if debug:
+                    print(f"[DEBUG][UI] {len(volumes)} volumes found for '{q}'")
                 for series in volumes:
                     series_name = series.get('name', 'Unknown')
                     volume_id = str(series.get('id', ''))
-                    issues = provider.search_albums(volume_id)
+                    issues = provider.search_albums(volume_id, debug=debug)
                     for issue in issues:
                         issue['volume'] = {'name': series_name}
                         self.issues_by_series[series_name].append(issue)
                 if not self.issues_by_series:
-                    QMessageBox.warning(self, 'No Results', 'No albums found for this search.')
+                    QMessageBox.warning(self, tr("messages.info.no_result"), tr("messages.errors.no_results"))
                     return
                 for s in sorted(self.issues_by_series):
                     self.series_combo.addItem(f"{s} ({len(self.issues_by_series[s])})")
             else:
-                print(f"[DEBUG][UI] No volumes found for '{q}', fallback to issues search")
+                if debug:
+                    print(f"[DEBUG][UI] No volumes found for '{q}', fallback to issues search")
                 issues = search_comicvine_issues(q)
-                print(f"[DEBUG][UI] {len(issues)} issues found for '{q}'")
+                if debug:
+                    print(f"[DEBUG][UI] {len(issues)} issues found for '{q}'")
                 issues_by_series = {}
                 for it in issues:
                     s = (it.get('volume') or {}).get('name', 'Sans série')
@@ -1073,7 +1116,7 @@ class ComicRenamer(QWidget):
                                 for k, v in series_data.items():
                                     if v and str(v).strip():
                                         html += f"<li><b>{k}</b> : {v}</li>"
-                                html += f"</ul><br><i>Erreur lors de la récupération des albums: {e}</i>"
+                                html += f"</ul><br><i>{tr('messages.errors.fetch_albums_error', error=str(e))}</i>"
                                 self.detail_text.setHtml(html)
                         else:
                             # Missing series ID or name
@@ -1172,34 +1215,37 @@ class ComicRenamer(QWidget):
                 return str(n)
         # Only keep allowed characters: unicode letters, numbers, spaces, apostrophes, hyphens, underscores, parentheses
         def clean(s):
-            print(f"[DEBUG] clean() input: {repr(s)}")
+            if self.debug:
+                print(f"[DEBUG] clean() input: {repr(s)}")
             cleaned = re.sub(r"[^\w\s'\u2019\-\_()]", '', str(s), flags=re.UNICODE).strip()
-            print(f"[DEBUG] clean() output: {repr(cleaned)}")
+            if self.debug:
+                print(f"[DEBUG] clean() output: {repr(cleaned)}")
             return cleaned
-        print(f"[DEBUG] series before clean: {repr(series)}")
-        print(f"[DEBUG] num before clean: {repr(num)}")
-        print(f"[DEBUG] title before clean: {repr(title)}")
+        if self.debug:
+            print(f"[DEBUG] series before clean: {repr(series)}")
+            print(f"[DEBUG] num before clean: {repr(num)}")
+            print(f"[DEBUG] title before clean: {repr(title)}")
         base = f"{clean(series)} - {format_num(num)} - {clean(title)}"
         if y:
             base += f" ({y})"
-        print(f"[DEBUG] base filename after clean: {repr(base)}")
+        if self.debug:
+            print(f"[DEBUG] base filename after clean: {repr(base)}")
         # Ensure extension does not have a leading dot
         ext = f['ext'].lstrip('.')
         new_name = f"{base}.{ext}"
         new_path = pathlib.Path(f['folder']) / new_name
-        msg = f"Rename file to:\n{new_name}?"
         if new_path.exists():
-            QMessageBox.critical(self, "Erreur", f"Un fichier nommé '{new_name}' existe déjà dans ce dossier.")
+            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_already_exists", name=new_name))
             return
-        if QMessageBox.question(self, 'Rename', msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+        if QMessageBox.question(self, tr("dialogs.rename_confirmation.title"), tr("dialogs.rename_confirmation.file_message", new_name=new_name), QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             try:
                 if not os.path.exists(str(f['path'])):
-                    QMessageBox.critical(self, "Erreur", f"Le fichier source n'existe pas:\n{f['path']}")
+                    QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_not_exists", path=f['path']))
                     return
                 os.rename(str(f['path']), str(new_path))
                 self._load_files(f['folder'])
             except Exception as e:
-                QMessageBox.critical(self, 'Rename Error', str(e))
+                QMessageBox.critical(self, tr("messages.errors.rename_error"), str(e))
 
     def _open_settings(self):
         dlg = SettingsDialog(self, self.settings)
@@ -1233,18 +1279,18 @@ class ComicRenamer(QWidget):
     def _rename_folder_to_serie(self):
         # Get current folder path
         if not self.files:
-            QMessageBox.warning(self, "Erreur", "Aucun fichier dans le dossier.")
+            QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.no_files_in_folder"))
             return
         current_folder = pathlib.Path(self.files[0]['folder'])
         # Get selected album
         ar = self.album_table.currentRow()
         if ar < 0:
-            QMessageBox.warning(self, "Sélection", "Veuillez sélectionner un album dans la liste.")
+            QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.no_album_selected"))
             return
         itm = self.album_table.item(ar, 0)
         meta = itm.data(Qt.UserRole) if itm else None
         if not meta:
-            QMessageBox.critical(self, "Erreur", "Métadonnées de l'album manquantes.")
+            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.album_metadata_missing"))
             return
         # Extract serie_name
         serie_name = meta.get('serie_name') or (meta.get('volume') or {}).get('name', '')
@@ -1261,7 +1307,7 @@ class ComicRenamer(QWidget):
         if not style:
             style = meta.get('style', '')
         if not serie_name:
-            QMessageBox.warning(self, "Erreur", "Impossible de déterminer le nom de la série.")
+            QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.cannot_determine_series"))
             return
         # Clean up names
         clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in "-_(),' ").strip()
@@ -1271,41 +1317,47 @@ class ComicRenamer(QWidget):
         parent_dir = current_folder.parent
 
         # DEBUG: Print current and new folder names and paths
-        print(f"[DEBUG] current_folder: {current_folder}")
-        print(f"[DEBUG] current_folder.name: {current_folder.name}")
-        print(f"[DEBUG] new_folder_name: {new_folder_name}")
-        print(f"[DEBUG] new_folder_path: {parent_dir / new_folder_name}")
-        print(f"[DEBUG] details: {details}")
+        if self.debug:
+            print(f"[DEBUG] current_folder: {current_folder}")
+            print(f"[DEBUG] current_folder.name: {current_folder.name}")
+            print(f"[DEBUG] new_folder_name: {new_folder_name}")
+            print(f"[DEBUG] new_folder_path: {parent_dir / new_folder_name}")
+            print(f"[DEBUG] details: {details}")
 
         if current_folder.name == new_folder_name:
-            print("[DEBUG] Folder name is already the target name, aborting rename.")
+            if self.debug:
+                print("[DEBUG] Folder name is already the target name, aborting rename.")
             QMessageBox.information(self, "Info", "Le dossier porte déjà ce nom.")
             return
 
         if style_clean and current_folder.name == serie_clean and new_folder_name != current_folder.name:
-            print("[DEBUG] Folder is only serie name, will rename to [Style] SerieName.")
+            if self.debug:
+                print("[DEBUG] Folder is only serie name, will rename to [Style] SerieName.")
 
         new_folder_path = parent_dir / new_folder_name
         if new_folder_path.exists():
-            print("[DEBUG] Target folder already exists, aborting rename.")
-            QMessageBox.critical(self, "Erreur", f"Un dossier nommé '{new_folder_name}' existe déjà dans ce répertoire.")
+            if self.debug:
+                print("[DEBUG] Target folder already exists, aborting rename.")
+            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_folder_name))
             return
 
         if QMessageBox.question(
             self,
-            "Renommer le dossier",
-            f"Renommer le dossier en :\n{new_folder_name} ?",
+            tr("messages.errors.rename_folder_title"),
+            tr("dialogs.rename_confirmation.folder_message", old_name=current_folder.name, new_name=new_folder_name),
             QMessageBox.Yes | QMessageBox.No
         ) == QMessageBox.Yes:
             try:
-                print(f"[DEBUG] Renaming {current_folder} -> {new_folder_path}")
+                if self.debug:
+                    print(f"[DEBUG] Renaming {current_folder} -> {new_folder_path}")
                 os.rename(str(current_folder), str(new_folder_path))
                 self.settings.setValue('last_folder', str(new_folder_path))
                 self._load_files(str(new_folder_path))
-                QMessageBox.information(self, "Succès", f"Dossier renommé en :\n{new_folder_name}")
+                QMessageBox.information(self, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=new_folder_name))
             except Exception as e:
-                print(f"[DEBUG] Exception during rename: {e}")
-                QMessageBox.critical(self, "Erreur", f"Erreur lors du renommage du dossier :\n{e}")
+                if self.debug:
+                    print(f"[DEBUG] Exception during rename: {e}")
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=str(e)))
 
     def resizeEvent(self, event):
         """Handle window resize to update cover image scaling"""
@@ -1444,22 +1496,22 @@ class EditableFolderLineEdit(QLineEdit):
         cleaned_name = cleaned_name.strip()
         
         if not cleaned_name:
-            QMessageBox.warning(self.main_window, "Nom invalide", "Le nom du dossier ne peut pas être vide.")
+            QMessageBox.warning(self.main_window, tr("messages.errors.error"), tr("messages.errors.invalid_folder_name"))
             self._cancel_editing()
             return
         
         # Check if folder with new name already exists
         new_folder_path = self._original_folder_path.parent / cleaned_name
         if new_folder_path.exists():
-            QMessageBox.critical(self.main_window, "Erreur", f"Un dossier nommé '{cleaned_name}' existe déjà dans ce répertoire.")
+            QMessageBox.critical(self.main_window, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=cleaned_name))
             self._cancel_editing()
             return
         
         # Confirm rename
         reply = QMessageBox.question(
             self.main_window,
-            "Renommer le dossier",
-            f"Renommer le dossier de :\n'{self._original_folder_path.name}'\nà :\n'{cleaned_name}' ?",
+            tr("messages.errors.rename_folder_title"),
+            tr("messages.errors.rename_folder_message", old_name=self._original_folder_path.name, new_name=cleaned_name),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -1474,10 +1526,10 @@ class EditableFolderLineEdit(QLineEdit):
                 self.main_window._load_files(str(new_folder_path))
                 
                 # Success message
-                QMessageBox.information(self.main_window, "Succès", f"Dossier renommé en '{cleaned_name}'")
+                QMessageBox.information(self.main_window, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=cleaned_name))
                 
             except Exception as e:
-                QMessageBox.critical(self.main_window, "Erreur", f"Erreur lors du renommage :\n{e}")
+                QMessageBox.critical(self.main_window, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=str(e)))
                 self._cancel_editing()
                 return
         

@@ -25,6 +25,11 @@ def main():
         # Import the main application class
         from comicsFileRenamer_v3 import ComicRenamer
         
+        # Initialize i18n system
+        from i18n import get_current_language
+        # Only show language info in debug mode
+        # print(f"[INFO] Starting ComicsRename with language: {get_current_language()}")
+        
         # Create the QApplication
         app = QApplication(sys.argv)
         app.setApplicationName("ComicsRename")

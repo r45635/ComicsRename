@@ -1,0 +1,3123 @@
+{
+  "strings": [
+    "\n        ]\n        \n        return any(indicator in line_content for indicator in ui_indicators)\n    \n    def _get_line_number(self, content: str, position: int) -> int:\n        ",
+    "\n        matches = re.finditer(pattern, content, re.MULTILINE)\n        \n        for match in matches:\n            string_val = match.group(1)\n            if self._is_translatable_string(string_val):\n                strings.add(string_val)\n                self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_user_messages(self, content: str, file_path: str) -> Set[str]:\n        ",
+    "\n        strings = set()\n        \n        pattern = r",
+    "\n        strings = set()\n        \n        patterns = [\n            r",
+    "   (Allez dans votre profil → API pour générer une clé)",
+    "   (Ils seront stockés dans .env, protégé par .gitignore)",
+    "   ... and {len(results[",
+    "   ... et {len(albums) - 3} autres albums",
+    "   ./launch.sh       (macOS/Linux)",
+    "   1. Lancez l",
+    "   1. Première recherche: Création session + authentification",
+    "   1. 🖱️  Double-clic sur le nom du dossier",
+    "   2. Ouvrez un dossier avec des fichiers",
+    "   2. Recherches suivantes: Réutilisation de la session existante",
+    "   2. ✏️  Passage en mode édition (fond jaune, bordure bleue)",
+    "   3. Double-cliquez sur le nom du dossier en haut",
+    "   3. En cas d",
+    "   3. ⌨️  Saisie du nouveau nom du dossier",
+    "   4. Changement d",
+    "   4. Modifiez le nom et appuyez sur Entrée",
+    "   4. ✅ Validation par Entrée ou perte de focus",
+    "   5. 🔍 Vérification que le nouveau nom est valide",
+    "   6. ❓ Demande de confirmation à l",
+    "   7. 📁 Renommage effectif du dossier",
+    "   8. 🔄 Rechargement des fichiers dans le nouveau dossier",
+    "   9. 📍 Mise à jour des paramètres (last_folder)",
+    "   Assurez-vous que bdgest_scraper_api.py est dans le même répertoire.",
+    "   BDGEST_PASSWORD=votre_mot_de_passe",
+    "   BDGEST_USERNAME=votre_nom_utilisateur",
+    "   Données de la série: {first_series}",
+    "   Fichier de log: {args.log_file}",
+    "   Files processed: {results[",
+    "   Mode debug: {debug_mode}",
+    "   Mode verbose: {args.verbose}",
+    "   Strings found: {results[",
+    "   Terme de recherche: ",
+    "   Utilisateur: {username}",
+    "   Utilisez -u/-p ou créez un fichier .env avec:",
+    "   Utilisez les variables d",
+    "   Vous pouvez maintenant utiliser ComicsRename en toute sécurité.",
+    "   ou créez un fichier .env avec:",
+    "   pip install -r requirements.txt",
+    "   pip install PySide6 requests beautifulsoup4 lxml python-dotenv",
+    "   python main.py",
+    "   {i+1}. {album_name} (#{album_number}) - {album_date}",
+    "   {i:2d}. {string_val}",
+    "   {i}. {issue}",
+    "   • Annulation possible avec Échap",
+    "   • Authentification uniquement quand nécessaire",
+    "   • Confirmation obligatoire de l",
+    "   • Entrée: Valider le nouveau nom",
+    "   • Gestion automatique des erreurs d",
+    "   • Gestion des erreurs (permissions, etc.)",
+    "   • Mode lecture: Aspect normal",
+    "   • Mode édition: Fond jaune, bordure bleue",
+    "   • Performance améliorée pour les recherches multiples",
+    "   • Perte de focus: Valider le nouveau nom",
+    "   • Restauration du nom original en cas d",
+    "   • Réutilisation des cookies et tokens",
+    "   • Session persistante entre les recherches",
+    "   • Sélection automatique du texte en mode édition",
+    "   • Validation du nom (caractères autorisés)",
+    "   • Vérification de l",
+    "   • extracted_strings.json    - Complete extraction data",
+    "   • strings_list.txt         - Simple list for reference",
+    "   • translation_template.json - Template for translators",
+    "   • {failed}",
+    "   • Échap: Annuler et restaurer le nom original",
+    "   ⚠️  .env file is empty",
+    "   ⚠️  .env file not found (optional)",
+    "   ✅ .env file exists",
+    "   ✅ .env file has content",
+    "   ✅ .env.example template exists",
+    "   ✅ ComicRenamer class found",
+    "   ✅ PySide6 GUI components available",
+    "   ✅ Python {version.major}.{version.minor}.{version.micro} (OK)",
+    "   ✅ setup_credentials.py exists",
+    "   ✅ {file_name}",
+    "   ✅ {module_name}: {description}",
+    "   ✅ {package_name}: {version}",
+    "   ❌ .env.example template missing",
+    "   ❌ ComicRenamer class not found",
+    "   ❌ Error reading .env file: {e}",
+    "   ❌ GUI components unavailable: {e}",
+    "   ❌ Python {version.major}.{version.minor}.{version.micro} (Required: 3.8+)",
+    "   ❌ setup_credentials.py missing",
+    "   ❌ {file_name}: Missing",
+    "   ❌ {module_name}: {description} - {e}",
+    "   ❌ {package_name}: Not installed",
+    "  10. 📢 Message de confirmation",
+    "  [Issue {i}] id={issue.get(",
+    "  [Series {i}] id={series.get(",
+    "  {key}: {",
+    "  {key}: {value}",
+    " existe déjà dans ce dossier.",
+    " existe déjà dans ce répertoire.",
+    " in str(ctx):\n                notes.append(",
+    ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _on_series_selection_changed(self, txt):\n        ",
+    ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _populate_albums(self, txt):\n        if not txt:\n            return\n        self.album_table.clearContents()\n        self.album_table.setRowCount(0)\n        self.series_cover_url = ",
+    ")\n\nclass AlbumTable(QTableWidget):\n    def __init__(self, parent=None):\n        super().__init__(parent)\n        self.main = parent\n        self.setSelectionBehavior(QAbstractItemView.SelectRows)\n        self.setDragEnabled(True)\n        self.setColumnCount(1)\n        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)\n        self.setEditTriggers(QAbstractItemView.NoEditTriggers)\n        self.setContextMenuPolicy(Qt.CustomContextMenu)\n        self.customContextMenuRequested.connect(self._show_context_menu)\n\n    def mouseMoveEvent(self, event):\n        it = self.itemAt(event.pos())\n        if not it:\n            return\n        print(f",
+    ")\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(",
+    ")\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f",
+    ")\n                else:\n                    # Clear album table since we",
+    ")\n                self.issues_by_series = issues_by_series\n                if not issues_by_series:\n                    QMessageBox.warning(self, ",
+    ")\n            else:\n                print(f",
+    ")\n            return\n        # Build new filename\n        series = meta.get(",
+    ")\n            return\n        # Clean up names\n        clean = lambda s: ",
+    ")\n            return\n        current_folder = pathlib.Path(self.files[0][",
+    ")\n            return\n        f = self.files[fr]\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ",
+    ")\n            return\n        if QMessageBox.question(self, ",
+    ")\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ",
+    ")\n        elif action == reveal_action:\n            try:\n                subprocess.Popen([",
+    ")\n        else:\n            albums = []\n            for album in series_list:\n                s = album.get(",
+    ")\n        else:  # BDGest\n            # Check if SeriesName checkbox is checked\n            if self.series_name_cb.isChecked():\n                # Use series-only search\n                series_results = provider.search_series_only(q, debug=debug, verbose=verbose) \\\n                    if hasattr(provider, ",
+    ")\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = DraggableLineEdit()\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(",
+    ")\n        self.dir_btn = QPushButton(",
+    ")\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([",
+    ")\n        self.folder_rename_btn.setToolTip(",
+    ")\n        self.folder_rename_btn.setToolTip(tr(",
+    ")\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(",
+    ")\n        self.recursive_cb = QCheckBox(",
+    ")\n        self.rename_btn = QPushButton(",
+    ")\n        self.resize(1400, 800)\n        self.settings = QSettings(",
+    ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(",
+    ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(tr(",
+    "))\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f",
+    "))\n                return\n            import shutil\n            for src in files_to_add:\n                # Vérifie que le fichier existe\n                if not os.path.exists(src):\n                    QMessageBox.critical(self, tr(",
+    "))\n                return\n            op = ",
+    "))\n            return\n        # Clean up names\n        clean = lambda s: ",
+    "))\n            return\n        # Extract serie_name\n        serie_name = meta.get(",
+    "))\n            return\n        current_folder = pathlib.Path(self.files[0][",
+    "))\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, tr(",
+    "))\n            self._cancel_editing()\n            return\n        \n        # Check if folder with new name already exists\n        new_folder_path = self._original_folder_path.parent / cleaned_name\n        if new_folder_path.exists():\n            QMessageBox.critical(self.main_window, tr(",
+    "))\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = EditableFolderLineEdit(main_window=self)\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(",
+    "))\n        self.dir_btn = QPushButton(tr(",
+    "))\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([",
+    "))\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(",
+    "))\n        self.recursive_cb = QCheckBox(",
+    "))\n        self.rename_btn = QPushButton(tr(",
+    "))\n        self.resize(1400, 800)\n        self.settings = QSettings(",
+    "))\n        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest\n        self.settings_btn = QPushButton(",
+    ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, ",
+    ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, tr(",
+    ")))\n        else:\n            # If nothing selected, show root folder name\n            self.folder_display.setText(os.path.basename(self.settings.value(",
+    "), str(e))\n\n    def _open_settings(self):\n        dlg = SettingsDialog(self, self.settings)\n        if dlg.exec():\n            # Invalidate BDGest session when settings change (credentials might have changed)\n            bdgest_provider = PROVIDERS.get(",
+    "), str(e))\n            return\n\n        # External file drop (from Finder, etc.)\n        if event.mimeData().hasUrls():\n            urls = event.mimeData().urls()\n            supported_exts = (",
+    "), tr(",
+    ").rstrip(",
+    ",\n            r",
+    ",\n        ]\n        \n        for pattern in patterns:\n            matches = re.finditer(pattern, content, re.MULTILINE)\n            for match in matches:\n                string_val = match.group(1)\n                if self._is_translatable_string(string_val):\n                    strings.add(string_val)\n                    self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_ui_strings(self, content: str, file_path: str) -> Set[str]:\n        ",
+    ", error=str(e)))\n                self._cancel_editing()\n                return\n        \n        # Reset to read-only mode\n        self._reset_to_readonly()\n\n    def _cancel_editing(self):\n        ",
+    ", f",
+    ", msg, QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:\n                return\n            dest_folder = self.main.files[0][",
+    ", msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[",
+    ", name=cleaned_name))\n                \n            except Exception as e:\n                QMessageBox.critical(self.main_window, tr(",
+    ", name=cleaned_name))\n            self._cancel_editing()\n            return\n        \n        # Confirm rename\n        reply = QMessageBox.question(\n            self.main_window,\n            tr(",
+    ", name=new_name))\n                        return\n                    os.rename(f[",
+    ", name=new_name))\n            return\n        if QMessageBox.question(self, tr(",
+    ", new_name=new_name), QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[",
+    ", path=f[",
+    ", path=src))\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(",
+    ", str(e))\n\n    def _show_context_menu(self, pos):\n        row = self.rowAt(pos.y())\n        if row < 0:\n            return\n        menu = QMenu(self)\n        open_action = menu.addAction(",
+    "/\\\\",
+    "Ajouter des fichiers",
+    "Album metadata missing",
+    "Application Settings",
+    "Aucun album trouvé pour cette recherche sur BDGest.",
+    "Aucun album trouvé pour cette recherche.",
+    "Aucun dossier actif pour l",
+    "Aucun fichier dans le dossier.",
+    "Aucun résultat",
+    "Aucune série trouvée pour cette recherche sur BDGest.",
+    "Avertissement",
+    "Comic Renamer - Multi-Source",
+    "ComicsRename String Extraction Tool",
+    "Constructed URL: {url}",
+    "Could not open file:\\n{e}",
+    "Could not reveal file:\\n{e}",
+    "Couverture: {series[",
+    "Dernier dossier utilisé",
+    "Details: {e}",
+    "Disques externes (/Volumes)",
+    "Dossier personnel",
+    "Dossier renommé en :\\n{new_folder_name}",
+    "Encoded Name: {encoded_series_name}",
+    "Erreur",
+    "Erreur lors du renommage du dossier :\\n{e}",
+    "Error",
+    "Error processing {file_path}: {e}",
+    "Error starting application: {e}",
+    "Error: Missing dependencies. Please install requirements:",
+    "Expected URL: {expected_url}",
+    "Extract strings from QMessageBox calls",
+    "Extract strings from addItem calls",
+    "Extracting from: {file_path}",
+    "Format non supporté",
+    "Impossible de déterminer le nom de la série.",
+    "Info",
+    "La fonction fetch_albums_by_series_id récupère maintenant les détails des albums",
+    "La fonctionnalité de renommage par double-clic est opérationnelle.",
+    "Language Change",
+    "Language will be applied after restarting the application.",
+    "Le dossier porte déjà ce nom.",
+    "Le fichier source n",
+    "Le système de gestion de session est opérationnel.",
+    "Mot de passe configuré: {",
+    "Métadonnées de l",
+    "No Results",
+    "No albums found for this search.",
+    "Nom: {series[",
+    "Où souhaitez-vous commencer la navigation ?",
+    "Paramètres",
+    "Paramètres de BDGestProvider.search_albums_by_series_id: {provider_params}",
+    "Paramètres de get_bdgest_albums_by_series_id: {params}",
+    "Pays: {series[",
+    "Please select one file and one album",
+    "Rename",
+    "Rename Error",
+    "Renommer le dossier",
+    "Renommer le dossier avec le nom de la série sélectionnée",
+    "Résultat",
+    "Scanning directory: {script_dir}",
+    "Selection",
+    "Series ID: {series_id}",
+    "Series Name: {series_name}",
+    "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.",
+    "Succès",
+    "Sélection",
+    "Sélection du dossier",
+    "Translation template saved to: {output_file}",
+    "URL: {series[",
+    "Un dossier nommé ",
+    "Un fichier nommé ",
+    "Utilisateur configuré: {",
+    "Valeur par défaut fetch_details dans provider: {provider_default}",
+    "Valeur par défaut fetch_details: {default_fetch_details}",
+    "Valeur par défaut max_workers: {default_max_workers}",
+    "Veuillez sélectionner un album dans la liste.",
+    "\\nDétails complets:",
+    "\\nFor installation help, see:",
+    "\\nOr use the launcher scripts:",
+    "\\nPlease fix the issues above.",
+    "\\nTo start the application, run:",
+    "\\n⌨️ Raccourcis clavier:",
+    "\\n⚙️  Checking configuration...",
+    "\\n✅ All tests passed!",
+    "\\n✅ Structure des fonctions correcte !",
+    "\\n✅ Test terminé avec succès!",
+    "\\n✅ Tests réussis! La fonctionnalité de récupération d",
+    "\\n❌ Certains tests ont échoué.",
+    "\\n❌ Test échoué.",
+    "\\n🎉 Test réussi!",
+    "\\n🎉 Tous les tests réussis !",
+    "\\n🎨 Indicateurs visuels:",
+    "\\n🎯 Top 10 strings to translate:",
+    "\\n💡 If dependencies are missing, try:",
+    "\\n💡 Pour tester:",
+    "\\n📁 Checking project files...",
+    "\\n📁 Output files created in: {output_dir}",
+    "\\n📊 Extraction Results:",
+    "\\n📋 Avantages de la nouvelle implémentation:",
+    "\\n📋 Workflow complet:",
+    "\\n📚 Albums trouvés:",
+    "\\n📚 Série #{i}",
+    "\\n📦 Checking dependencies...",
+    "\\n🔄 Comportement:",
+    "\\n🔍 Fonctionnalités d",
+    "\\n🔍 Test des méthodes de gestion de session:",
+    "\\n🔍 Testing function availability...",
+    "\\n🔑 Test de récupération des identifiants:",
+    "\\n🔧 Testing module imports...",
+    "\\n🖥️  Checking GUI availability...",
+    "\\n🛡️ Protections implémentées:",
+    "])\n        default_provider = self.settings.value(",
+    "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._bdgest_series_results = []  # New: store series search results\n        self._original_cover_pixmap = None  # Store original pixmap for rescaling\n        self._build_ui()\n        self.series_cover_url = ",
+    "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._build_ui()\n        self.series_cover_url = ",
+    "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(",
+    "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(tr(",
+    "]))\n                        return\n                    if new_path.exists():\n                        QMessageBox.critical(self, tr(",
+    "]))\n                    return\n                os.rename(str(f[",
+    "]}",
+    "album manquantes.",
+    "exactement comme fetch_albums.",
+    "existe pas:\\n{f[",
+    "import.",
+    "pip install -r requirements.txt",
+    "{new_name}",
+    "État initial - Authentifié: {provider._authenticated}",
+    "État initial - Derniers identifiants: {provider._last_credentials}",
+    "État initial - Session: {provider._session}",
+    "⏰ Début: {datetime.now().strftime(",
+    "⏱️  Durée: {(end_time - start_time).total_seconds():.2f}s",
+    "⚠️  Clé ComicVine manquante (optionnel pour BDGest seulement)",
+    "⚠️  Fichier .env manquant",
+    "⚠️  {var} manquant",
+    "✅ .env protégé dans .gitignore",
+    "✅ BDGestProvider créé",
+    "✅ BDGestProvider utilise fetch_details=True par défaut",
+    "✅ BDGestProvider.search_albums_by_series_id method available",
+    "✅ Classes importées avec succès",
+    "✅ Configuration sauvegardée dans .env",
+    "✅ Fichier .env trouvé",
+    "✅ Import de get_bdgest_albums_by_series_id réussi",
+    "✅ Paramètre fetch_details présent",
+    "✅ Paramètre max_workers présent",
+    "✅ Series ID correctly placed in ",
+    "✅ Series name correctly placed in ",
+    "✅ fetch_details=True par défaut",
+    "✅ get_bdgest_albums_by_series_id imported successfully",
+    "✅ max_workers=4 par défaut",
+    "✅ {len(albums)} album(s) trouvé(s) pour la série ",
+    "✅ {len(series_list)} série(s) trouvée(s):",
+    "✅ {len(series_results)} série(s) trouvée(s)",
+    "✅ {method} disponible",
+    "✅ {method}: {description}",
+    "✅ {var} configuré",
+    "❌ .env non protégé dans .gitignore",
+    "❌ .gitignore manquant",
+    "❌ Aucun ID de série trouvé dans les résultats",
+    "❌ Aucun album trouvé pour la série ",
+    "❌ Aucune série trouvée pour ",
+    "❌ Aucune série trouvée.",
+    "❌ BDGestProvider devrait utiliser fetch_details=True par défaut",
+    "❌ BDGestProvider.search_albums_by_series_id method not found",
+    "❌ Configuration annulée.",
+    "❌ Erreur d",
+    "❌ Erreur lors de la récupération des identifiants: {e}",
+    "❌ Erreur lors de la sauvegarde: {e}",
+    "❌ Erreur lors des tests: {e}",
+    "❌ Erreur lors du test: {e}",
+    "❌ Erreur: Nom d",
+    "❌ Error during testing: {e}",
+    "❌ Identifiants BDGest manquants.",
+    "❌ Paramètre fetch_details manquant",
+    "❌ Paramètre max_workers manquant",
+    "❌ Series ID not found in ",
+    "❌ Series name not found in ",
+    "❌ fetch_details devrait être True par défaut",
+    "❌ max_workers devrait être 4 par défaut",
+    "❌ {len(failed_checks)} check(s) failed:",
+    "❌ {method} manquante",
+    "❌ {method}: MANQUANT",
+    "🎉 All checks passed! ComicsRename is ready to use.",
+    "🎉 Configuration de sécurité optimale !",
+    "🎉 Configuration terminée !",
+    "🐍 Checking Python version...",
+    "📝 Les albums récupérés auront maintenant un champ ",
+    "📝 Veuillez entrer vos identifiants:",
+    "🔍 ComicsRename Installation Validator",
+    "🔍 Recherche de séries avec le terme: ",
+    "🔍 Test 1: Recherche de séries...",
+    "🔍 Test 2: Récupération des albums pour la série ",
+    "🔍 Test de la structure des données d",
+    "🔍 Testing URL construction...",
+    "🔍 Vérification de Sécurité",
+    "🔐 Configuration Sécurisée des Identifiants",
+    "🔒 Permissions sécurisées appliquées",
+    "🔧 Actions Recommandées:",
+    "🔧 Paramètres de test:",
+    "🔸 BDGest (www.bedetheque.com)",
+    "🔸 ComicVine (comicvine.gamespot.com)",
+    "🧪 Test de gestion de session BDGest",
+    "🧪 Test de renommage de dossier par double-clic",
+    "🧪 Test de récupération d",
+    "🧪 Test de récupération des détails d"
+  ],
+  "contexts": {
+    "  [Series {i}] id={series.get(": [
+      {
+        "file": "comicVine_scraper_api.py",
+        "line": 137
+      }
+    ],
+    "  [Issue {i}] id={issue.get(": [
+      {
+        "file": "comicVine_scraper_api.py",
+        "line": 170
+      }
+    ],
+    "Extract strings from QMessageBox calls": [
+      {
+        "file": "extract_strings.py",
+        "line": 53
+      }
+    ],
+    "\n        strings = set()\n        \n        patterns = [\n            r": [
+      {
+        "file": "extract_strings.py",
+        "line": 53
+      }
+    ],
+    ",\n            r": [
+      {
+        "file": "extract_strings.py",
+        "line": 57
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 58
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 59
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 60
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 79
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 80
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 81
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 82
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 83
+      }
+    ],
+    ",\n        ]\n        \n        for pattern in patterns:\n            matches = re.finditer(pattern, content, re.MULTILINE)\n            for match in matches:\n                string_val = match.group(1)\n                if self._is_translatable_string(string_val):\n                    strings.add(string_val)\n                    self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_ui_strings(self, content: str, file_path: str) -> Set[str]:\n        ": [
+      {
+        "file": "extract_strings.py",
+        "line": 84
+      }
+    ],
+    "Extract strings from addItem calls": [
+      {
+        "file": "extract_strings.py",
+        "line": 117
+      }
+    ],
+    "\n        strings = set()\n        \n        pattern = r": [
+      {
+        "file": "extract_strings.py",
+        "line": 117
+      }
+    ],
+    "\n        matches = re.finditer(pattern, content, re.MULTILINE)\n        \n        for match in matches:\n            string_val = match.group(1)\n            if self._is_translatable_string(string_val):\n                strings.add(string_val)\n                self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_user_messages(self, content: str, file_path: str) -> Set[str]:\n        ": [
+      {
+        "file": "extract_strings.py",
+        "line": 120
+      }
+    ],
+    "\n        ]\n        \n        return any(indicator in line_content for indicator in ui_indicators)\n    \n    def _get_line_number(self, content: str, position: int) -> int:\n        ": [
+      {
+        "file": "extract_strings.py",
+        "line": 183
+      }
+    ],
+    " in str(ctx):\n                notes.append(": [
+      {
+        "file": "extract_strings.py",
+        "line": 258
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 260
+      },
+      {
+        "file": "extract_strings.py",
+        "line": 262
+      }
+    ],
+    "Extracting from: {file_path}": [
+      {
+        "file": "extract_strings.py",
+        "line": 22
+      }
+    ],
+    "Error processing {file_path}: {e}": [
+      {
+        "file": "extract_strings.py",
+        "line": 49
+      }
+    ],
+    "Translation template saved to: {output_file}": [
+      {
+        "file": "extract_strings.py",
+        "line": 250
+      }
+    ],
+    "ComicsRename String Extraction Tool": [
+      {
+        "file": "extract_strings.py",
+        "line": 276
+      }
+    ],
+    "Scanning directory: {script_dir}": [
+      {
+        "file": "extract_strings.py",
+        "line": 286
+      }
+    ],
+    "\\n📊 Extraction Results:": [
+      {
+        "file": "extract_strings.py",
+        "line": 289
+      }
+    ],
+    "   Files processed: {results[": [
+      {
+        "file": "extract_strings.py",
+        "line": 290
+      }
+    ],
+    "   Strings found: {results[": [
+      {
+        "file": "extract_strings.py",
+        "line": 291
+      }
+    ],
+    "\\n📁 Output files created in: {output_dir}": [
+      {
+        "file": "extract_strings.py",
+        "line": 314
+      }
+    ],
+    "   • extracted_strings.json    - Complete extraction data": [
+      {
+        "file": "extract_strings.py",
+        "line": 315
+      }
+    ],
+    "   • translation_template.json - Template for translators": [
+      {
+        "file": "extract_strings.py",
+        "line": 316
+      }
+    ],
+    "   • strings_list.txt         - Simple list for reference": [
+      {
+        "file": "extract_strings.py",
+        "line": 317
+      }
+    ],
+    "\\n🎯 Top 10 strings to translate:": [
+      {
+        "file": "extract_strings.py",
+        "line": 319
+      }
+    ],
+    "   {i:2d}. {string_val}": [
+      {
+        "file": "extract_strings.py",
+        "line": 321
+      }
+    ],
+    "   ... and {len(results[": [
+      {
+        "file": "extract_strings.py",
+        "line": 324
+      }
+    ],
+    "❌ Aucune série trouvée.": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 61
+      }
+    ],
+    "✅ {len(series_list)} série(s) trouvée(s):": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 64
+      }
+    ],
+    "\\n📚 Série #{i}": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 68
+      }
+    ],
+    "Nom: {series[": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 73
+      }
+    ],
+    "Pays: {series[": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 76
+      }
+    ],
+    "Couverture: {series[": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 79
+      }
+    ],
+    "URL: {series[": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 82
+      }
+    ],
+    "\\nDétails complets:": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 86
+      }
+    ],
+    "  {key}: {": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 90
+      }
+    ],
+    "  {key}: {value}": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 92
+      }
+    ],
+    "❌ Erreur: Nom d": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 166
+      },
+      {
+        "file": "test_series_albums.py",
+        "line": 25
+      }
+    ],
+    "   Utilisez -u/-p ou créez un fichier .env avec:": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 167
+      }
+    ],
+    "   BDGEST_USERNAME=votre_nom_utilisateur": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 168
+      },
+      {
+        "file": "test_series_albums.py",
+        "line": 28
+      }
+    ],
+    "   BDGEST_PASSWORD=votre_mot_de_passe": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 169
+      },
+      {
+        "file": "test_series_albums.py",
+        "line": 29
+      }
+    ],
+    "🔧 Paramètres de test:": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 174
+      }
+    ],
+    "   Terme de recherche: ": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 175
+      }
+    ],
+    "   Utilisateur: {username}": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 176
+      }
+    ],
+    "   Mode debug: {debug_mode}": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 177
+      }
+    ],
+    "   Mode verbose: {args.verbose}": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 178
+      }
+    ],
+    "   Fichier de log: {args.log_file}": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 180
+      }
+    ],
+    "🔍 Recherche de séries avec le terme: ": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 187
+      }
+    ],
+    "⏰ Début: {datetime.now().strftime(": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 188
+      }
+    ],
+    "⏱️  Durée: {(end_time - start_time).total_seconds():.2f}s": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 203
+      }
+    ],
+    "\\n✅ Test terminé avec succès!": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 212
+      }
+    ],
+    "❌ Erreur d": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 215
+      }
+    ],
+    "   Assurez-vous que bdgest_scraper_api.py est dans le même répertoire.": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 216
+      }
+    ],
+    "❌ Erreur lors du test: {e}": [
+      {
+        "file": "test_bdgest_series.py",
+        "line": 220
+      },
+      {
+        "file": "test_folder_rename.py",
+        "line": 73
+      },
+      {
+        "file": "test_album_details.py",
+        "line": 81
+      },
+      {
+        "file": "test_session_management.py",
+        "line": 70
+      }
+    ],
+    "🧪 Test de renommage de dossier par double-clic": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 15
+      }
+    ],
+    "✅ Classes importées avec succès": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 21
+      }
+    ],
+    "\\n🔍 Fonctionnalités d": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 24
+      }
+    ],
+    "✅ {method}: {description}": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 36
+      }
+    ],
+    "❌ {method}: MANQUANT": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 38
+      }
+    ],
+    "\\n📋 Workflow complet:": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 40
+      }
+    ],
+    "   1. 🖱️  Double-clic sur le nom du dossier": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 41
+      }
+    ],
+    "   2. ✏️  Passage en mode édition (fond jaune, bordure bleue)": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 42
+      }
+    ],
+    "   3. ⌨️  Saisie du nouveau nom du dossier": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 43
+      }
+    ],
+    "   4. ✅ Validation par Entrée ou perte de focus": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 44
+      }
+    ],
+    "   5. 🔍 Vérification que le nouveau nom est valide": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 45
+      }
+    ],
+    "   6. ❓ Demande de confirmation à l": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 46
+      }
+    ],
+    "   7. 📁 Renommage effectif du dossier": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 47
+      }
+    ],
+    "   8. 🔄 Rechargement des fichiers dans le nouveau dossier": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 48
+      }
+    ],
+    "   9. 📍 Mise à jour des paramètres (last_folder)": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 49
+      }
+    ],
+    "  10. 📢 Message de confirmation": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 50
+      }
+    ],
+    "\\n🛡️ Protections implémentées:": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 52
+      }
+    ],
+    "   • Validation du nom (caractères autorisés)": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 53
+      }
+    ],
+    "   • Vérification de l": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 54
+      }
+    ],
+    "   • Confirmation obligatoire de l": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 55
+      }
+    ],
+    "   • Gestion des erreurs (permissions, etc.)": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 56
+      }
+    ],
+    "   • Annulation possible avec Échap": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 57
+      }
+    ],
+    "   • Restauration du nom original en cas d": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 58
+      }
+    ],
+    "\\n⌨️ Raccourcis clavier:": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 60
+      }
+    ],
+    "   • Entrée: Valider le nouveau nom": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 61
+      }
+    ],
+    "   • Échap: Annuler et restaurer le nom original": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 62
+      }
+    ],
+    "   • Perte de focus: Valider le nouveau nom": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 63
+      }
+    ],
+    "\\n🎨 Indicateurs visuels:": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 65
+      }
+    ],
+    "   • Mode lecture: Aspect normal": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 66
+      }
+    ],
+    "   • Mode édition: Fond jaune, bordure bleue": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 67
+      }
+    ],
+    "   • Sélection automatique du texte en mode édition": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 68
+      }
+    ],
+    "\\n🎉 Test réussi!": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 82
+      },
+      {
+        "file": "test_session_management.py",
+        "line": 79
+      }
+    ],
+    "La fonctionnalité de renommage par double-clic est opérationnelle.": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 83
+      }
+    ],
+    "\\n💡 Pour tester:": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 84
+      }
+    ],
+    "   1. Lancez l": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 85
+      }
+    ],
+    "   2. Ouvrez un dossier avec des fichiers": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 86
+      }
+    ],
+    "   3. Double-cliquez sur le nom du dossier en haut": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 87
+      }
+    ],
+    "   4. Modifiez le nom et appuyez sur Entrée": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 88
+      }
+    ],
+    "\\n❌ Test échoué.": [
+      {
+        "file": "test_folder_rename.py",
+        "line": 90
+      },
+      {
+        "file": "test_session_management.py",
+        "line": 82
+      }
+    ],
+    "🐍 Checking Python version...": [
+      {
+        "file": "validate_install.py",
+        "line": 16
+      }
+    ],
+    "   ✅ Python {version.major}.{version.minor}.{version.micro} (OK)": [
+      {
+        "file": "validate_install.py",
+        "line": 19
+      }
+    ],
+    "   ❌ Python {version.major}.{version.minor}.{version.micro} (Required: 3.8+)": [
+      {
+        "file": "validate_install.py",
+        "line": 22
+      }
+    ],
+    "\\n📦 Checking dependencies...": [
+      {
+        "file": "validate_install.py",
+        "line": 27
+      }
+    ],
+    "   ✅ {package_name}: {version}": [
+      {
+        "file": "validate_install.py",
+        "line": 42
+      }
+    ],
+    "   ❌ {package_name}: Not installed": [
+      {
+        "file": "validate_install.py",
+        "line": 44
+      }
+    ],
+    "\\n📁 Checking project files...": [
+      {
+        "file": "validate_install.py",
+        "line": 51
+      }
+    ],
+    "   ✅ {file_name}": [
+      {
+        "file": "validate_install.py",
+        "line": 66
+      }
+    ],
+    "   ❌ {file_name}: Missing": [
+      {
+        "file": "validate_install.py",
+        "line": 68
+      }
+    ],
+    "\\n🔧 Testing module imports...": [
+      {
+        "file": "validate_install.py",
+        "line": 75
+      }
+    ],
+    "   ✅ {module_name}: {description}": [
+      {
+        "file": "validate_install.py",
+        "line": 88
+      }
+    ],
+    "   ✅ ComicRenamer class found": [
+      {
+        "file": "validate_install.py",
+        "line": 93
+      }
+    ],
+    "   ❌ ComicRenamer class not found": [
+      {
+        "file": "validate_install.py",
+        "line": 95
+      }
+    ],
+    "   ❌ {module_name}: {description} - {e}": [
+      {
+        "file": "validate_install.py",
+        "line": 99
+      }
+    ],
+    "\\n⚙️  Checking configuration...": [
+      {
+        "file": "validate_install.py",
+        "line": 106
+      }
+    ],
+    "   ✅ .env file exists": [
+      {
+        "file": "validate_install.py",
+        "line": 112
+      }
+    ],
+    "   ✅ .env file has content": [
+      {
+        "file": "validate_install.py",
+        "line": 119
+      }
+    ],
+    "   ⚠️  .env file is empty": [
+      {
+        "file": "validate_install.py",
+        "line": 121
+      }
+    ],
+    "   ❌ Error reading .env file: {e}": [
+      {
+        "file": "validate_install.py",
+        "line": 123
+      }
+    ],
+    "   ⚠️  .env file not found (optional)": [
+      {
+        "file": "validate_install.py",
+        "line": 126
+      }
+    ],
+    "   ✅ .env.example template exists": [
+      {
+        "file": "validate_install.py",
+        "line": 130
+      }
+    ],
+    "   ❌ .env.example template missing": [
+      {
+        "file": "validate_install.py",
+        "line": 132
+      }
+    ],
+    "   ✅ setup_credentials.py exists": [
+      {
+        "file": "validate_install.py",
+        "line": 137
+      }
+    ],
+    "   ❌ setup_credentials.py missing": [
+      {
+        "file": "validate_install.py",
+        "line": 139
+      }
+    ],
+    "\\n🖥️  Checking GUI availability...": [
+      {
+        "file": "validate_install.py",
+        "line": 146
+      }
+    ],
+    "   ✅ PySide6 GUI components available": [
+      {
+        "file": "validate_install.py",
+        "line": 158
+      }
+    ],
+    "   ❌ GUI components unavailable: {e}": [
+      {
+        "file": "validate_install.py",
+        "line": 162
+      }
+    ],
+    "🔍 ComicsRename Installation Validator": [
+      {
+        "file": "validate_install.py",
+        "line": 167
+      }
+    ],
+    "🎉 All checks passed! ComicsRename is ready to use.": [
+      {
+        "file": "validate_install.py",
+        "line": 189
+      }
+    ],
+    "\\nTo start the application, run:": [
+      {
+        "file": "validate_install.py",
+        "line": 190
+      }
+    ],
+    "   python main.py": [
+      {
+        "file": "validate_install.py",
+        "line": 191
+      }
+    ],
+    "\\nOr use the launcher scripts:": [
+      {
+        "file": "validate_install.py",
+        "line": 192
+      }
+    ],
+    "   ./launch.sh       (macOS/Linux)": [
+      {
+        "file": "validate_install.py",
+        "line": 193
+      }
+    ],
+    "❌ {len(failed_checks)} check(s) failed:": [
+      {
+        "file": "validate_install.py",
+        "line": 196
+      }
+    ],
+    "   • {failed}": [
+      {
+        "file": "validate_install.py",
+        "line": 198
+      }
+    ],
+    "\\nPlease fix the issues above.": [
+      {
+        "file": "validate_install.py",
+        "line": 199
+      }
+    ],
+    "\\nFor installation help, see:": [
+      {
+        "file": "validate_install.py",
+        "line": 200
+      }
+    ],
+    "\\n💡 If dependencies are missing, try:": [
+      {
+        "file": "validate_install.py",
+        "line": 205
+      },
+      {
+        "file": "validate_install.py",
+        "line": 208
+      }
+    ],
+    "   pip install PySide6 requests beautifulsoup4 lxml python-dotenv": [
+      {
+        "file": "validate_install.py",
+        "line": 206
+      }
+    ],
+    "   pip install -r requirements.txt": [
+      {
+        "file": "validate_install.py",
+        "line": 209
+      }
+    ],
+    "🔍 Test de la structure des données d": [
+      {
+        "file": "test_album_details.py",
+        "line": 15
+      }
+    ],
+    "✅ Import de get_bdgest_albums_by_series_id réussi": [
+      {
+        "file": "test_album_details.py",
+        "line": 21
+      }
+    ],
+    "Paramètres de get_bdgest_albums_by_series_id: {params}": [
+      {
+        "file": "test_album_details.py",
+        "line": 28
+      }
+    ],
+    "✅ Paramètre fetch_details présent": [
+      {
+        "file": "test_album_details.py",
+        "line": 31
+      }
+    ],
+    "❌ Paramètre fetch_details manquant": [
+      {
+        "file": "test_album_details.py",
+        "line": 33
+      }
+    ],
+    "✅ Paramètre max_workers présent": [
+      {
+        "file": "test_album_details.py",
+        "line": 37
+      }
+    ],
+    "❌ Paramètre max_workers manquant": [
+      {
+        "file": "test_album_details.py",
+        "line": 39
+      }
+    ],
+    "Valeur par défaut fetch_details: {default_fetch_details}": [
+      {
+        "file": "test_album_details.py",
+        "line": 46
+      }
+    ],
+    "Valeur par défaut max_workers: {default_max_workers}": [
+      {
+        "file": "test_album_details.py",
+        "line": 47
+      }
+    ],
+    "✅ fetch_details=True par défaut": [
+      {
+        "file": "test_album_details.py",
+        "line": 50
+      }
+    ],
+    "❌ fetch_details devrait être True par défaut": [
+      {
+        "file": "test_album_details.py",
+        "line": 52
+      }
+    ],
+    "✅ max_workers=4 par défaut": [
+      {
+        "file": "test_album_details.py",
+        "line": 55
+      }
+    ],
+    "❌ max_workers devrait être 4 par défaut": [
+      {
+        "file": "test_album_details.py",
+        "line": 57
+      }
+    ],
+    "Paramètres de BDGestProvider.search_albums_by_series_id: {provider_params}": [
+      {
+        "file": "test_album_details.py",
+        "line": 66
+      }
+    ],
+    "Valeur par défaut fetch_details dans provider: {provider_default}": [
+      {
+        "file": "test_album_details.py",
+        "line": 70
+      }
+    ],
+    "✅ BDGestProvider utilise fetch_details=True par défaut": [
+      {
+        "file": "test_album_details.py",
+        "line": 72
+      }
+    ],
+    "❌ BDGestProvider devrait utiliser fetch_details=True par défaut": [
+      {
+        "file": "test_album_details.py",
+        "line": 74
+      }
+    ],
+    "\\n✅ Structure des fonctions correcte !": [
+      {
+        "file": "test_album_details.py",
+        "line": 76
+      }
+    ],
+    "📝 Les albums récupérés auront maintenant un champ ": [
+      {
+        "file": "test_album_details.py",
+        "line": 77
+      }
+    ],
+    "🧪 Test de récupération des détails d": [
+      {
+        "file": "test_album_details.py",
+        "line": 87
+      }
+    ],
+    "\\n🎉 Tous les tests réussis !": [
+      {
+        "file": "test_album_details.py",
+        "line": 93
+      }
+    ],
+    "La fonction fetch_albums_by_series_id récupère maintenant les détails des albums": [
+      {
+        "file": "test_album_details.py",
+        "line": 94
+      }
+    ],
+    "exactement comme fetch_albums.": [
+      {
+        "file": "test_album_details.py",
+        "line": 95
+      }
+    ],
+    "\\n❌ Certains tests ont échoué.": [
+      {
+        "file": "test_album_details.py",
+        "line": 97
+      }
+    ],
+    "🔐 Configuration Sécurisée des Identifiants": [
+      {
+        "file": "setup_credentials.py",
+        "line": 14
+      }
+    ],
+    "❌ Configuration annulée.": [
+      {
+        "file": "setup_credentials.py",
+        "line": 23
+      }
+    ],
+    "📝 Veuillez entrer vos identifiants:": [
+      {
+        "file": "setup_credentials.py",
+        "line": 26
+      }
+    ],
+    "   (Ils seront stockés dans .env, protégé par .gitignore)": [
+      {
+        "file": "setup_credentials.py",
+        "line": 27
+      }
+    ],
+    "🔸 BDGest (www.bedetheque.com)": [
+      {
+        "file": "setup_credentials.py",
+        "line": 31
+      }
+    ],
+    "🔸 ComicVine (comicvine.gamespot.com)": [
+      {
+        "file": "setup_credentials.py",
+        "line": 37
+      }
+    ],
+    "   (Allez dans votre profil → API pour générer une clé)": [
+      {
+        "file": "setup_credentials.py",
+        "line": 38
+      }
+    ],
+    "❌ Identifiants BDGest manquants.": [
+      {
+        "file": "setup_credentials.py",
+        "line": 44
+      }
+    ],
+    "⚠️  Clé ComicVine manquante (optionnel pour BDGest seulement)": [
+      {
+        "file": "setup_credentials.py",
+        "line": 48
+      }
+    ],
+    "✅ Configuration sauvegardée dans .env": [
+      {
+        "file": "setup_credentials.py",
+        "line": 67
+      }
+    ],
+    "🔒 Permissions sécurisées appliquées": [
+      {
+        "file": "setup_credentials.py",
+        "line": 68
+      }
+    ],
+    "🎉 Configuration terminée !": [
+      {
+        "file": "setup_credentials.py",
+        "line": 70
+      }
+    ],
+    "   Vous pouvez maintenant utiliser ComicsRename en toute sécurité.": [
+      {
+        "file": "setup_credentials.py",
+        "line": 71
+      }
+    ],
+    "❌ Erreur lors de la sauvegarde: {e}": [
+      {
+        "file": "setup_credentials.py",
+        "line": 74
+      }
+    ],
+    "🔍 Vérification de Sécurité": [
+      {
+        "file": "setup_credentials.py",
+        "line": 79
+      }
+    ],
+    "✅ Fichier .env trouvé": [
+      {
+        "file": "setup_credentials.py",
+        "line": 86
+      }
+    ],
+    "⚠️  Fichier .env manquant": [
+      {
+        "file": "setup_credentials.py",
+        "line": 88
+      }
+    ],
+    "✅ .env protégé dans .gitignore": [
+      {
+        "file": "setup_credentials.py",
+        "line": 96
+      }
+    ],
+    "❌ .env non protégé dans .gitignore": [
+      {
+        "file": "setup_credentials.py",
+        "line": 98
+      }
+    ],
+    "❌ .gitignore manquant": [
+      {
+        "file": "setup_credentials.py",
+        "line": 101
+      }
+    ],
+    "✅ {var} configuré": [
+      {
+        "file": "setup_credentials.py",
+        "line": 108
+      }
+    ],
+    "⚠️  {var} manquant": [
+      {
+        "file": "setup_credentials.py",
+        "line": 110
+      }
+    ],
+    "🔧 Actions Recommandées:": [
+      {
+        "file": "setup_credentials.py",
+        "line": 114
+      }
+    ],
+    "   {i}. {issue}": [
+      {
+        "file": "setup_credentials.py",
+        "line": 116
+      }
+    ],
+    "🎉 Configuration de sécurité optimale !": [
+      {
+        "file": "setup_credentials.py",
+        "line": 119
+      }
+    ],
+    "🧪 Test de gestion de session BDGest": [
+      {
+        "file": "test_session_management.py",
+        "line": 15
+      }
+    ],
+    "✅ BDGestProvider créé": [
+      {
+        "file": "test_session_management.py",
+        "line": 23
+      }
+    ],
+    "État initial - Session: {provider._session}": [
+      {
+        "file": "test_session_management.py",
+        "line": 26
+      }
+    ],
+    "État initial - Authentifié: {provider._authenticated}": [
+      {
+        "file": "test_session_management.py",
+        "line": 27
+      }
+    ],
+    "État initial - Derniers identifiants: {provider._last_credentials}": [
+      {
+        "file": "test_session_management.py",
+        "line": 28
+      }
+    ],
+    "\\n🔍 Test des méthodes de gestion de session:": [
+      {
+        "file": "test_session_management.py",
+        "line": 31
+      }
+    ],
+    "✅ {method} disponible": [
+      {
+        "file": "test_session_management.py",
+        "line": 41
+      }
+    ],
+    "❌ {method} manquante": [
+      {
+        "file": "test_session_management.py",
+        "line": 43
+      }
+    ],
+    "\\n🔑 Test de récupération des identifiants:": [
+      {
+        "file": "test_session_management.py",
+        "line": 46
+      }
+    ],
+    "Utilisateur configuré: {": [
+      {
+        "file": "test_session_management.py",
+        "line": 49
+      }
+    ],
+    "Mot de passe configuré: {": [
+      {
+        "file": "test_session_management.py",
+        "line": 50
+      }
+    ],
+    "❌ Erreur lors de la récupération des identifiants: {e}": [
+      {
+        "file": "test_session_management.py",
+        "line": 52
+      }
+    ],
+    "\\n📋 Avantages de la nouvelle implémentation:": [
+      {
+        "file": "test_session_management.py",
+        "line": 54
+      }
+    ],
+    "   • Session persistante entre les recherches": [
+      {
+        "file": "test_session_management.py",
+        "line": 55
+      }
+    ],
+    "   • Authentification uniquement quand nécessaire": [
+      {
+        "file": "test_session_management.py",
+        "line": 56
+      }
+    ],
+    "   • Réutilisation des cookies et tokens": [
+      {
+        "file": "test_session_management.py",
+        "line": 57
+      }
+    ],
+    "   • Performance améliorée pour les recherches multiples": [
+      {
+        "file": "test_session_management.py",
+        "line": 58
+      }
+    ],
+    "   • Gestion automatique des erreurs d": [
+      {
+        "file": "test_session_management.py",
+        "line": 59
+      }
+    ],
+    "\\n🔄 Comportement:": [
+      {
+        "file": "test_session_management.py",
+        "line": 61
+      }
+    ],
+    "   1. Première recherche: Création session + authentification": [
+      {
+        "file": "test_session_management.py",
+        "line": 62
+      }
+    ],
+    "   2. Recherches suivantes: Réutilisation de la session existante": [
+      {
+        "file": "test_session_management.py",
+        "line": 63
+      }
+    ],
+    "   3. En cas d": [
+      {
+        "file": "test_session_management.py",
+        "line": 64
+      }
+    ],
+    "   4. Changement d": [
+      {
+        "file": "test_session_management.py",
+        "line": 65
+      }
+    ],
+    "Le système de gestion de session est opérationnel.": [
+      {
+        "file": "test_session_management.py",
+        "line": 80
+      }
+    ],
+    "Rename": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 155
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 241
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 783
+      }
+    ],
+    "Erreur": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 164
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 167
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 195
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 201
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 224
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 781
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 786
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 820
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 831
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 848
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 875
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 892
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 195
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 820
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 831
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 848
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 167
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 201
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 875
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 892
+      }
+    ],
+    "Rename Error": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 172
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 252
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 791
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 172
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 791
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 431
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 431
+      }
+    ],
+    "Format non supporté": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 187
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 187
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 187
+      }
+    ],
+    "Ajouter des fichiers": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 191
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 191
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 370
+      }
+    ],
+    "Avertissement": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 218
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 397
+      }
+    ],
+    "Error": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 268
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 273
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 747
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 747
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 449
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 454
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1194
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1194
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 449
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 454
+      }
+    ],
+    "No Results": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 607
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 607
+      }
+    ],
+    "Résultat": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 623
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 623
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 913
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 913
+      }
+    ],
+    "Aucun résultat": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 642
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 642
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 936
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 969
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 936
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 969
+      }
+    ],
+    "Selection": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 741
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 741
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1188
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1188
+      }
+    ],
+    "Sélection": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 826
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 826
+      }
+    ],
+    "Info": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 866
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 866
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 866
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1316
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1316
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1316
+      }
+    ],
+    "Renommer le dossier": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 878
+      }
+    ],
+    "Succès": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 889
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 889
+      }
+    ],
+    "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 187
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 187
+      }
+    ],
+    "Aucun dossier actif pour l": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 195
+      }
+    ],
+    "No albums found for this search.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 607
+      }
+    ],
+    "Aucun album trouvé pour cette recherche.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 623
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 913
+      }
+    ],
+    "Aucun album trouvé pour cette recherche sur BDGest.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 642
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 969
+      }
+    ],
+    "Please select one file and one album": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 741
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1188
+      }
+    ],
+    "Album metadata missing": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 747
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1194
+      }
+    ],
+    "Aucun fichier dans le dossier.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 820
+      }
+    ],
+    "Veuillez sélectionner un album dans la liste.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 826
+      }
+    ],
+    "Métadonnées de l": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 831
+      }
+    ],
+    "Impossible de déterminer le nom de la série.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 848
+      }
+    ],
+    "Le dossier porte déjà ce nom.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 866
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 866
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1316
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1316
+      }
+    ],
+    "Où souhaitez-vous commencer la navigation ?": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 526
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 526
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 526
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 809
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 809
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 809
+      }
+    ],
+    "Paramètres": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 314
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 314
+      }
+    ],
+    "Comic Renamer - Multi-Source": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 362
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 362
+      }
+    ],
+    "Sélection du dossier": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 525
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 525
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 525
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 808
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 808
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 808
+      }
+    ],
+    "Disques externes (/Volumes)": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 527
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 527
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 810
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 810
+      }
+    ],
+    "Dernier dossier utilisé": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 528
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 528
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 811
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 811
+      }
+    ],
+    "Dossier personnel": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 529
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 529
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 812
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 812
+      }
+    ],
+    "Application Settings": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 404
+      }
+    ],
+    "Renommer le dossier avec le nom de la série sélectionnée": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 420
+      }
+    ],
+    ", f": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 164
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 268
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 273
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 781
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 786
+      }
+    ],
+    "existe pas:\\n{f[": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 164
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 786
+      }
+    ],
+    "]}": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 164
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 786
+      }
+    ],
+    "Un fichier nommé ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 167
+      }
+    ],
+    " existe déjà dans ce dossier.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 167
+      }
+    ],
+    "import.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 195
+      }
+    ],
+    "Le fichier source n": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 201
+      }
+    ],
+    ")\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 201
+      }
+    ],
+    ", str(e))\n\n    def _show_context_menu(self, pos):\n        row = self.rowAt(pos.y())\n        if row < 0:\n            return\n        menu = QMenu(self)\n        open_action = menu.addAction(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 252
+      }
+    ],
+    ")\n        elif action == reveal_action:\n            try:\n                subprocess.Popen([": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 268
+      }
+    ],
+    ")\n\nclass AlbumTable(QTableWidget):\n    def __init__(self, parent=None):\n        super().__init__(parent)\n        self.main = parent\n        self.setSelectionBehavior(QAbstractItemView.SelectRows)\n        self.setDragEnabled(True)\n        self.setColumnCount(1)\n        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)\n        self.setEditTriggers(QAbstractItemView.NoEditTriggers)\n        self.setContextMenuPolicy(Qt.CustomContextMenu)\n        self.customContextMenuRequested.connect(self._show_context_menu)\n\n    def mouseMoveEvent(self, event):\n        it = self.itemAt(event.pos())\n        if not it:\n            return\n        print(f": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 273
+      }
+    ],
+    ")\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 314
+      }
+    ],
+    "])\n        default_provider = self.settings.value(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 320
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 515
+      }
+    ],
+    ")\n        self.resize(1400, 800)\n        self.settings = QSettings(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 362
+      }
+    ],
+    "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._build_ui()\n        self.series_cover_url = ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 367
+      }
+    ],
+    "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 397
+      }
+    ],
+    ")\n        self.dir_btn = QPushButton(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 399
+      }
+    ],
+    ")\n        self.recursive_cb = QCheckBox(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 400
+      }
+    ],
+    ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 402
+      }
+    ],
+    ")\n        self.rename_btn = QPushButton(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 404
+      }
+    ],
+    ")\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = DraggableLineEdit()\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 405
+      }
+    ],
+    ")\n        self.folder_rename_btn.setToolTip(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 419
+      }
+    ],
+    ")\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 420
+      }
+    ],
+    "/\\\\": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 568
+      },
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 812
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 851
+      }
+    ],
+    ")\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 607
+      }
+    ],
+    ")\n            else:\n                print(f": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 610
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 900
+      }
+    ],
+    ")\n                self.issues_by_series = issues_by_series\n                if not issues_by_series:\n                    QMessageBox.warning(self, ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 620
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 910
+      }
+    ],
+    ")\n        else:\n            albums = []\n            for album in series_list:\n                s = album.get(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 623
+      }
+    ],
+    ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _populate_albums(self, txt):\n        if not txt:\n            return\n        self.album_table.clearContents()\n        self.album_table.setRowCount(0)\n        self.series_cover_url = ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 642
+      }
+    ],
+    ")\n            return\n        f = self.files[fr]\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 741
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1188
+      }
+    ],
+    ")\n            return\n        # Build new filename\n        series = meta.get(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 747
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1194
+      }
+    ],
+    "{new_name}": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 781
+      }
+    ],
+    ")\n            return\n        if QMessageBox.question(self, ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 781
+      }
+    ],
+    ", msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 783
+      }
+    ],
+    ").rstrip(": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 815
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1265
+      }
+    ],
+    ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 815
+      }
+    ],
+    ")\n            return\n        current_folder = pathlib.Path(self.files[0][": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 820
+      }
+    ],
+    ")\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 826
+      }
+    ],
+    "album manquantes.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 831
+      }
+    ],
+    ")\n            return\n        # Clean up names\n        clean = lambda s: ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 848
+      }
+    ],
+    "Un dossier nommé ": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 875
+      }
+    ],
+    " existe déjà dans ce répertoire.": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 875
+      }
+    ],
+    "Dossier renommé en :\\n{new_folder_name}": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 889
+      }
+    ],
+    "Erreur lors du renommage du dossier :\\n{e}": [
+      {
+        "file": "comicsFileRenamer_v2.py",
+        "line": 892
+      }
+    ],
+    "Error: Missing dependencies. Please install requirements:": [
+      {
+        "file": "main.py",
+        "line": 47
+      }
+    ],
+    "pip install -r requirements.txt": [
+      {
+        "file": "main.py",
+        "line": 48
+      }
+    ],
+    "Details: {e}": [
+      {
+        "file": "main.py",
+        "line": 49
+      }
+    ],
+    "Error starting application: {e}": [
+      {
+        "file": "main.py",
+        "line": 52
+      }
+    ],
+    "🔍 Testing URL construction...": [
+      {
+        "file": "test_url_construction.py",
+        "line": 10
+      }
+    ],
+    "Series ID: {series_id}": [
+      {
+        "file": "test_url_construction.py",
+        "line": 20
+      }
+    ],
+    "Series Name: {series_name}": [
+      {
+        "file": "test_url_construction.py",
+        "line": 21
+      }
+    ],
+    "Encoded Name: {encoded_series_name}": [
+      {
+        "file": "test_url_construction.py",
+        "line": 22
+      }
+    ],
+    "Constructed URL: {url}": [
+      {
+        "file": "test_url_construction.py",
+        "line": 23
+      }
+    ],
+    "Expected URL: {expected_url}": [
+      {
+        "file": "test_url_construction.py",
+        "line": 28
+      }
+    ],
+    "✅ Series ID correctly placed in ": [
+      {
+        "file": "test_url_construction.py",
+        "line": 32
+      }
+    ],
+    "❌ Series ID not found in ": [
+      {
+        "file": "test_url_construction.py",
+        "line": 34
+      }
+    ],
+    "✅ Series name correctly placed in ": [
+      {
+        "file": "test_url_construction.py",
+        "line": 37
+      }
+    ],
+    "❌ Series name not found in ": [
+      {
+        "file": "test_url_construction.py",
+        "line": 39
+      }
+    ],
+    "\\n🔍 Testing function availability...": [
+      {
+        "file": "test_url_construction.py",
+        "line": 41
+      }
+    ],
+    "✅ get_bdgest_albums_by_series_id imported successfully": [
+      {
+        "file": "test_url_construction.py",
+        "line": 49
+      }
+    ],
+    "✅ BDGestProvider.search_albums_by_series_id method available": [
+      {
+        "file": "test_url_construction.py",
+        "line": 55
+      }
+    ],
+    "❌ BDGestProvider.search_albums_by_series_id method not found": [
+      {
+        "file": "test_url_construction.py",
+        "line": 57
+      }
+    ],
+    "\\n✅ All tests passed!": [
+      {
+        "file": "test_url_construction.py",
+        "line": 59
+      }
+    ],
+    "❌ Error during testing: {e}": [
+      {
+        "file": "test_url_construction.py",
+        "line": 62
+      }
+    ],
+    "   Utilisez les variables d": [
+      {
+        "file": "test_series_albums.py",
+        "line": 26
+      }
+    ],
+    "   ou créez un fichier .env avec:": [
+      {
+        "file": "test_series_albums.py",
+        "line": 27
+      }
+    ],
+    "🔍 Test 1: Recherche de séries...": [
+      {
+        "file": "test_series_albums.py",
+        "line": 34
+      }
+    ],
+    "❌ Aucune série trouvée pour ": [
+      {
+        "file": "test_series_albums.py",
+        "line": 40
+      }
+    ],
+    "✅ {len(series_results)} série(s) trouvée(s)": [
+      {
+        "file": "test_series_albums.py",
+        "line": 43
+      }
+    ],
+    "❌ Aucun ID de série trouvé dans les résultats": [
+      {
+        "file": "test_series_albums.py",
+        "line": 51
+      }
+    ],
+    "   Données de la série: {first_series}": [
+      {
+        "file": "test_series_albums.py",
+        "line": 52
+      }
+    ],
+    "🔍 Test 2: Récupération des albums pour la série ": [
+      {
+        "file": "test_series_albums.py",
+        "line": 55
+      }
+    ],
+    "❌ Aucun album trouvé pour la série ": [
+      {
+        "file": "test_series_albums.py",
+        "line": 62
+      }
+    ],
+    "✅ {len(albums)} album(s) trouvé(s) pour la série ": [
+      {
+        "file": "test_series_albums.py",
+        "line": 65
+      }
+    ],
+    "\\n📚 Albums trouvés:": [
+      {
+        "file": "test_series_albums.py",
+        "line": 68
+      }
+    ],
+    "   {i+1}. {album_name} (#{album_number}) - {album_date}": [
+      {
+        "file": "test_series_albums.py",
+        "line": 73
+      }
+    ],
+    "   ... et {len(albums) - 3} autres albums": [
+      {
+        "file": "test_series_albums.py",
+        "line": 76
+      }
+    ],
+    "\\n✅ Tests réussis! La fonctionnalité de récupération d": [
+      {
+        "file": "test_series_albums.py",
+        "line": 78
+      }
+    ],
+    "❌ Erreur lors des tests: {e}": [
+      {
+        "file": "test_series_albums.py",
+        "line": 82
+      }
+    ],
+    "🧪 Test de récupération d": [
+      {
+        "file": "test_series_albums.py",
+        "line": 93
+      }
+    ],
+    "Language Change": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 553
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 553
+      }
+    ],
+    "Language will be applied after restarting the application.": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 553
+      }
+    ],
+    "Aucune série trouvée pour cette recherche sur BDGest.": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 936
+      }
+    ],
+    "), tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 343
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 346
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 366
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 374
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 380
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 897
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1226
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1228
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1231
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1270
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1276
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1281
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1298
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1481
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1488
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1511
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1514
+      }
+    ],
+    ", path=f[": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 343
+      },
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1231
+      }
+    ],
+    "]))\n                        return\n                    if new_path.exists():\n                        QMessageBox.critical(self, tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 343
+      }
+    ],
+    ", name=new_name))\n                        return\n                    os.rename(f[": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 346
+      }
+    ],
+    "), str(e))\n            return\n\n        # External file drop (from Finder, etc.)\n        if event.mimeData().hasUrls():\n            urls = event.mimeData().urls()\n            supported_exts = (": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 351
+      }
+    ],
+    "))\n                return\n            op = ": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 366
+      }
+    ],
+    ", msg, QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:\n                return\n            dest_folder = self.main.files[0][": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 370
+      }
+    ],
+    "))\n                return\n            import shutil\n            for src in files_to_add:\n                # Vérifie que le fichier existe\n                if not os.path.exists(src):\n                    QMessageBox.critical(self, tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 374
+      }
+    ],
+    ", path=src))\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 380
+      }
+    ],
+    "Could not open file:\\n{e}": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 449
+      }
+    ],
+    "Could not reveal file:\\n{e}": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 454
+      }
+    ],
+    "))\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 497
+      }
+    ],
+    "))\n        self.resize(1400, 800)\n        self.settings = QSettings(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 577
+      }
+    ],
+    "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._bdgest_series_results = []  # New: store series search results\n        self._original_cover_pixmap = None  # Store original pixmap for rescaling\n        self._build_ui()\n        self.series_cover_url = ": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 582
+      }
+    ],
+    "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 620
+      }
+    ],
+    "))\n        self.dir_btn = QPushButton(tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 622
+      }
+    ],
+    "))\n        self.recursive_cb = QCheckBox(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 623
+      }
+    ],
+    "))\n        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest\n        self.settings_btn = QPushButton(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 626
+      }
+    ],
+    ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 628
+      }
+    ],
+    "))\n        self.rename_btn = QPushButton(tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 630
+      }
+    ],
+    "))\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = EditableFolderLineEdit(main_window=self)\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 631
+      }
+    ],
+    ")\n        self.folder_rename_btn.setToolTip(tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 645
+      }
+    ],
+    "))\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 646
+      }
+    ],
+    "))\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 897
+      }
+    ],
+    ")\n        else:  # BDGest\n            # Check if SeriesName checkbox is checked\n            if self.series_name_cb.isChecked():\n                # Use series-only search\n                series_results = provider.search_series_only(q, debug=debug, verbose=verbose) \\\n                    if hasattr(provider, ": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 913
+      }
+    ],
+    ")\n                else:\n                    # Clear album table since we": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 936
+      }
+    ],
+    ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _on_series_selection_changed(self, txt):\n        ": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 969
+      }
+    ],
+    ", name=new_name))\n            return\n        if QMessageBox.question(self, tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1226
+      }
+    ],
+    ", new_name=new_name), QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1228
+      }
+    ],
+    "]))\n                    return\n                os.rename(str(f[": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1231
+      }
+    ],
+    "), str(e))\n\n    def _open_settings(self):\n        dlg = SettingsDialog(self, self.settings)\n        if dlg.exec():\n            # Invalidate BDGest session when settings change (credentials might have changed)\n            bdgest_provider = PROVIDERS.get(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1236
+      }
+    ],
+    ")))\n        else:\n            # If nothing selected, show root folder name\n            self.folder_display.setText(os.path.basename(self.settings.value(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1262
+      }
+    ],
+    ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1265
+      }
+    ],
+    "))\n            return\n        current_folder = pathlib.Path(self.files[0][": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1270
+      }
+    ],
+    "))\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1276
+      }
+    ],
+    "))\n            return\n        # Extract serie_name\n        serie_name = meta.get(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1281
+      }
+    ],
+    "))\n            return\n        # Clean up names\n        clean = lambda s: ": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1298
+      }
+    ],
+    "))\n            self._cancel_editing()\n            return\n        \n        # Check if folder with new name already exists\n        new_folder_path = self._original_folder_path.parent / cleaned_name\n        if new_folder_path.exists():\n            QMessageBox.critical(self.main_window, tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1481
+      }
+    ],
+    ", name=cleaned_name))\n            self._cancel_editing()\n            return\n        \n        # Confirm rename\n        reply = QMessageBox.question(\n            self.main_window,\n            tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1488
+      }
+    ],
+    ", name=cleaned_name))\n                \n            except Exception as e:\n                QMessageBox.critical(self.main_window, tr(": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1511
+      }
+    ],
+    ", error=str(e)))\n                self._cancel_editing()\n                return\n        \n        # Reset to read-only mode\n        self._reset_to_readonly()\n\n    def _cancel_editing(self):\n        ": [
+      {
+        "file": "comicsFileRenamer_v3.py",
+        "line": 1514
+      }
+    ]
+  },
+  "files_processed": 16,
+  "total_strings": 365
+}

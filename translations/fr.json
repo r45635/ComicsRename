@@ -1,0 +1,125 @@
+{
+  "app": {
+    "title": "Comic Renamer - Multi-Source",
+    "settings": "Paramètres"
+  },
+  "ui": {
+    "buttons": {
+      "browse": "Parcourir",
+      "search": "Rechercher",
+      "settings": "Paramètres",
+      "rename": "Renommer",
+      "rename_folder": "Renommer le dossier",
+      "refresh": "Actualiser",
+      "refresh_files": "Actualiser les fichiers",
+      "ok": "OK",
+      "cancel": "Annuler",
+      "yes": "Oui",
+      "no": "Non"
+    },
+    "labels": {
+      "folder": "Dossier",
+      "search_term": "Terme de recherche",
+      "series_name_mode": "Mode nom de série",
+      "provider": "Fournisseur",
+      "language": "Langue",
+      "volume": "Volume",
+      "series": "Série",
+      "album": "Album",
+      "issue": "Numéro"
+    },
+    "tooltips": {
+      "series_name_mode": "Rechercher uniquement dans les noms de séries (BDGest uniquement)",
+      "settings": "Paramètres de l'application",
+      "rename_folder": "Renommer le dossier avec le nom de la série sélectionnée"
+    },
+    "placeholders": {
+      "search": "Entrez un terme de recherche..."
+    },
+    "menus": {
+      "open_file": "Ouvrir le fichier",
+      "reveal_in_finder": "Afficher dans le Finder",
+      "refresh_folder_files": "Rafraîchir les fichiers du dossier"
+    }
+  },
+  "dialogs": {
+    "folder_selection": {
+      "title": "Sélection du dossier",
+      "message": "Où souhaitez-vous commencer la navigation ?",
+      "external_drives": "Disques externes (/Volumes)",
+      "last_folder": "Dernier dossier utilisé",
+      "home_folder": "Dossier personnel"
+    },
+    "rename_confirmation": {
+      "title": "Confirmation de renommage",
+      "file_message": "Renommer le fichier en :\n{new_name} ?",
+      "folder_message": "Renommer le dossier '{old_name}' en '{new_name}' ?"
+    },
+    "add_files": {
+      "title": "Ajouter des fichiers",
+      "message": "Ajouter {count} fichier(s) au dossier actuel ?"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "language_label": "Langue :",
+      "bdgest_credentials": "Identifiants BDGest",
+      "username": "Nom d'utilisateur :",
+      "password": "Mot de passe :",
+      "comicvine_settings": "Paramètres ComicVine",
+      "api_key": "Clé API :"
+    }
+  },
+  "messages": {
+    "errors": {
+      "no_results": "Aucun album trouvé pour cette recherche.",
+      "no_series_found": "Aucune série trouvée pour cette recherche sur BDGest.",
+      "no_albums_found": "Aucun album trouvé pour cette recherche sur BDGest.",
+      "file_not_exists": "Le fichier source n'existe pas :\\n{path}",
+      "file_already_exists": "Un fichier nommé '{name}' existe déjà dans ce dossier.",
+      "folder_already_exists": "Un dossier nommé '{name}' existe déjà dans ce répertoire.",
+      "no_files_in_folder": "Aucun fichier dans le dossier.",
+      "no_album_selected": "Veuillez sélectionner un album dans la liste.",
+      "invalid_folder_name": "Le nom du dossier ne peut pas être vide.",
+      "rename_folder_title": "Renommer le dossier",
+      "rename_folder_message": "Renommer le dossier de :\n'{old_name}'\nà :\n'{new_name}' ?",
+      "success_title": "Succès",
+      "folder_renamed": "Dossier renommé en '{name}'",
+      "album_metadata_missing": "Métadonnées de l'album manquantes.",
+      "cannot_determine_series": "Impossible de déterminer le nom de la série.",
+      "rename_error": "Erreur de renommage",
+      "error": "Erreur",
+      "add_file_error": "Erreur lors de l'ajout de {file} :\n{error}\n\nSource: {source}\nDestination: {dest}",
+      "fetch_albums_error": "Erreur lors de la récupération des albums: {error}",
+      "folder_rename_error": "Erreur lors du renommage du dossier :\n{error}",
+      "no_active_folder": "Aucun dossier actif pour l'import.",
+      "unsupported_format": "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.",
+      "could_not_open_file": "Impossible d'ouvrir le fichier :\\n{error}",
+      "could_not_reveal_file": "Impossible de révéler le fichier :\\n{error}",
+      "selection_required": "Veuillez sélectionner un fichier et un album"
+    },
+    "warnings": {
+      "file_overwrite": "Un fichier nommé '{name}' existe déjà.\\nÉcraser ?",
+      "unsupported_format": "Format non supporté"
+    },
+    "info": {
+      "folder_same_name": "Le dossier porte déjà ce nom.",
+      "series_found": "{count} série(s) trouvée(s)",
+      "albums_found": "{count} album(s) trouvé(s)",
+      "no_result": "Aucun résultat",
+      "language_change_title": "Changement de langue",
+      "language_change_message": "La langue sera appliquée après le redémarrage de l'application."
+    },
+    "success": {
+      "rename_complete": "Renommage terminé avec succès"
+    }
+  },
+  "debug": {
+    "image_load_failed": "Échec du chargement de l'image",
+    "fetch_albums_failed": "Échec de la récupération des albums pour la série {series}",
+    "clean_input": "entrée clean()",
+    "clean_output": "sortie clean()",
+    "volumes_found": "{count} volume(s) trouvé(s) pour '{query}'",
+    "issues_found": "{count} numéro(s) trouvé(s) pour '{query}'",
+    "no_volumes_fallback": "Aucun volume trouvé pour '{query}', recherche des numéros"
+  }
+}

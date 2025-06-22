@@ -1,0 +1,4948 @@
+{
+  "extraction_info": {
+    "total_strings": 365,
+    "files_processed": 13
+  },
+  "strings_to_translate": [
+    {
+      "original": "\n        ]\n        \n        return any(indicator in line_content for indicator in ui_indicators)\n    \n    def _get_line_number(self, content: str, position: int) -> int:\n        ",
+      "english": "\n        ]\n        \n        return any(indicator in line_content for indicator in ui_indicators)\n    \n    def _get_line_number(self, content: str, position: int) -> int:\n        ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 183
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "\n        matches = re.finditer(pattern, content, re.MULTILINE)\n        \n        for match in matches:\n            string_val = match.group(1)\n            if self._is_translatable_string(string_val):\n                strings.add(string_val)\n                self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_user_messages(self, content: str, file_path: str) -> Set[str]:\n        ",
+      "english": "\n        matches = re.finditer(pattern, content, re.MULTILINE)\n        \n        for match in matches:\n            string_val = match.group(1)\n            if self._is_translatable_string(string_val):\n                strings.add(string_val)\n                self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_user_messages(self, content: str, file_path: str) -> Set[str]:\n        ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 120
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "\n        strings = set()\n        \n        pattern = r",
+      "english": "\n        strings = set()\n        \n        pattern = r",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 117
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "\n        strings = set()\n        \n        patterns = [\n            r",
+      "english": "\n        strings = set()\n        \n        patterns = [\n            r",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 53
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   (Allez dans votre profil → API pour générer une clé)",
+      "english": "   (Allez dans votre profil → API pour générer une clé)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 38
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   (Ils seront stockés dans .env, protégé par .gitignore)",
+      "english": "   (Ils seront stockés dans .env, protégé par .gitignore)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 27
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ... and {len(results[",
+      "english": "   ... and {len(results[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 324
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ... et {len(albums) - 3} autres albums",
+      "english": "   ... et {len(albums) - 3} autres albums",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 76
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ./launch.sh       (macOS/Linux)",
+      "english": "   ./launch.sh       (macOS/Linux)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 193
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   1. Lancez l",
+      "english": "   1. Lancez l",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 85
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   1. Première recherche: Création session + authentification",
+      "english": "   1. Première recherche: Création session + authentification",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 62
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   1. 🖱️  Double-clic sur le nom du dossier",
+      "english": "   1. 🖱️  Double-clic sur le nom du dossier",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 41
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   2. Ouvrez un dossier avec des fichiers",
+      "english": "   2. Ouvrez un dossier avec des fichiers",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 86
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   2. Recherches suivantes: Réutilisation de la session existante",
+      "english": "   2. Recherches suivantes: Réutilisation de la session existante",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 63
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   2. ✏️  Passage en mode édition (fond jaune, bordure bleue)",
+      "english": "   2. ✏️  Passage en mode édition (fond jaune, bordure bleue)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 42
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   3. Double-cliquez sur le nom du dossier en haut",
+      "english": "   3. Double-cliquez sur le nom du dossier en haut",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 87
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   3. En cas d",
+      "english": "   3. En cas d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 64
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   3. ⌨️  Saisie du nouveau nom du dossier",
+      "english": "   3. ⌨️  Saisie du nouveau nom du dossier",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 43
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   4. Changement d",
+      "english": "   4. Changement d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 65
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   4. Modifiez le nom et appuyez sur Entrée",
+      "english": "   4. Modifiez le nom et appuyez sur Entrée",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 88
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   4. ✅ Validation par Entrée ou perte de focus",
+      "english": "   4. ✅ Validation par Entrée ou perte de focus",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 44
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   5. 🔍 Vérification que le nouveau nom est valide",
+      "english": "   5. 🔍 Vérification que le nouveau nom est valide",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 45
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   6. ❓ Demande de confirmation à l",
+      "english": "   6. ❓ Demande de confirmation à l",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 46
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   7. 📁 Renommage effectif du dossier",
+      "english": "   7. 📁 Renommage effectif du dossier",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 47
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   8. 🔄 Rechargement des fichiers dans le nouveau dossier",
+      "english": "   8. 🔄 Rechargement des fichiers dans le nouveau dossier",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 48
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   9. 📍 Mise à jour des paramètres (last_folder)",
+      "english": "   9. 📍 Mise à jour des paramètres (last_folder)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 49
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   Assurez-vous que bdgest_scraper_api.py est dans le même répertoire.",
+      "english": "   Assurez-vous que bdgest_scraper_api.py est dans le même répertoire.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 216
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   BDGEST_PASSWORD=votre_mot_de_passe",
+      "english": "   BDGEST_PASSWORD=votre_mot_de_passe",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 169
+        },
+        {
+          "file": "test_series_albums.py",
+          "line": 29
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   BDGEST_USERNAME=votre_nom_utilisateur",
+      "english": "   BDGEST_USERNAME=votre_nom_utilisateur",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 168
+        },
+        {
+          "file": "test_series_albums.py",
+          "line": 28
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   Données de la série: {first_series}",
+      "english": "   Données de la série: {first_series}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 52
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   Fichier de log: {args.log_file}",
+      "english": "   Fichier de log: {args.log_file}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 180
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   Files processed: {results[",
+      "english": "   Files processed: {results[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 290
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   Mode debug: {debug_mode}",
+      "english": "   Mode debug: {debug_mode}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 177
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   Mode verbose: {args.verbose}",
+      "english": "   Mode verbose: {args.verbose}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 178
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   Strings found: {results[",
+      "english": "   Strings found: {results[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 291
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   Terme de recherche: ",
+      "english": "   Terme de recherche: ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 175
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   Utilisateur: {username}",
+      "english": "   Utilisateur: {username}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 176
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   Utilisez -u/-p ou créez un fichier .env avec:",
+      "english": "   Utilisez -u/-p ou créez un fichier .env avec:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 167
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   Utilisez les variables d",
+      "english": "   Utilisez les variables d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 26
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   Vous pouvez maintenant utiliser ComicsRename en toute sécurité.",
+      "english": "   Vous pouvez maintenant utiliser ComicsRename en toute sécurité.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 71
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ou créez un fichier .env avec:",
+      "english": "   ou créez un fichier .env avec:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 27
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   pip install -r requirements.txt",
+      "english": "   pip install -r requirements.txt",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 209
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   pip install PySide6 requests beautifulsoup4 lxml python-dotenv",
+      "english": "   pip install PySide6 requests beautifulsoup4 lxml python-dotenv",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 206
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   python main.py",
+      "english": "   python main.py",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 191
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   {i+1}. {album_name} (#{album_number}) - {album_date}",
+      "english": "   {i+1}. {album_name} (#{album_number}) - {album_date}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 73
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   {i:2d}. {string_val}",
+      "english": "   {i:2d}. {string_val}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 321
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   {i}. {issue}",
+      "english": "   {i}. {issue}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 116
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   • Annulation possible avec Échap",
+      "english": "   • Annulation possible avec Échap",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 57
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Authentification uniquement quand nécessaire",
+      "english": "   • Authentification uniquement quand nécessaire",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 56
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Confirmation obligatoire de l",
+      "english": "   • Confirmation obligatoire de l",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 55
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Entrée: Valider le nouveau nom",
+      "english": "   • Entrée: Valider le nouveau nom",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 61
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Gestion automatique des erreurs d",
+      "english": "   • Gestion automatique des erreurs d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 59
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Gestion des erreurs (permissions, etc.)",
+      "english": "   • Gestion des erreurs (permissions, etc.)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 56
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Mode lecture: Aspect normal",
+      "english": "   • Mode lecture: Aspect normal",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 66
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Mode édition: Fond jaune, bordure bleue",
+      "english": "   • Mode édition: Fond jaune, bordure bleue",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 67
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Performance améliorée pour les recherches multiples",
+      "english": "   • Performance améliorée pour les recherches multiples",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 58
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Perte de focus: Valider le nouveau nom",
+      "english": "   • Perte de focus: Valider le nouveau nom",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 63
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Restauration du nom original en cas d",
+      "english": "   • Restauration du nom original en cas d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 58
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Réutilisation des cookies et tokens",
+      "english": "   • Réutilisation des cookies et tokens",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 57
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Session persistante entre les recherches",
+      "english": "   • Session persistante entre les recherches",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 55
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Sélection automatique du texte en mode édition",
+      "english": "   • Sélection automatique du texte en mode édition",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 68
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Validation du nom (caractères autorisés)",
+      "english": "   • Validation du nom (caractères autorisés)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 53
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • Vérification de l",
+      "english": "   • Vérification de l",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 54
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • extracted_strings.json    - Complete extraction data",
+      "english": "   • extracted_strings.json    - Complete extraction data",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 315
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • strings_list.txt         - Simple list for reference",
+      "english": "   • strings_list.txt         - Simple list for reference",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 317
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • translation_template.json - Template for translators",
+      "english": "   • translation_template.json - Template for translators",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 316
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   • {failed}",
+      "english": "   • {failed}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 198
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   • Échap: Annuler et restaurer le nom original",
+      "english": "   • Échap: Annuler et restaurer le nom original",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 62
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ⚠️  .env file is empty",
+      "english": "   ⚠️  .env file is empty",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 121
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ⚠️  .env file not found (optional)",
+      "english": "   ⚠️  .env file not found (optional)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 126
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ✅ .env file exists",
+      "english": "   ✅ .env file exists",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 112
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ✅ .env file has content",
+      "english": "   ✅ .env file has content",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 119
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ✅ .env.example template exists",
+      "english": "   ✅ .env.example template exists",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 130
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ✅ ComicRenamer class found",
+      "english": "   ✅ ComicRenamer class found",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 93
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ✅ PySide6 GUI components available",
+      "english": "   ✅ PySide6 GUI components available",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 158
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ✅ Python {version.major}.{version.minor}.{version.micro} (OK)",
+      "english": "   ✅ Python {version.major}.{version.minor}.{version.micro} (OK)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 19
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ✅ setup_credentials.py exists",
+      "english": "   ✅ setup_credentials.py exists",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 137
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ✅ {file_name}",
+      "english": "   ✅ {file_name}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 66
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ✅ {module_name}: {description}",
+      "english": "   ✅ {module_name}: {description}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 88
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ✅ {package_name}: {version}",
+      "english": "   ✅ {package_name}: {version}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 42
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ❌ .env.example template missing",
+      "english": "   ❌ .env.example template missing",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 132
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ❌ ComicRenamer class not found",
+      "english": "   ❌ ComicRenamer class not found",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 95
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ❌ Error reading .env file: {e}",
+      "english": "   ❌ Error reading .env file: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 123
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ❌ GUI components unavailable: {e}",
+      "english": "   ❌ GUI components unavailable: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 162
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ❌ Python {version.major}.{version.minor}.{version.micro} (Required: 3.8+)",
+      "english": "   ❌ Python {version.major}.{version.minor}.{version.micro} (Required: 3.8+)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 22
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ❌ setup_credentials.py missing",
+      "english": "   ❌ setup_credentials.py missing",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 139
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "   ❌ {file_name}: Missing",
+      "english": "   ❌ {file_name}: Missing",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 68
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ❌ {module_name}: {description} - {e}",
+      "english": "   ❌ {module_name}: {description} - {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 99
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "   ❌ {package_name}: Not installed",
+      "english": "   ❌ {package_name}: Not installed",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 44
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "  10. 📢 Message de confirmation",
+      "english": "  10. 📢 Message de confirmation",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 50
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "  [Issue {i}] id={issue.get(",
+      "english": "  [Issue {i}] id={issue.get(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicVine_scraper_api.py",
+          "line": 170
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "  [Series {i}] id={series.get(",
+      "english": "  [Series {i}] id={series.get(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicVine_scraper_api.py",
+          "line": 137
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "  {key}: {",
+      "english": "  {key}: {",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 90
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "  {key}: {value}",
+      "english": "  {key}: {value}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 92
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": " existe déjà dans ce dossier.",
+      "english": " existe déjà dans ce dossier.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 167
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": " existe déjà dans ce répertoire.",
+      "english": " existe déjà dans ce répertoire.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 875
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": " in str(ctx):\n                notes.append(",
+      "english": " in str(ctx):\n                notes.append(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 258
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 260
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 262
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _on_series_selection_changed(self, txt):\n        ",
+      "english": ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _on_series_selection_changed(self, txt):\n        ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 969
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _populate_albums(self, txt):\n        if not txt:\n            return\n        self.album_table.clearContents()\n        self.album_table.setRowCount(0)\n        self.series_cover_url = ",
+      "english": ")\n\n    def _enable_folder_rename_btn(self, *args):\n        self.folder_rename_btn.setEnabled(True)\n\n    def _on_album_selection_changed(self, selected, deselected):\n        # Enable if any row is selected, else disable\n        selected_rows = self.album_table.selectionModel().selectedRows()\n        self.folder_rename_btn.setEnabled(bool(selected_rows))\n\n    def _populate_albums(self, txt):\n        if not txt:\n            return\n        self.album_table.clearContents()\n        self.album_table.setRowCount(0)\n        self.series_cover_url = ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 642
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n\nclass AlbumTable(QTableWidget):\n    def __init__(self, parent=None):\n        super().__init__(parent)\n        self.main = parent\n        self.setSelectionBehavior(QAbstractItemView.SelectRows)\n        self.setDragEnabled(True)\n        self.setColumnCount(1)\n        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)\n        self.setEditTriggers(QAbstractItemView.NoEditTriggers)\n        self.setContextMenuPolicy(Qt.CustomContextMenu)\n        self.customContextMenuRequested.connect(self._show_context_menu)\n\n    def mouseMoveEvent(self, event):\n        it = self.itemAt(event.pos())\n        if not it:\n            return\n        print(f",
+      "english": ")\n\nclass AlbumTable(QTableWidget):\n    def __init__(self, parent=None):\n        super().__init__(parent)\n        self.main = parent\n        self.setSelectionBehavior(QAbstractItemView.SelectRows)\n        self.setDragEnabled(True)\n        self.setColumnCount(1)\n        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)\n        self.setEditTriggers(QAbstractItemView.NoEditTriggers)\n        self.setContextMenuPolicy(Qt.CustomContextMenu)\n        self.customContextMenuRequested.connect(self._show_context_menu)\n\n    def mouseMoveEvent(self, event):\n        it = self.itemAt(event.pos())\n        if not it:\n            return\n        print(f",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 273
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(",
+      "english": ")\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 201
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f",
+      "english": ")\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 607
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n                else:\n                    # Clear album table since we",
+      "english": ")\n                else:\n                    # Clear album table since we",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 936
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n                self.issues_by_series = issues_by_series\n                if not issues_by_series:\n                    QMessageBox.warning(self, ",
+      "english": ")\n                self.issues_by_series = issues_by_series\n                if not issues_by_series:\n                    QMessageBox.warning(self, ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 620
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 910
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n            else:\n                print(f",
+      "english": ")\n            else:\n                print(f",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 610
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 900
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n            return\n        # Build new filename\n        series = meta.get(",
+      "english": ")\n            return\n        # Build new filename\n        series = meta.get(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 747
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1194
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n            return\n        # Clean up names\n        clean = lambda s: ",
+      "english": ")\n            return\n        # Clean up names\n        clean = lambda s: ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 848
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n            return\n        current_folder = pathlib.Path(self.files[0][",
+      "english": ")\n            return\n        current_folder = pathlib.Path(self.files[0][",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 820
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n            return\n        f = self.files[fr]\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ",
+      "english": ")\n            return\n        f = self.files[fr]\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 741
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1188
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n            return\n        if QMessageBox.question(self, ",
+      "english": ")\n            return\n        if QMessageBox.question(self, ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 781
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ",
+      "english": ")\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 826
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        elif action == reveal_action:\n            try:\n                subprocess.Popen([",
+      "english": ")\n        elif action == reveal_action:\n            try:\n                subprocess.Popen([",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 268
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        else:\n            albums = []\n            for album in series_list:\n                s = album.get(",
+      "english": ")\n        else:\n            albums = []\n            for album in series_list:\n                s = album.get(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 623
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        else:  # BDGest\n            # Check if SeriesName checkbox is checked\n            if self.series_name_cb.isChecked():\n                # Use series-only search\n                series_results = provider.search_series_only(q, debug=debug, verbose=verbose) \\\n                    if hasattr(provider, ",
+      "english": ")\n        else:  # BDGest\n            # Check if SeriesName checkbox is checked\n            if self.series_name_cb.isChecked():\n                # Use series-only search\n                series_results = provider.search_series_only(q, debug=debug, verbose=verbose) \\\n                    if hasattr(provider, ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 913
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = DraggableLineEdit()\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(",
+      "english": ")\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = DraggableLineEdit()\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 405
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.dir_btn = QPushButton(",
+      "english": ")\n        self.dir_btn = QPushButton(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 399
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([",
+      "english": ")\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 420
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.folder_rename_btn.setToolTip(",
+      "english": ")\n        self.folder_rename_btn.setToolTip(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 419
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.folder_rename_btn.setToolTip(tr(",
+      "english": ")\n        self.folder_rename_btn.setToolTip(tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 645
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(",
+      "english": ")\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 314
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.recursive_cb = QCheckBox(",
+      "english": ")\n        self.recursive_cb = QCheckBox(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 400
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.rename_btn = QPushButton(",
+      "english": ")\n        self.rename_btn = QPushButton(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 404
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.resize(1400, 800)\n        self.settings = QSettings(",
+      "english": ")\n        self.resize(1400, 800)\n        self.settings = QSettings(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 362
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(",
+      "english": ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 402
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(tr(",
+      "english": ")\n        self.settings_btn.setFixedWidth(30)\n        self.settings_btn.setToolTip(tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 628
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f",
+      "english": "))\n                    return\n                for s in sorted(self.issues_by_series):\n                    self.series_combo.addItem(f",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 897
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n                return\n            import shutil\n            for src in files_to_add:\n                # Vérifie que le fichier existe\n                if not os.path.exists(src):\n                    QMessageBox.critical(self, tr(",
+      "english": "))\n                return\n            import shutil\n            for src in files_to_add:\n                # Vérifie que le fichier existe\n                if not os.path.exists(src):\n                    QMessageBox.critical(self, tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 374
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n                return\n            op = ",
+      "english": "))\n                return\n            op = ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 366
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n            return\n        # Clean up names\n        clean = lambda s: ",
+      "english": "))\n            return\n        # Clean up names\n        clean = lambda s: ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1298
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n            return\n        # Extract serie_name\n        serie_name = meta.get(",
+      "english": "))\n            return\n        # Extract serie_name\n        serie_name = meta.get(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1281
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n            return\n        current_folder = pathlib.Path(self.files[0][",
+      "english": "))\n            return\n        current_folder = pathlib.Path(self.files[0][",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1270
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, tr(",
+      "english": "))\n            return\n        itm = self.album_table.item(ar, 0)\n        meta = itm.data(Qt.UserRole) if itm else None\n        if not meta:\n            QMessageBox.critical(self, tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1276
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n            self._cancel_editing()\n            return\n        \n        # Check if folder with new name already exists\n        new_folder_path = self._original_folder_path.parent / cleaned_name\n        if new_folder_path.exists():\n            QMessageBox.critical(self.main_window, tr(",
+      "english": "))\n            self._cancel_editing()\n            return\n        \n        # Check if folder with new name already exists\n        new_folder_path = self._original_folder_path.parent / cleaned_name\n        if new_folder_path.exists():\n            QMessageBox.critical(self.main_window, tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1481
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = EditableFolderLineEdit(main_window=self)\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(",
+      "english": "))\n        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):\n            ctrl.addWidget(w)\n        layout.addLayout(ctrl)\n\n        splitter_main = QSplitter(Qt.Horizontal)\n\n        # --- Folder display ---\n        file_panel = QWidget()\n        file_panel_layout = QVBoxLayout(file_panel)\n        file_panel_layout.setContentsMargins(0, 0, 0, 0)\n        folder_display_layout = QHBoxLayout()\n        self.folder_display = EditableFolderLineEdit(main_window=self)\n        # Add the rename folder button\n        self.folder_rename_btn = QPushButton(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 631
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        self.dir_btn = QPushButton(tr(",
+      "english": "))\n        self.dir_btn = QPushButton(tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 622
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([",
+      "english": "))\n        self.folder_rename_btn.setFixedWidth(30)\n        self.folder_rename_btn.setEnabled(False)  # Disabled by default\n        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)\n        folder_display_layout.addWidget(self.folder_display)\n        folder_display_layout.addWidget(self.folder_rename_btn)\n        file_panel_layout.addLayout(folder_display_layout)\n        self.file_table = FileTable(self)\n        self.file_table.setColumnCount(4)\n        self.file_table.setHorizontalHeaderLabels([",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 646
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(",
+      "english": "))\n        self.layout = QFormLayout(self)\n\n        self.settings = settings or QSettings(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 497
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        self.recursive_cb = QCheckBox(",
+      "english": "))\n        self.recursive_cb = QCheckBox(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 623
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        self.rename_btn = QPushButton(tr(",
+      "english": "))\n        self.rename_btn = QPushButton(tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 630
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        self.resize(1400, 800)\n        self.settings = QSettings(",
+      "english": "))\n        self.resize(1400, 800)\n        self.settings = QSettings(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 577
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "))\n        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest\n        self.settings_btn = QPushButton(",
+      "english": "))\n        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest\n        self.settings_btn = QPushButton(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 626
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, ",
+      "english": ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 815
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, tr(",
+      "english": ")))\n\n    def _rename_folder_to_serie(self):\n        # Get current folder path\n        if not self.files:\n            QMessageBox.warning(self, tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1265
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ")))\n        else:\n            # If nothing selected, show root folder name\n            self.folder_display.setText(os.path.basename(self.settings.value(",
+      "english": ")))\n        else:\n            # If nothing selected, show root folder name\n            self.folder_display.setText(os.path.basename(self.settings.value(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1262
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "), str(e))\n\n    def _open_settings(self):\n        dlg = SettingsDialog(self, self.settings)\n        if dlg.exec():\n            # Invalidate BDGest session when settings change (credentials might have changed)\n            bdgest_provider = PROVIDERS.get(",
+      "english": "), str(e))\n\n    def _open_settings(self):\n        dlg = SettingsDialog(self, self.settings)\n        if dlg.exec():\n            # Invalidate BDGest session when settings change (credentials might have changed)\n            bdgest_provider = PROVIDERS.get(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1236
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "), str(e))\n            return\n\n        # External file drop (from Finder, etc.)\n        if event.mimeData().hasUrls():\n            urls = event.mimeData().urls()\n            supported_exts = (",
+      "english": "), str(e))\n            return\n\n        # External file drop (from Finder, etc.)\n        if event.mimeData().hasUrls():\n            urls = event.mimeData().urls()\n            supported_exts = (",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 351
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "), tr(",
+      "english": "), tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 343
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 346
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 366
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 374
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 380
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 897
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1226
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1228
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1231
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1270
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1276
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1281
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1298
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1481
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1488
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1511
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1514
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ").rstrip(",
+      "english": ").rstrip(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 815
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1265
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ",\n            r",
+      "english": ",\n            r",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 57
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 58
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 59
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 60
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 79
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 80
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 81
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 82
+        },
+        {
+          "file": "extract_strings.py",
+          "line": 83
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ",\n        ]\n        \n        for pattern in patterns:\n            matches = re.finditer(pattern, content, re.MULTILINE)\n            for match in matches:\n                string_val = match.group(1)\n                if self._is_translatable_string(string_val):\n                    strings.add(string_val)\n                    self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_ui_strings(self, content: str, file_path: str) -> Set[str]:\n        ",
+      "english": ",\n        ]\n        \n        for pattern in patterns:\n            matches = re.finditer(pattern, content, re.MULTILINE)\n            for match in matches:\n                string_val = match.group(1)\n                if self._is_translatable_string(string_val):\n                    strings.add(string_val)\n                    self._add_context(string_val, file_path, self._get_line_number(content, match.start()))\n        \n        return strings\n    \n    def _extract_ui_strings(self, content: str, file_path: str) -> Set[str]:\n        ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 84
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", error=str(e)))\n                self._cancel_editing()\n                return\n        \n        # Reset to read-only mode\n        self._reset_to_readonly()\n\n    def _cancel_editing(self):\n        ",
+      "english": ", error=str(e)))\n                self._cancel_editing()\n                return\n        \n        # Reset to read-only mode\n        self._reset_to_readonly()\n\n    def _cancel_editing(self):\n        ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1514
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", f",
+      "english": ", f",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 164
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 268
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 273
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 781
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 786
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", msg, QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:\n                return\n            dest_folder = self.main.files[0][",
+      "english": ", msg, QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:\n                return\n            dest_folder = self.main.files[0][",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 370
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[",
+      "english": ", msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 783
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", name=cleaned_name))\n                \n            except Exception as e:\n                QMessageBox.critical(self.main_window, tr(",
+      "english": ", name=cleaned_name))\n                \n            except Exception as e:\n                QMessageBox.critical(self.main_window, tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1511
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", name=cleaned_name))\n            self._cancel_editing()\n            return\n        \n        # Confirm rename\n        reply = QMessageBox.question(\n            self.main_window,\n            tr(",
+      "english": ", name=cleaned_name))\n            self._cancel_editing()\n            return\n        \n        # Confirm rename\n        reply = QMessageBox.question(\n            self.main_window,\n            tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1488
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", name=new_name))\n                        return\n                    os.rename(f[",
+      "english": ", name=new_name))\n                        return\n                    os.rename(f[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 346
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", name=new_name))\n            return\n        if QMessageBox.question(self, tr(",
+      "english": ", name=new_name))\n            return\n        if QMessageBox.question(self, tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1226
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", new_name=new_name), QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[",
+      "english": ", new_name=new_name), QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:\n            try:\n                if not os.path.exists(str(f[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1228
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", path=f[",
+      "english": ", path=f[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 343
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1231
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", path=src))\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(",
+      "english": ", path=src))\n                    continue\n                # Nettoie le nom du fichier (enlève les caractères interdits)\n                base_name = os.path.basename(src).replace(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 380
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": ", str(e))\n\n    def _show_context_menu(self, pos):\n        row = self.rowAt(pos.y())\n        if row < 0:\n            return\n        menu = QMenu(self)\n        open_action = menu.addAction(",
+      "english": ", str(e))\n\n    def _show_context_menu(self, pos):\n        row = self.rowAt(pos.y())\n        if row < 0:\n            return\n        menu = QMenu(self)\n        open_action = menu.addAction(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 252
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "/\\\\",
+      "english": "/\\\\",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 568
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 812
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 851
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Ajouter des fichiers",
+      "english": "Ajouter des fichiers",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 191
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 191
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 370
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Album metadata missing",
+      "english": "Album metadata missing",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 747
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1194
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Application Settings",
+      "english": "Application Settings",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 404
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Aucun album trouvé pour cette recherche sur BDGest.",
+      "english": "Aucun album trouvé pour cette recherche sur BDGest.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 642
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 969
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Aucun album trouvé pour cette recherche.",
+      "english": "Aucun album trouvé pour cette recherche.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 623
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 913
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Aucun dossier actif pour l",
+      "english": "Aucun dossier actif pour l",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 195
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Aucun fichier dans le dossier.",
+      "english": "Aucun fichier dans le dossier.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 820
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Aucun résultat",
+      "english": "Aucun résultat",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 642
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 642
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 936
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 969
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 936
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 969
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Aucune série trouvée pour cette recherche sur BDGest.",
+      "english": "Aucune série trouvée pour cette recherche sur BDGest.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 936
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Avertissement",
+      "english": "Avertissement",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 218
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 397
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Comic Renamer - Multi-Source",
+      "english": "Comic Renamer - Multi-Source",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 362
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 362
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "ComicsRename String Extraction Tool",
+      "english": "ComicsRename String Extraction Tool",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 276
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Constructed URL: {url}",
+      "english": "Constructed URL: {url}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 23
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Could not open file:\\n{e}",
+      "english": "Could not open file:\\n{e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 449
+        }
+      ],
+      "notes": "Contains variables for substitution; Contains line breaks"
+    },
+    {
+      "original": "Could not reveal file:\\n{e}",
+      "english": "Could not reveal file:\\n{e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 454
+        }
+      ],
+      "notes": "Contains variables for substitution; Contains line breaks"
+    },
+    {
+      "original": "Couverture: {series[",
+      "english": "Couverture: {series[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 79
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Dernier dossier utilisé",
+      "english": "Dernier dossier utilisé",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 528
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 528
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 811
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 811
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Details: {e}",
+      "english": "Details: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "main.py",
+          "line": 49
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Disques externes (/Volumes)",
+      "english": "Disques externes (/Volumes)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 527
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 527
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 810
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 810
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Dossier personnel",
+      "english": "Dossier personnel",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 529
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 529
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 812
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 812
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Dossier renommé en :\\n{new_folder_name}",
+      "english": "Dossier renommé en :\\n{new_folder_name}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 889
+        }
+      ],
+      "notes": "Contains variables for substitution; Contains line breaks"
+    },
+    {
+      "original": "Encoded Name: {encoded_series_name}",
+      "english": "Encoded Name: {encoded_series_name}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 22
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Erreur",
+      "english": "Erreur",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 164
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 167
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 195
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 201
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 224
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 781
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 786
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 820
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 831
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 848
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 875
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 892
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 195
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 820
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 831
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 848
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 167
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 201
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 875
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 892
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Erreur lors du renommage du dossier :\\n{e}",
+      "english": "Erreur lors du renommage du dossier :\\n{e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 892
+        }
+      ],
+      "notes": "Contains variables for substitution; Contains line breaks"
+    },
+    {
+      "original": "Error",
+      "english": "Error",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 268
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 273
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 747
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 747
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 449
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 454
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1194
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1194
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 449
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 454
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Error processing {file_path}: {e}",
+      "english": "Error processing {file_path}: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 49
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Error starting application: {e}",
+      "english": "Error starting application: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "main.py",
+          "line": 52
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Error: Missing dependencies. Please install requirements:",
+      "english": "Error: Missing dependencies. Please install requirements:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "main.py",
+          "line": 47
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Expected URL: {expected_url}",
+      "english": "Expected URL: {expected_url}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 28
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Extract strings from QMessageBox calls",
+      "english": "Extract strings from QMessageBox calls",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 53
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Extract strings from addItem calls",
+      "english": "Extract strings from addItem calls",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 117
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Extracting from: {file_path}",
+      "english": "Extracting from: {file_path}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 22
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Format non supporté",
+      "english": "Format non supporté",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 187
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 187
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 187
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Impossible de déterminer le nom de la série.",
+      "english": "Impossible de déterminer le nom de la série.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 848
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Info",
+      "english": "Info",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 866
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 866
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 866
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1316
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1316
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1316
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "La fonction fetch_albums_by_series_id récupère maintenant les détails des albums",
+      "english": "La fonction fetch_albums_by_series_id récupère maintenant les détails des albums",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 94
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "La fonctionnalité de renommage par double-clic est opérationnelle.",
+      "english": "La fonctionnalité de renommage par double-clic est opérationnelle.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 83
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Language Change",
+      "english": "Language Change",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 553
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 553
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Language will be applied after restarting the application.",
+      "english": "Language will be applied after restarting the application.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 553
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Le dossier porte déjà ce nom.",
+      "english": "Le dossier porte déjà ce nom.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 866
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 866
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1316
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1316
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Le fichier source n",
+      "english": "Le fichier source n",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 201
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Le système de gestion de session est opérationnel.",
+      "english": "Le système de gestion de session est opérationnel.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 80
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Mot de passe configuré: {",
+      "english": "Mot de passe configuré: {",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 50
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Métadonnées de l",
+      "english": "Métadonnées de l",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 831
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "No Results",
+      "english": "No Results",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 607
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 607
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "No albums found for this search.",
+      "english": "No albums found for this search.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 607
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Nom: {series[",
+      "english": "Nom: {series[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 73
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Où souhaitez-vous commencer la navigation ?",
+      "english": "Où souhaitez-vous commencer la navigation ?",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 526
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 526
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 526
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 809
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 809
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 809
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Paramètres",
+      "english": "Paramètres",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 314
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 314
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Paramètres de BDGestProvider.search_albums_by_series_id: {provider_params}",
+      "english": "Paramètres de BDGestProvider.search_albums_by_series_id: {provider_params}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 66
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Paramètres de get_bdgest_albums_by_series_id: {params}",
+      "english": "Paramètres de get_bdgest_albums_by_series_id: {params}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 28
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Pays: {series[",
+      "english": "Pays: {series[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 76
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Please select one file and one album",
+      "english": "Please select one file and one album",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 741
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1188
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Rename",
+      "english": "Rename",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 155
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 241
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 783
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Rename Error",
+      "english": "Rename Error",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 172
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 252
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 791
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 172
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 791
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 431
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 431
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Renommer le dossier",
+      "english": "Renommer le dossier",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 878
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Renommer le dossier avec le nom de la série sélectionnée",
+      "english": "Renommer le dossier avec le nom de la série sélectionnée",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 420
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Résultat",
+      "english": "Résultat",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 623
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 623
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 913
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 913
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Scanning directory: {script_dir}",
+      "english": "Scanning directory: {script_dir}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 286
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Selection",
+      "english": "Selection",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 741
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 741
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1188
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1188
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Series ID: {series_id}",
+      "english": "Series ID: {series_id}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 20
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Series Name: {series_name}",
+      "english": "Series Name: {series_name}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 21
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.",
+      "english": "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 187
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 187
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Succès",
+      "english": "Succès",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 889
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 889
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Sélection",
+      "english": "Sélection",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 826
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 826
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Sélection du dossier",
+      "english": "Sélection du dossier",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 525
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 525
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 525
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 808
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 808
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 808
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Translation template saved to: {output_file}",
+      "english": "Translation template saved to: {output_file}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 250
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "URL: {series[",
+      "english": "URL: {series[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 82
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Un dossier nommé ",
+      "english": "Un dossier nommé ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 875
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Un fichier nommé ",
+      "english": "Un fichier nommé ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 167
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Utilisateur configuré: {",
+      "english": "Utilisateur configuré: {",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 49
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "Valeur par défaut fetch_details dans provider: {provider_default}",
+      "english": "Valeur par défaut fetch_details dans provider: {provider_default}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 70
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Valeur par défaut fetch_details: {default_fetch_details}",
+      "english": "Valeur par défaut fetch_details: {default_fetch_details}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 46
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Valeur par défaut max_workers: {default_max_workers}",
+      "english": "Valeur par défaut max_workers: {default_max_workers}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 47
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "Veuillez sélectionner un album dans la liste.",
+      "english": "Veuillez sélectionner un album dans la liste.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 826
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "\\nDétails complets:",
+      "english": "\\nDétails complets:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 86
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\nFor installation help, see:",
+      "english": "\\nFor installation help, see:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 200
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\nOr use the launcher scripts:",
+      "english": "\\nOr use the launcher scripts:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 192
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\nPlease fix the issues above.",
+      "english": "\\nPlease fix the issues above.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 199
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\nTo start the application, run:",
+      "english": "\\nTo start the application, run:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 190
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n⌨️ Raccourcis clavier:",
+      "english": "\\n⌨️ Raccourcis clavier:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 60
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n⚙️  Checking configuration...",
+      "english": "\\n⚙️  Checking configuration...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 106
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n✅ All tests passed!",
+      "english": "\\n✅ All tests passed!",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 59
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n✅ Structure des fonctions correcte !",
+      "english": "\\n✅ Structure des fonctions correcte !",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 76
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n✅ Test terminé avec succès!",
+      "english": "\\n✅ Test terminé avec succès!",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 212
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n✅ Tests réussis! La fonctionnalité de récupération d",
+      "english": "\\n✅ Tests réussis! La fonctionnalité de récupération d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 78
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n❌ Certains tests ont échoué.",
+      "english": "\\n❌ Certains tests ont échoué.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 97
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n❌ Test échoué.",
+      "english": "\\n❌ Test échoué.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 90
+        },
+        {
+          "file": "test_session_management.py",
+          "line": 82
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🎉 Test réussi!",
+      "english": "\\n🎉 Test réussi!",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 82
+        },
+        {
+          "file": "test_session_management.py",
+          "line": 79
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🎉 Tous les tests réussis !",
+      "english": "\\n🎉 Tous les tests réussis !",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 93
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🎨 Indicateurs visuels:",
+      "english": "\\n🎨 Indicateurs visuels:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 65
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🎯 Top 10 strings to translate:",
+      "english": "\\n🎯 Top 10 strings to translate:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 319
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n💡 If dependencies are missing, try:",
+      "english": "\\n💡 If dependencies are missing, try:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 205
+        },
+        {
+          "file": "validate_install.py",
+          "line": 208
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n💡 Pour tester:",
+      "english": "\\n💡 Pour tester:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 84
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n📁 Checking project files...",
+      "english": "\\n📁 Checking project files...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 51
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n📁 Output files created in: {output_dir}",
+      "english": "\\n📁 Output files created in: {output_dir}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 314
+        }
+      ],
+      "notes": "Contains variables for substitution; Contains line breaks"
+    },
+    {
+      "original": "\\n📊 Extraction Results:",
+      "english": "\\n📊 Extraction Results:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "extract_strings.py",
+          "line": 289
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n📋 Avantages de la nouvelle implémentation:",
+      "english": "\\n📋 Avantages de la nouvelle implémentation:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 54
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n📋 Workflow complet:",
+      "english": "\\n📋 Workflow complet:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 40
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n📚 Albums trouvés:",
+      "english": "\\n📚 Albums trouvés:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 68
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n📚 Série #{i}",
+      "english": "\\n📚 Série #{i}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 68
+        }
+      ],
+      "notes": "Contains variables for substitution; Contains line breaks"
+    },
+    {
+      "original": "\\n📦 Checking dependencies...",
+      "english": "\\n📦 Checking dependencies...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 27
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🔄 Comportement:",
+      "english": "\\n🔄 Comportement:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 61
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🔍 Fonctionnalités d",
+      "english": "\\n🔍 Fonctionnalités d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 24
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🔍 Test des méthodes de gestion de session:",
+      "english": "\\n🔍 Test des méthodes de gestion de session:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 31
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🔍 Testing function availability...",
+      "english": "\\n🔍 Testing function availability...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 41
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🔑 Test de récupération des identifiants:",
+      "english": "\\n🔑 Test de récupération des identifiants:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 46
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🔧 Testing module imports...",
+      "english": "\\n🔧 Testing module imports...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 75
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🖥️  Checking GUI availability...",
+      "english": "\\n🖥️  Checking GUI availability...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 146
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "\\n🛡️ Protections implémentées:",
+      "english": "\\n🛡️ Protections implémentées:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 52
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "])\n        default_provider = self.settings.value(",
+      "english": "])\n        default_provider = self.settings.value(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 320
+        },
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 515
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._bdgest_series_results = []  # New: store series search results\n        self._original_cover_pixmap = None  # Store original pixmap for rescaling\n        self._build_ui()\n        self.series_cover_url = ",
+      "english": "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._bdgest_series_results = []  # New: store series search results\n        self._original_cover_pixmap = None  # Store original pixmap for rescaling\n        self._build_ui()\n        self.series_cover_url = ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 582
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._build_ui()\n        self.series_cover_url = ",
+      "english": "])\n        idx = self.provider_combo.findText(self.default_provider)\n        if idx >= 0:\n            self.provider_combo.setCurrentIndex(idx)\n        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)\n\n        self.files = []\n        self._source = self.provider_combo.currentText()\n        self.issues_by_series = defaultdict(list)\n        self._populating = False\n        self._bdgest_album_results = []\n        self._build_ui()\n        self.series_cover_url = ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 367
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(",
+      "english": "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 397
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(tr(",
+      "english": "])\n        self.search_bar = DroppableLineEdit()\n        self.search_btn = QPushButton(tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 620
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "]))\n                        return\n                    if new_path.exists():\n                        QMessageBox.critical(self, tr(",
+      "english": "]))\n                        return\n                    if new_path.exists():\n                        QMessageBox.critical(self, tr(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 343
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "]))\n                    return\n                os.rename(str(f[",
+      "english": "]))\n                    return\n                os.rename(str(f[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v3.py",
+          "line": 1231
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "]}",
+      "english": "]}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 164
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 786
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "album manquantes.",
+      "english": "album manquantes.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 831
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "exactement comme fetch_albums.",
+      "english": "exactement comme fetch_albums.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 95
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "existe pas:\\n{f[",
+      "english": "existe pas:\\n{f[",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 164
+        },
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 786
+        }
+      ],
+      "notes": "Contains line breaks"
+    },
+    {
+      "original": "import.",
+      "english": "import.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 195
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "pip install -r requirements.txt",
+      "english": "pip install -r requirements.txt",
+      "french": "",
+      "contexts": [
+        {
+          "file": "main.py",
+          "line": 48
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "{new_name}",
+      "english": "{new_name}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "comicsFileRenamer_v2.py",
+          "line": 781
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "État initial - Authentifié: {provider._authenticated}",
+      "english": "État initial - Authentifié: {provider._authenticated}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 27
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "État initial - Derniers identifiants: {provider._last_credentials}",
+      "english": "État initial - Derniers identifiants: {provider._last_credentials}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 28
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "État initial - Session: {provider._session}",
+      "english": "État initial - Session: {provider._session}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 26
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "⏰ Début: {datetime.now().strftime(",
+      "english": "⏰ Début: {datetime.now().strftime(",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 188
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "⏱️  Durée: {(end_time - start_time).total_seconds():.2f}s",
+      "english": "⏱️  Durée: {(end_time - start_time).total_seconds():.2f}s",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 203
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "⚠️  Clé ComicVine manquante (optionnel pour BDGest seulement)",
+      "english": "⚠️  Clé ComicVine manquante (optionnel pour BDGest seulement)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 48
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "⚠️  Fichier .env manquant",
+      "english": "⚠️  Fichier .env manquant",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 88
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "⚠️  {var} manquant",
+      "english": "⚠️  {var} manquant",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 110
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "✅ .env protégé dans .gitignore",
+      "english": "✅ .env protégé dans .gitignore",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 96
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ BDGestProvider créé",
+      "english": "✅ BDGestProvider créé",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 23
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ BDGestProvider utilise fetch_details=True par défaut",
+      "english": "✅ BDGestProvider utilise fetch_details=True par défaut",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 72
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ BDGestProvider.search_albums_by_series_id method available",
+      "english": "✅ BDGestProvider.search_albums_by_series_id method available",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 55
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Classes importées avec succès",
+      "english": "✅ Classes importées avec succès",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 21
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Configuration sauvegardée dans .env",
+      "english": "✅ Configuration sauvegardée dans .env",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 67
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Fichier .env trouvé",
+      "english": "✅ Fichier .env trouvé",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 86
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Import de get_bdgest_albums_by_series_id réussi",
+      "english": "✅ Import de get_bdgest_albums_by_series_id réussi",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 21
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Paramètre fetch_details présent",
+      "english": "✅ Paramètre fetch_details présent",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 31
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Paramètre max_workers présent",
+      "english": "✅ Paramètre max_workers présent",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 37
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Series ID correctly placed in ",
+      "english": "✅ Series ID correctly placed in ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 32
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ Series name correctly placed in ",
+      "english": "✅ Series name correctly placed in ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 37
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ fetch_details=True par défaut",
+      "english": "✅ fetch_details=True par défaut",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 50
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ get_bdgest_albums_by_series_id imported successfully",
+      "english": "✅ get_bdgest_albums_by_series_id imported successfully",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 49
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ max_workers=4 par défaut",
+      "english": "✅ max_workers=4 par défaut",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 55
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "✅ {len(albums)} album(s) trouvé(s) pour la série ",
+      "english": "✅ {len(albums)} album(s) trouvé(s) pour la série ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 65
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "✅ {len(series_list)} série(s) trouvée(s):",
+      "english": "✅ {len(series_list)} série(s) trouvée(s):",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 64
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "✅ {len(series_results)} série(s) trouvée(s)",
+      "english": "✅ {len(series_results)} série(s) trouvée(s)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 43
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "✅ {method} disponible",
+      "english": "✅ {method} disponible",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 41
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "✅ {method}: {description}",
+      "english": "✅ {method}: {description}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 36
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "✅ {var} configuré",
+      "english": "✅ {var} configuré",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 108
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ .env non protégé dans .gitignore",
+      "english": "❌ .env non protégé dans .gitignore",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 98
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ .gitignore manquant",
+      "english": "❌ .gitignore manquant",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 101
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Aucun ID de série trouvé dans les résultats",
+      "english": "❌ Aucun ID de série trouvé dans les résultats",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 51
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Aucun album trouvé pour la série ",
+      "english": "❌ Aucun album trouvé pour la série ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 62
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Aucune série trouvée pour ",
+      "english": "❌ Aucune série trouvée pour ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 40
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Aucune série trouvée.",
+      "english": "❌ Aucune série trouvée.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 61
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ BDGestProvider devrait utiliser fetch_details=True par défaut",
+      "english": "❌ BDGestProvider devrait utiliser fetch_details=True par défaut",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 74
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ BDGestProvider.search_albums_by_series_id method not found",
+      "english": "❌ BDGestProvider.search_albums_by_series_id method not found",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 57
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Configuration annulée.",
+      "english": "❌ Configuration annulée.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 23
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Erreur d",
+      "english": "❌ Erreur d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 215
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Erreur lors de la récupération des identifiants: {e}",
+      "english": "❌ Erreur lors de la récupération des identifiants: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 52
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ Erreur lors de la sauvegarde: {e}",
+      "english": "❌ Erreur lors de la sauvegarde: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 74
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ Erreur lors des tests: {e}",
+      "english": "❌ Erreur lors des tests: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 82
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ Erreur lors du test: {e}",
+      "english": "❌ Erreur lors du test: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 220
+        },
+        {
+          "file": "test_folder_rename.py",
+          "line": 73
+        },
+        {
+          "file": "test_album_details.py",
+          "line": 81
+        },
+        {
+          "file": "test_session_management.py",
+          "line": 70
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ Erreur: Nom d",
+      "english": "❌ Erreur: Nom d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 166
+        },
+        {
+          "file": "test_series_albums.py",
+          "line": 25
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Error during testing: {e}",
+      "english": "❌ Error during testing: {e}",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 62
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ Identifiants BDGest manquants.",
+      "english": "❌ Identifiants BDGest manquants.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 44
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Paramètre fetch_details manquant",
+      "english": "❌ Paramètre fetch_details manquant",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 33
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Paramètre max_workers manquant",
+      "english": "❌ Paramètre max_workers manquant",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 39
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Series ID not found in ",
+      "english": "❌ Series ID not found in ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 34
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ Series name not found in ",
+      "english": "❌ Series name not found in ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 39
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ fetch_details devrait être True par défaut",
+      "english": "❌ fetch_details devrait être True par défaut",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 52
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ max_workers devrait être 4 par défaut",
+      "english": "❌ max_workers devrait être 4 par défaut",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 57
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "❌ {len(failed_checks)} check(s) failed:",
+      "english": "❌ {len(failed_checks)} check(s) failed:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 196
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ {method} manquante",
+      "english": "❌ {method} manquante",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 43
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "❌ {method}: MANQUANT",
+      "english": "❌ {method}: MANQUANT",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 38
+        }
+      ],
+      "notes": "Contains variables for substitution"
+    },
+    {
+      "original": "🎉 All checks passed! ComicsRename is ready to use.",
+      "english": "🎉 All checks passed! ComicsRename is ready to use.",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 189
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🎉 Configuration de sécurité optimale !",
+      "english": "🎉 Configuration de sécurité optimale !",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 119
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🎉 Configuration terminée !",
+      "english": "🎉 Configuration terminée !",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 70
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🐍 Checking Python version...",
+      "english": "🐍 Checking Python version...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 16
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "📝 Les albums récupérés auront maintenant un champ ",
+      "english": "📝 Les albums récupérés auront maintenant un champ ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 77
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "📝 Veuillez entrer vos identifiants:",
+      "english": "📝 Veuillez entrer vos identifiants:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 26
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔍 ComicsRename Installation Validator",
+      "english": "🔍 ComicsRename Installation Validator",
+      "french": "",
+      "contexts": [
+        {
+          "file": "validate_install.py",
+          "line": 167
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔍 Recherche de séries avec le terme: ",
+      "english": "🔍 Recherche de séries avec le terme: ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 187
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔍 Test 1: Recherche de séries...",
+      "english": "🔍 Test 1: Recherche de séries...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 34
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔍 Test 2: Récupération des albums pour la série ",
+      "english": "🔍 Test 2: Récupération des albums pour la série ",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 55
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔍 Test de la structure des données d",
+      "english": "🔍 Test de la structure des données d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 15
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔍 Testing URL construction...",
+      "english": "🔍 Testing URL construction...",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_url_construction.py",
+          "line": 10
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔍 Vérification de Sécurité",
+      "english": "🔍 Vérification de Sécurité",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 79
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔐 Configuration Sécurisée des Identifiants",
+      "english": "🔐 Configuration Sécurisée des Identifiants",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 14
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔒 Permissions sécurisées appliquées",
+      "english": "🔒 Permissions sécurisées appliquées",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 68
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔧 Actions Recommandées:",
+      "english": "🔧 Actions Recommandées:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 114
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔧 Paramètres de test:",
+      "english": "🔧 Paramètres de test:",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_bdgest_series.py",
+          "line": 174
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔸 BDGest (www.bedetheque.com)",
+      "english": "🔸 BDGest (www.bedetheque.com)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 31
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🔸 ComicVine (comicvine.gamespot.com)",
+      "english": "🔸 ComicVine (comicvine.gamespot.com)",
+      "french": "",
+      "contexts": [
+        {
+          "file": "setup_credentials.py",
+          "line": 37
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🧪 Test de gestion de session BDGest",
+      "english": "🧪 Test de gestion de session BDGest",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_session_management.py",
+          "line": 15
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🧪 Test de renommage de dossier par double-clic",
+      "english": "🧪 Test de renommage de dossier par double-clic",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_folder_rename.py",
+          "line": 15
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🧪 Test de récupération d",
+      "english": "🧪 Test de récupération d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_series_albums.py",
+          "line": 93
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "original": "🧪 Test de récupération des détails d",
+      "english": "🧪 Test de récupération des détails d",
+      "french": "",
+      "contexts": [
+        {
+          "file": "test_album_details.py",
+          "line": 87
+        }
+      ],
+      "notes": ""
+    }
+  ]
+}

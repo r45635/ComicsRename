@@ -1,0 +1,125 @@
+{
+  "app": {
+    "title": "Comic Renamer - Multi-Source",
+    "settings": "Settings"
+  },
+  "ui": {
+    "buttons": {
+      "browse": "Browse",
+      "search": "Search",
+      "settings": "Settings",
+      "rename": "Rename",
+      "rename_folder": "Rename Folder",
+      "refresh": "Refresh",
+      "refresh_files": "Refresh Files",
+      "ok": "OK",
+      "cancel": "Cancel",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "labels": {
+      "folder": "Folder",
+      "search_term": "Search term",
+      "series_name_mode": "Series Name Mode",
+      "provider": "Provider",
+      "language": "Language",
+      "volume": "Volume",
+      "series": "Series",
+      "album": "Album",
+      "issue": "Issue"
+    },
+    "tooltips": {
+      "series_name_mode": "Search only in series names (BDGest only)",
+      "settings": "Application Settings",
+      "rename_folder": "Rename folder with selected series name"
+    },
+    "placeholders": {
+      "search": "Enter search term..."
+    },
+    "menus": {
+      "open_file": "Open File",
+      "reveal_in_finder": "Reveal in Finder",
+      "refresh_folder_files": "Refresh Folder Files"
+    }
+  },
+  "dialogs": {
+    "folder_selection": {
+      "title": "Folder Selection",
+      "message": "Where would you like to start browsing?",
+      "external_drives": "External drives (/Volumes)",
+      "last_folder": "Last used folder",
+      "home_folder": "Home folder"
+    },
+    "rename_confirmation": {
+      "title": "Rename Confirmation",
+      "file_message": "Rename file to:\n{new_name}?",
+      "folder_message": "Rename folder '{old_name}' to '{new_name}'?"
+    },
+    "add_files": {
+      "title": "Add Files",
+      "message": "Add {count} file(s) to the current folder?"
+    },
+    "settings": {
+      "title": "Settings",
+      "language_label": "Language:",
+      "bdgest_credentials": "BDGest Credentials",
+      "username": "Username:",
+      "password": "Password:",
+      "comicvine_settings": "ComicVine Settings",
+      "api_key": "API Key:"
+    }
+  },
+  "messages": {
+    "errors": {
+      "no_results": "No albums found for this search.",
+      "no_series_found": "No series found for this search on BDGest.",
+      "no_albums_found": "No albums found for this search on BDGest.",
+      "file_not_exists": "Source file does not exist:\\n{path}",
+      "file_already_exists": "A file named '{name}' already exists in this folder.",
+      "folder_already_exists": "A folder named '{name}' already exists in this directory.",
+      "no_files_in_folder": "No files in the folder.",
+      "no_album_selected": "Please select an album from the list.",
+      "invalid_folder_name": "Folder name cannot be empty.",
+      "rename_folder_title": "Rename Folder",
+      "rename_folder_message": "Rename folder from:\n'{old_name}'\nto:\n'{new_name}'?",
+      "success_title": "Success",
+      "folder_renamed": "Folder renamed to '{name}'",
+      "album_metadata_missing": "Album metadata missing.",
+      "cannot_determine_series": "Cannot determine series name.",
+      "rename_error": "Rename Error",
+      "error": "Error",
+      "add_file_error": "Error adding {file}:\n{error}\n\nSource: {source}\nDestination: {dest}",
+      "fetch_albums_error": "Error fetching albums: {error}",
+      "folder_rename_error": "Error renaming folder:\n{error}",
+      "no_active_folder": "No active folder for import.",
+      "unsupported_format": "Only PDF, EPUB, CBZ or CBR files are accepted.",
+      "could_not_open_file": "Could not open file:\\n{error}",
+      "could_not_reveal_file": "Could not reveal file:\\n{error}",
+      "selection_required": "Please select one file and one album"
+    },
+    "warnings": {
+      "file_overwrite": "A file named '{name}' already exists.\\nOverwrite?",
+      "unsupported_format": "Unsupported format"
+    },
+    "info": {
+      "folder_same_name": "Folder already has this name.",
+      "series_found": "{count} series found",
+      "albums_found": "{count} albums found",
+      "no_result": "No Result",
+      "language_change_title": "Language Change",
+      "language_change_message": "Language will be applied after restarting the application."
+    },
+    "success": {
+      "rename_complete": "Rename completed successfully"
+    }
+  },
+  "debug": {
+    "image_load_failed": "Image load failed",
+    "fetch_albums_failed": "Failed to fetch albums for series {series}",
+    "clean_input": "clean() input",
+    "clean_output": "clean() output",
+    "volumes_found": "{count} volumes found for '{query}'",
+    "issues_found": "{count} issues found for '{query}'",
+    "no_volumes_fallback": "No volumes found for '{query}', fallback to issues search"
+  }
+}

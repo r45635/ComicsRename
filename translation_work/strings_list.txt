@@ -1,0 +1,333 @@
+ComicsRename - Extracted Strings for Translation\n==================================================\n\n  1. 
+        ]
+        
+        return any(indicator in line_content for indicator in ui_indicators)
+    
+    def _get_line_number(self, content: str, position: int) -> int:
+        \n  2. 
+        matches = re.finditer(pattern, content, re.MULTILINE)
+        
+        for match in matches:
+            string_val = match.group(1)
+            if self._is_translatable_string(string_val):
+                strings.add(string_val)
+                self._add_context(string_val, file_path, self._get_line_number(content, match.start()))
+        
+        return strings
+    
+    def _extract_user_messages(self, content: str, file_path: str) -> Set[str]:
+        \n  3. 
+        strings = set()
+        
+        pattern = r\n  4. 
+        strings = set()
+        
+        patterns = [
+            r\n  5.    (Allez dans votre profil → API pour générer une clé)\n  6.    (Ils seront stockés dans .env, protégé par .gitignore)\n  7.    ... and {len(results[\n  8.    ... et {len(albums) - 3} autres albums\n  9.    ./launch.sh       (macOS/Linux)\n 10.    1. Lancez l\n 11.    1. Première recherche: Création session + authentification\n 12.    1. 🖱️  Double-clic sur le nom du dossier\n 13.    2. Ouvrez un dossier avec des fichiers\n 14.    2. Recherches suivantes: Réutilisation de la session existante\n 15.    2. ✏️  Passage en mode édition (fond jaune, bordure bleue)\n 16.    3. Double-cliquez sur le nom du dossier en haut\n 17.    3. En cas d\n 18.    3. ⌨️  Saisie du nouveau nom du dossier\n 19.    4. Changement d\n 20.    4. Modifiez le nom et appuyez sur Entrée\n 21.    4. ✅ Validation par Entrée ou perte de focus\n 22.    5. 🔍 Vérification que le nouveau nom est valide\n 23.    6. ❓ Demande de confirmation à l\n 24.    7. 📁 Renommage effectif du dossier\n 25.    8. 🔄 Rechargement des fichiers dans le nouveau dossier\n 26.    9. 📍 Mise à jour des paramètres (last_folder)\n 27.    Assurez-vous que bdgest_scraper_api.py est dans le même répertoire.\n 28.    BDGEST_PASSWORD=votre_mot_de_passe\n 29.    BDGEST_USERNAME=votre_nom_utilisateur\n 30.    Données de la série: {first_series}\n 31.    Fichier de log: {args.log_file}\n 32.    Files processed: {results[\n 33.    Mode debug: {debug_mode}\n 34.    Mode verbose: {args.verbose}\n 35.    Strings found: {results[\n 36.    Terme de recherche: \n 37.    Utilisateur: {username}\n 38.    Utilisez -u/-p ou créez un fichier .env avec:\n 39.    Utilisez les variables d\n 40.    Vous pouvez maintenant utiliser ComicsRename en toute sécurité.\n 41.    ou créez un fichier .env avec:\n 42.    pip install -r requirements.txt\n 43.    pip install PySide6 requests beautifulsoup4 lxml python-dotenv\n 44.    python main.py\n 45.    {i+1}. {album_name} (#{album_number}) - {album_date}\n 46.    {i:2d}. {string_val}\n 47.    {i}. {issue}\n 48.    • Annulation possible avec Échap\n 49.    • Authentification uniquement quand nécessaire\n 50.    • Confirmation obligatoire de l\n 51.    • Entrée: Valider le nouveau nom\n 52.    • Gestion automatique des erreurs d\n 53.    • Gestion des erreurs (permissions, etc.)\n 54.    • Mode lecture: Aspect normal\n 55.    • Mode édition: Fond jaune, bordure bleue\n 56.    • Performance améliorée pour les recherches multiples\n 57.    • Perte de focus: Valider le nouveau nom\n 58.    • Restauration du nom original en cas d\n 59.    • Réutilisation des cookies et tokens\n 60.    • Session persistante entre les recherches\n 61.    • Sélection automatique du texte en mode édition\n 62.    • Validation du nom (caractères autorisés)\n 63.    • Vérification de l\n 64.    • extracted_strings.json    - Complete extraction data\n 65.    • strings_list.txt         - Simple list for reference\n 66.    • translation_template.json - Template for translators\n 67.    • {failed}\n 68.    • Échap: Annuler et restaurer le nom original\n 69.    ⚠️  .env file is empty\n 70.    ⚠️  .env file not found (optional)\n 71.    ✅ .env file exists\n 72.    ✅ .env file has content\n 73.    ✅ .env.example template exists\n 74.    ✅ ComicRenamer class found\n 75.    ✅ PySide6 GUI components available\n 76.    ✅ Python {version.major}.{version.minor}.{version.micro} (OK)\n 77.    ✅ setup_credentials.py exists\n 78.    ✅ {file_name}\n 79.    ✅ {module_name}: {description}\n 80.    ✅ {package_name}: {version}\n 81.    ❌ .env.example template missing\n 82.    ❌ ComicRenamer class not found\n 83.    ❌ Error reading .env file: {e}\n 84.    ❌ GUI components unavailable: {e}\n 85.    ❌ Python {version.major}.{version.minor}.{version.micro} (Required: 3.8+)\n 86.    ❌ setup_credentials.py missing\n 87.    ❌ {file_name}: Missing\n 88.    ❌ {module_name}: {description} - {e}\n 89.    ❌ {package_name}: Not installed\n 90.   10. 📢 Message de confirmation\n 91.   [Issue {i}] id={issue.get(\n 92.   [Series {i}] id={series.get(\n 93.   {key}: {\n 94.   {key}: {value}\n 95.  existe déjà dans ce dossier.\n 96.  existe déjà dans ce répertoire.\n 97.  in str(ctx):
+                notes.append(\n 98. )
+
+    def _enable_folder_rename_btn(self, *args):
+        self.folder_rename_btn.setEnabled(True)
+
+    def _on_album_selection_changed(self, selected, deselected):
+        # Enable if any row is selected, else disable
+        selected_rows = self.album_table.selectionModel().selectedRows()
+        self.folder_rename_btn.setEnabled(bool(selected_rows))
+
+    def _on_series_selection_changed(self, txt):
+        \n 99. )
+
+    def _enable_folder_rename_btn(self, *args):
+        self.folder_rename_btn.setEnabled(True)
+
+    def _on_album_selection_changed(self, selected, deselected):
+        # Enable if any row is selected, else disable
+        selected_rows = self.album_table.selectionModel().selectedRows()
+        self.folder_rename_btn.setEnabled(bool(selected_rows))
+
+    def _populate_albums(self, txt):
+        if not txt:
+            return
+        self.album_table.clearContents()
+        self.album_table.setRowCount(0)
+        self.series_cover_url = \n100. )
+
+class AlbumTable(QTableWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.main = parent
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setDragEnabled(True)
+        self.setColumnCount(1)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+
+    def mouseMoveEvent(self, event):
+        it = self.itemAt(event.pos())
+        if not it:
+            return
+        print(f\n101. )
+                    continue
+                # Nettoie le nom du fichier (enlève les caractères interdits)
+                base_name = os.path.basename(src).replace(\n102. )
+                    return
+                for s in sorted(self.issues_by_series):
+                    self.series_combo.addItem(f\n103. )
+                else:
+                    # Clear album table since we\n104. )
+                self.issues_by_series = issues_by_series
+                if not issues_by_series:
+                    QMessageBox.warning(self, \n105. )
+            else:
+                print(f\n106. )
+            return
+        # Build new filename
+        series = meta.get(\n107. )
+            return
+        # Clean up names
+        clean = lambda s: \n108. )
+            return
+        current_folder = pathlib.Path(self.files[0][\n109. )
+            return
+        f = self.files[fr]
+        itm = self.album_table.item(ar, 0)
+        meta = itm.data(Qt.UserRole) if itm else None
+        if not meta:
+            QMessageBox.critical(self, \n110. )
+            return
+        if QMessageBox.question(self, \n111. )
+            return
+        itm = self.album_table.item(ar, 0)
+        meta = itm.data(Qt.UserRole) if itm else None
+        if not meta:
+            QMessageBox.critical(self, \n112. )
+        elif action == reveal_action:
+            try:
+                subprocess.Popen([\n113. )
+        else:
+            albums = []
+            for album in series_list:
+                s = album.get(\n114. )
+        else:  # BDGest
+            # Check if SeriesName checkbox is checked
+            if self.series_name_cb.isChecked():
+                # Use series-only search
+                series_results = provider.search_series_only(q, debug=debug, verbose=verbose) \
+                    if hasattr(provider, \n115. )
+        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.settings_btn):
+            ctrl.addWidget(w)
+        layout.addLayout(ctrl)
+
+        splitter_main = QSplitter(Qt.Horizontal)
+
+        # --- Folder display ---
+        file_panel = QWidget()
+        file_panel_layout = QVBoxLayout(file_panel)
+        file_panel_layout.setContentsMargins(0, 0, 0, 0)
+        folder_display_layout = QHBoxLayout()
+        self.folder_display = DraggableLineEdit()
+        # Add the rename folder button
+        self.folder_rename_btn = QPushButton(\n116. )
+        self.dir_btn = QPushButton(\n117. )
+        self.folder_rename_btn.setFixedWidth(30)
+        self.folder_rename_btn.setEnabled(False)  # Disabled by default
+        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)
+        folder_display_layout.addWidget(self.folder_display)
+        folder_display_layout.addWidget(self.folder_rename_btn)
+        file_panel_layout.addLayout(folder_display_layout)
+        self.file_table = FileTable(self)
+        self.file_table.setColumnCount(4)
+        self.file_table.setHorizontalHeaderLabels([\n118. )
+        self.folder_rename_btn.setToolTip(\n119. )
+        self.folder_rename_btn.setToolTip(tr(\n120. )
+        self.layout = QFormLayout(self)
+
+        self.settings = settings or QSettings(\n121. )
+        self.recursive_cb = QCheckBox(\n122. )
+        self.rename_btn = QPushButton(\n123. )
+        self.resize(1400, 800)
+        self.settings = QSettings(\n124. )
+        self.settings_btn.setFixedWidth(30)
+        self.settings_btn.setToolTip(\n125. )
+        self.settings_btn.setFixedWidth(30)
+        self.settings_btn.setToolTip(tr(\n126. ))
+                    return
+                for s in sorted(self.issues_by_series):
+                    self.series_combo.addItem(f\n127. ))
+                return
+            import shutil
+            for src in files_to_add:
+                # Vérifie que le fichier existe
+                if not os.path.exists(src):
+                    QMessageBox.critical(self, tr(\n128. ))
+                return
+            op = \n129. ))
+            return
+        # Clean up names
+        clean = lambda s: \n130. ))
+            return
+        # Extract serie_name
+        serie_name = meta.get(\n131. ))
+            return
+        current_folder = pathlib.Path(self.files[0][\n132. ))
+            return
+        itm = self.album_table.item(ar, 0)
+        meta = itm.data(Qt.UserRole) if itm else None
+        if not meta:
+            QMessageBox.critical(self, tr(\n133. ))
+            self._cancel_editing()
+            return
+        
+        # Check if folder with new name already exists
+        new_folder_path = self._original_folder_path.parent / cleaned_name
+        if new_folder_path.exists():
+            QMessageBox.critical(self.main_window, tr(\n134. ))
+        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):
+            ctrl.addWidget(w)
+        layout.addLayout(ctrl)
+
+        splitter_main = QSplitter(Qt.Horizontal)
+
+        # --- Folder display ---
+        file_panel = QWidget()
+        file_panel_layout = QVBoxLayout(file_panel)
+        file_panel_layout.setContentsMargins(0, 0, 0, 0)
+        folder_display_layout = QHBoxLayout()
+        self.folder_display = EditableFolderLineEdit(main_window=self)
+        # Add the rename folder button
+        self.folder_rename_btn = QPushButton(\n135. ))
+        self.dir_btn = QPushButton(tr(\n136. ))
+        self.folder_rename_btn.setFixedWidth(30)
+        self.folder_rename_btn.setEnabled(False)  # Disabled by default
+        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)
+        folder_display_layout.addWidget(self.folder_display)
+        folder_display_layout.addWidget(self.folder_rename_btn)
+        file_panel_layout.addLayout(folder_display_layout)
+        self.file_table = FileTable(self)
+        self.file_table.setColumnCount(4)
+        self.file_table.setHorizontalHeaderLabels([\n137. ))
+        self.layout = QFormLayout(self)
+
+        self.settings = settings or QSettings(\n138. ))
+        self.recursive_cb = QCheckBox(\n139. ))
+        self.rename_btn = QPushButton(tr(\n140. ))
+        self.resize(1400, 800)
+        self.settings = QSettings(\n141. ))
+        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest
+        self.settings_btn = QPushButton(\n142. )))
+
+    def _rename_folder_to_serie(self):
+        # Get current folder path
+        if not self.files:
+            QMessageBox.warning(self, \n143. )))
+
+    def _rename_folder_to_serie(self):
+        # Get current folder path
+        if not self.files:
+            QMessageBox.warning(self, tr(\n144. )))
+        else:
+            # If nothing selected, show root folder name
+            self.folder_display.setText(os.path.basename(self.settings.value(\n145. ), str(e))
+
+    def _open_settings(self):
+        dlg = SettingsDialog(self, self.settings)
+        if dlg.exec():
+            # Invalidate BDGest session when settings change (credentials might have changed)
+            bdgest_provider = PROVIDERS.get(\n146. ), str(e))
+            return
+
+        # External file drop (from Finder, etc.)
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            supported_exts = (\n147. ), tr(\n148. ).rstrip(\n149. ,
+            r\n150. ,
+        ]
+        
+        for pattern in patterns:
+            matches = re.finditer(pattern, content, re.MULTILINE)
+            for match in matches:
+                string_val = match.group(1)
+                if self._is_translatable_string(string_val):
+                    strings.add(string_val)
+                    self._add_context(string_val, file_path, self._get_line_number(content, match.start()))
+        
+        return strings
+    
+    def _extract_ui_strings(self, content: str, file_path: str) -> Set[str]:
+        \n151. , error=str(e)))
+                self._cancel_editing()
+                return
+        
+        # Reset to read-only mode
+        self._reset_to_readonly()
+
+    def _cancel_editing(self):
+        \n152. , f\n153. , msg, QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:
+                return
+            dest_folder = self.main.files[0][\n154. , msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+            try:
+                if not os.path.exists(str(f[\n155. , name=cleaned_name))
+                
+            except Exception as e:
+                QMessageBox.critical(self.main_window, tr(\n156. , name=cleaned_name))
+            self._cancel_editing()
+            return
+        
+        # Confirm rename
+        reply = QMessageBox.question(
+            self.main_window,
+            tr(\n157. , name=new_name))
+                        return
+                    os.rename(f[\n158. , name=new_name))
+            return
+        if QMessageBox.question(self, tr(\n159. , new_name=new_name), QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+            try:
+                if not os.path.exists(str(f[\n160. , path=f[\n161. , path=src))
+                    continue
+                # Nettoie le nom du fichier (enlève les caractères interdits)
+                base_name = os.path.basename(src).replace(\n162. , str(e))
+
+    def _show_context_menu(self, pos):
+        row = self.rowAt(pos.y())
+        if row < 0:
+            return
+        menu = QMenu(self)
+        open_action = menu.addAction(\n163. /\\\n164. Ajouter des fichiers\n165. Album metadata missing\n166. Application Settings\n167. Aucun album trouvé pour cette recherche sur BDGest.\n168. Aucun album trouvé pour cette recherche.\n169. Aucun dossier actif pour l\n170. Aucun fichier dans le dossier.\n171. Aucun résultat\n172. Aucune série trouvée pour cette recherche sur BDGest.\n173. Avertissement\n174. Comic Renamer - Multi-Source\n175. ComicsRename String Extraction Tool\n176. Constructed URL: {url}\n177. Could not open file:\n{e}\n178. Could not reveal file:\n{e}\n179. Couverture: {series[\n180. Dernier dossier utilisé\n181. Details: {e}\n182. Disques externes (/Volumes)\n183. Dossier personnel\n184. Dossier renommé en :\n{new_folder_name}\n185. Encoded Name: {encoded_series_name}\n186. Erreur\n187. Erreur lors du renommage du dossier :\n{e}\n188. Error\n189. Error processing {file_path}: {e}\n190. Error starting application: {e}\n191. Error: Missing dependencies. Please install requirements:\n192. Expected URL: {expected_url}\n193. Extract strings from QMessageBox calls\n194. Extract strings from addItem calls\n195. Extracting from: {file_path}\n196. Format non supporté\n197. Impossible de déterminer le nom de la série.\n198. Info\n199. La fonction fetch_albums_by_series_id récupère maintenant les détails des albums\n200. La fonctionnalité de renommage par double-clic est opérationnelle.\n201. Language Change\n202. Language will be applied after restarting the application.\n203. Le dossier porte déjà ce nom.\n204. Le fichier source n\n205. Le système de gestion de session est opérationnel.\n206. Mot de passe configuré: {\n207. Métadonnées de l\n208. No Results\n209. No albums found for this search.\n210. Nom: {series[\n211. Où souhaitez-vous commencer la navigation ?\n212. Paramètres\n213. Paramètres de BDGestProvider.search_albums_by_series_id: {provider_params}\n214. Paramètres de get_bdgest_albums_by_series_id: {params}\n215. Pays: {series[\n216. Please select one file and one album\n217. Rename\n218. Rename Error\n219. Renommer le dossier\n220. Renommer le dossier avec le nom de la série sélectionnée\n221. Résultat\n222. Scanning directory: {script_dir}\n223. Selection\n224. Series ID: {series_id}\n225. Series Name: {series_name}\n226. Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.\n227. Succès\n228. Sélection\n229. Sélection du dossier\n230. Translation template saved to: {output_file}\n231. URL: {series[\n232. Un dossier nommé \n233. Un fichier nommé \n234. Utilisateur configuré: {\n235. Valeur par défaut fetch_details dans provider: {provider_default}\n236. Valeur par défaut fetch_details: {default_fetch_details}\n237. Valeur par défaut max_workers: {default_max_workers}\n238. Veuillez sélectionner un album dans la liste.\n239. \nDétails complets:\n240. \nFor installation help, see:\n241. \nOr use the launcher scripts:\n242. \nPlease fix the issues above.\n243. \nTo start the application, run:\n244. \n⌨️ Raccourcis clavier:\n245. \n⚙️  Checking configuration...\n246. \n✅ All tests passed!\n247. \n✅ Structure des fonctions correcte !\n248. \n✅ Test terminé avec succès!\n249. \n✅ Tests réussis! La fonctionnalité de récupération d\n250. \n❌ Certains tests ont échoué.\n251. \n❌ Test échoué.\n252. \n🎉 Test réussi!\n253. \n🎉 Tous les tests réussis !\n254. \n🎨 Indicateurs visuels:\n255. \n🎯 Top 10 strings to translate:\n256. \n💡 If dependencies are missing, try:\n257. \n💡 Pour tester:\n258. \n📁 Checking project files...\n259. \n📁 Output files created in: {output_dir}\n260. \n📊 Extraction Results:\n261. \n📋 Avantages de la nouvelle implémentation:\n262. \n📋 Workflow complet:\n263. \n📚 Albums trouvés:\n264. \n📚 Série #{i}\n265. \n📦 Checking dependencies...\n266. \n🔄 Comportement:\n267. \n🔍 Fonctionnalités d\n268. \n🔍 Test des méthodes de gestion de session:\n269. \n🔍 Testing function availability...\n270. \n🔑 Test de récupération des identifiants:\n271. \n🔧 Testing module imports...\n272. \n🖥️  Checking GUI availability...\n273. \n🛡️ Protections implémentées:\n274. ])
+        default_provider = self.settings.value(\n275. ])
+        idx = self.provider_combo.findText(self.default_provider)
+        if idx >= 0:
+            self.provider_combo.setCurrentIndex(idx)
+        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)
+
+        self.files = []
+        self._source = self.provider_combo.currentText()
+        self.issues_by_series = defaultdict(list)
+        self._populating = False
+        self._bdgest_album_results = []
+        self._bdgest_series_results = []  # New: store series search results
+        self._original_cover_pixmap = None  # Store original pixmap for rescaling
+        self._build_ui()
+        self.series_cover_url = \n276. ])
+        idx = self.provider_combo.findText(self.default_provider)
+        if idx >= 0:
+            self.provider_combo.setCurrentIndex(idx)
+        self.provider_combo.setCurrentIndex(idx if idx >= 0 else 0)
+
+        self.files = []
+        self._source = self.provider_combo.currentText()
+        self.issues_by_series = defaultdict(list)
+        self._populating = False
+        self._bdgest_album_results = []
+        self._build_ui()
+        self.series_cover_url = \n277. ])
+        self.search_bar = DroppableLineEdit()
+        self.search_btn = QPushButton(\n278. ])
+        self.search_bar = DroppableLineEdit()
+        self.search_btn = QPushButton(tr(\n279. ]))
+                        return
+                    if new_path.exists():
+                        QMessageBox.critical(self, tr(\n280. ]))
+                    return
+                os.rename(str(f[\n281. ]}\n282. album manquantes.\n283. exactement comme fetch_albums.\n284. existe pas:\n{f[\n285. import.\n286. pip install -r requirements.txt\n287. {new_name}\n288. État initial - Authentifié: {provider._authenticated}\n289. État initial - Derniers identifiants: {provider._last_credentials}\n290. État initial - Session: {provider._session}\n291. ⏰ Début: {datetime.now().strftime(\n292. ⏱️  Durée: {(end_time - start_time).total_seconds():.2f}s\n293. ⚠️  Clé ComicVine manquante (optionnel pour BDGest seulement)\n294. ⚠️  Fichier .env manquant\n295. ⚠️  {var} manquant\n296. ✅ .env protégé dans .gitignore\n297. ✅ BDGestProvider créé\n298. ✅ BDGestProvider utilise fetch_details=True par défaut\n299. ✅ BDGestProvider.search_albums_by_series_id method available\n300. ✅ Classes importées avec succès\n301. ✅ Configuration sauvegardée dans .env\n302. ✅ Fichier .env trouvé\n303. ✅ Import de get_bdgest_albums_by_series_id réussi\n304. ✅ Paramètre fetch_details présent\n305. ✅ Paramètre max_workers présent\n306. ✅ Series ID correctly placed in \n307. ✅ Series name correctly placed in \n308. ✅ fetch_details=True par défaut\n309. ✅ get_bdgest_albums_by_series_id imported successfully\n310. ✅ max_workers=4 par défaut\n311. ✅ {len(albums)} album(s) trouvé(s) pour la série \n312. ✅ {len(series_list)} série(s) trouvée(s):\n313. ✅ {len(series_results)} série(s) trouvée(s)\n314. ✅ {method} disponible\n315. ✅ {method}: {description}\n316. ✅ {var} configuré\n317. ❌ .env non protégé dans .gitignore\n318. ❌ .gitignore manquant\n319. ❌ Aucun ID de série trouvé dans les résultats\n320. ❌ Aucun album trouvé pour la série \n321. ❌ Aucune série trouvée pour \n322. ❌ Aucune série trouvée.\n323. ❌ BDGestProvider devrait utiliser fetch_details=True par défaut\n324. ❌ BDGestProvider.search_albums_by_series_id method not found\n325. ❌ Configuration annulée.\n326. ❌ Erreur d\n327. ❌ Erreur lors de la récupération des identifiants: {e}\n328. ❌ Erreur lors de la sauvegarde: {e}\n329. ❌ Erreur lors des tests: {e}\n330. ❌ Erreur lors du test: {e}\n331. ❌ Erreur: Nom d\n332. ❌ Error during testing: {e}\n333. ❌ Identifiants BDGest manquants.\n334. ❌ Paramètre fetch_details manquant\n335. ❌ Paramètre max_workers manquant\n336. ❌ Series ID not found in \n337. ❌ Series name not found in \n338. ❌ fetch_details devrait être True par défaut\n339. ❌ max_workers devrait être 4 par défaut\n340. ❌ {len(failed_checks)} check(s) failed:\n341. ❌ {method} manquante\n342. ❌ {method}: MANQUANT\n343. 🎉 All checks passed! ComicsRename is ready to use.\n344. 🎉 Configuration de sécurité optimale !\n345. 🎉 Configuration terminée !\n346. 🐍 Checking Python version...\n347. 📝 Les albums récupérés auront maintenant un champ \n348. 📝 Veuillez entrer vos identifiants:\n349. 🔍 ComicsRename Installation Validator\n350. 🔍 Recherche de séries avec le terme: \n351. 🔍 Test 1: Recherche de séries...\n352. 🔍 Test 2: Récupération des albums pour la série \n353. 🔍 Test de la structure des données d\n354. 🔍 Testing URL construction...\n355. 🔍 Vérification de Sécurité\n356. 🔐 Configuration Sécurisée des Identifiants\n357. 🔒 Permissions sécurisées appliquées\n358. 🔧 Actions Recommandées:\n359. 🔧 Paramètres de test:\n360. 🔸 BDGest (www.bedetheque.com)\n361. 🔸 ComicVine (comicvine.gamespot.com)\n362. 🧪 Test de gestion de session BDGest\n363. 🧪 Test de renommage de dossier par double-clic\n364. 🧪 Test de récupération d\n365. 🧪 Test de récupération des détails d\n

@@ -325,9 +325,41 @@ def fetch_albums_by_series_id(session, series_id, series_name=None, debug=True, 
             serie_name_extracted = serie_tag.get_text(strip=True) if serie_tag else ""
             titre_tag = tds[2].find("span", class_="titre")
             titre_raw = titre_tag.get_text(" ", strip=True) if titre_tag else ""
-            m = re.match(r"-?\s*([A-Z0-9\-]+)\s*-\s*(.+)", titre_raw)
-            album_number = m.group(1) if m else ""
-            album_name = m.group(2) if m else titre_raw
+            
+            # Improved parsing to handle special cases like album 13
+            album_number = ""
+            album_name = ""
+            
+            if titre_raw:
+                # Nettoyer les retours à la ligne et espaces multiples
+                titre_clean = re.sub(r'\s+', ' ', titre_raw.strip())
+                
+                # Patterns à tester dans l'ordre de priorité
+                patterns = [
+                    # Pattern normal: "-1 - Titre"
+                    r"^-(\d+)\s*-\s*(.+)$",
+                    # Pattern avec caractères spéciaux: "-13 ' - Titre" (cas album 13)
+                    r"^-(\d+)\s*['\s]*-\s*(.+)$",
+                    # Pattern simple: "1 - Titre"
+                    r"^(\d+)\s*-\s*(.+)$",
+                    # Pattern général: trouve le premier nombre puis le titre après un tiret
+                    r".*?(\d+).*?-\s*(.+)$",
+                ]
+                
+                for pattern in patterns:
+                    m = re.search(pattern, titre_clean, re.DOTALL)
+                    if m:
+                        album_number = m.group(1)
+                        album_name = m.group(2).strip()
+                        break
+                
+                # Si aucun pattern ne marche, garder le titre tel quel
+                if not album_number and not album_name:
+                    album_name = titre_raw
+            
+            if debug and album_number == "13":
+                print(f"[DEBUG][BDGest] Album 13 parsing - Raw: {repr(titre_raw)}")
+                print(f"[DEBUG][BDGest] Album 13 parsing - Number: '{album_number}', Name: '{album_name}'")
 
             editor = tds[3].contents[0].strip() if tds[3].contents else ""
             date = tds[3].find("span", class_="dl").get_text(strip=True) if tds[3].find("span", class_="dl") else ""
