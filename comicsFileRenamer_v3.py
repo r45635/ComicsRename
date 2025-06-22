@@ -176,10 +176,76 @@ class ComicVineProvider(MetadataProvider):
         return search_comicvine_series(query, api_key=api_key) if api_key else search_comicvine_series(query)
 
     def search_albums(self, volume_id):
-        from comicVine_scraper_api import get_comicvine_volume_issues
+        from comicVine_scraper_api import get_comicvine_volume_issues, get_comicvine_issue_details
         settings = QSettings("ComicsRename", "App")
         api_key = settings.value('comicvine_api', '')
-        return get_comicvine_volume_issues(volume_id, api_key=api_key) if api_key else get_comicvine_volume_issues(volume_id)
+        
+        # Get basic volume and issues data
+        issues_list = get_comicvine_volume_issues(volume_id, api_key=api_key, debug=True) if api_key else get_comicvine_volume_issues(volume_id, debug=True)
+        
+        if not issues_list:
+            return []
+        
+        # Enrich each issue with detailed information
+        enriched_issues = []
+        for issue in issues_list[:20]:  # Limit to first 20 issues to avoid too many API calls
+            issue_id = issue.get('id')
+            if issue_id:
+                print(f"[DEBUG] Fetching details for issue {issue_id}...")
+                # Get detailed information for this issue
+                details = get_comicvine_issue_details(issue_id, api_key=api_key, debug=False) if api_key else get_comicvine_issue_details(issue_id, debug=False)
+                
+                # Merge basic issue data with detailed data
+                enriched_issue = {
+                    'id': issue.get('id'),
+                    'issue_number': issue.get('issue_number') or details.get('issue_number', 'N/A'),
+                    'name': issue.get('name') or details.get('name', 'Sans titre'),
+                    'cover_date': details.get('cover_date', 'Date inconnue'),
+                    'store_date': details.get('store_date', ''),
+                    'description': details.get('description', ''),
+                    'image': details.get('image', {}),
+                    'volume': details.get('volume', {}),
+                    'character_credits': details.get('character_credits', []),
+                    'person_credits': details.get('person_credits', []),
+                    'location_credits': details.get('location_credits', []),
+                    # Add computed fields for consistency with BDGest
+                    'title': issue.get('name') or details.get('name', 'Sans titre'),
+                    'cover_url': details.get('image', {}).get('original_url', ''),
+                    'album_url': f"https://comicvine.gamespot.com/issue/4000-{issue_id}/",
+                }
+                
+                # Create details section like BDGest
+                details_dict = {}
+                if details.get('cover_date'):
+                    details_dict['Date de publication'] = details.get('cover_date')
+                if details.get('store_date'):
+                    details_dict['Date en magasin'] = details.get('store_date')
+                if details.get('description'):
+                    # Clean HTML from description
+                    import re
+                    clean_desc = re.sub('<[^<]+?>', '', details.get('description', ''))
+                    details_dict['Description'] = clean_desc[:500] + ('...' if len(clean_desc) > 500 else '')
+                
+                # Add character credits
+                if details.get('character_credits'):
+                    char_names = [char.get('name', '') for char in details.get('character_credits', [])[:5]]
+                    if char_names:
+                        details_dict['Personnages'] = ', '.join(char_names)
+                
+                # Add person credits (writers, artists, etc.)
+                if details.get('person_credits'):
+                    person_names = [f"{person.get('name', '')} ({person.get('role', 'N/A')})" for person in details.get('person_credits', [])[:5]]
+                    if person_names:
+                        details_dict['Équipe créative'] = ', '.join(person_names)
+                
+                enriched_issue['details'] = details_dict
+                enriched_issues.append(enriched_issue)
+            else:
+                # Fallback for issues without ID
+                enriched_issues.append(issue)
+        
+        print(f"[DEBUG] Enriched {len(enriched_issues)} issues with detailed information")
+        return enriched_issues
 
 PROVIDERS = {
     'ComicVine': ComicVineProvider(),
@@ -368,6 +434,8 @@ class FileTable(QTableWidget):
         menu = QMenu(self)
         open_action = menu.addAction("Open File")
         reveal_action = menu.addAction("Reveal in Finder")
+        menu.addSeparator()
+        refresh_action = menu.addAction("Rafraîchir les fichiers du dossier")
         action = menu.exec(self.viewport().mapToGlobal(pos))
         f = self.main.files[row]
         file_path = str(f['path'])
@@ -381,6 +449,10 @@ class FileTable(QTableWidget):
                 subprocess.Popen(['open', '-R', file_path])
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Could not reveal file:\n{e}")
+        elif action == refresh_action:
+            folder = self.main.settings.value('last_folder', '')
+            if folder and pathlib.Path(folder).exists():
+                self.main._load_files(folder)
 
 class AlbumTable(QTableWidget):
     def __init__(self, parent=None):
@@ -410,12 +482,10 @@ class AlbumTable(QTableWidget):
         if row < 0:
             return
         menu = QMenu(self)
-        refresh_action = menu.addAction("Rafraîchir les fichiers du dossier")
-        action = menu.exec(self.viewport().mapToGlobal(pos))
-        if action == refresh_action:
-            folder = self.main.settings.value('last_folder', '')
-            if folder and pathlib.Path(folder).exists():
-                self.main._load_files(folder)
+        # Aucune action spéciale pour le moment - peut être étendu plus tard
+        # Exemple : menu.addAction("Voir détails de l'album")
+        # Pour l'instant, le menu contextuel reste vide mais peut être développé
+        # action = menu.exec(self.viewport().mapToGlobal(pos))
 
 # ---------- Settings Dialog ----------
 class SettingsDialog(QDialog):

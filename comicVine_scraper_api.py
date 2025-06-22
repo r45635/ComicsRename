@@ -23,14 +23,39 @@ Usage Example:
 """
 
 import requests
+import os
+from pathlib import Path
 #from comicVine_scraper_api import search_comicvine_series, search_comicvine_issues
 
-COMICVINE_API_KEY = "2a483cf8399177d8689c6c58d29699ef01978ae5"
+# Load .env file if it exists
+def load_env():
+    env_file = Path('.env')
+    if env_file.exists():
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+
+# Load environment variables
+load_env()
+
+# ⚠️ SÉCURITÉ: Ne jamais stocker la clé API en dur dans le code !
+# Utilisez plutôt une variable d'environnement ou un fichier .env
+COMICVINE_API_KEY = os.getenv('COMICVINE_API_KEY', '').strip()
 COMICVINE_SEARCH_URL = "https://comicvine.gamespot.com/api/search/"
 
 def search_comicvine_issues(query, debug=False, api_key=None):
+    # Clean and validate API key
+    final_api_key = (api_key or COMICVINE_API_KEY).strip()
+    if not final_api_key:
+        if debug:
+            print("[ERROR][ComicVine] No API key provided")
+        return []
+    
     params = {
-        'api_key': api_key or COMICVINE_API_KEY,
+        'api_key': final_api_key,
         'format': 'json',
         'query': query,
         'resources': 'issue',
@@ -80,9 +105,16 @@ def get_comicvine_issue_details(issue_url, debug=False, api_key=None):
 
 
 def search_comicvine_series(query, debug=True, api_key=None):
+    # Clean and validate API key
+    final_api_key = (api_key or COMICVINE_API_KEY).strip()
+    if not final_api_key:
+        if debug:
+            print("[ERROR][ComicVine] No API key provided")
+        return []
+    
     url = "https://comicvine.gamespot.com/api/search/"
     params = {
-        'api_key': api_key or COMICVINE_API_KEY,
+        'api_key': final_api_key,
         'format': 'json',
         'query': query,
         'resources': 'volume',  # <-- IMPORTANT: search for volumes/series, not issues
@@ -110,11 +142,18 @@ def search_comicvine_series(query, debug=True, api_key=None):
         return []
 
 def get_comicvine_volume_issues(volume_id, debug=True, api_key=None):
+    # Clean and validate API key
+    final_api_key = (api_key or COMICVINE_API_KEY).strip()
+    if not final_api_key:
+        if debug:
+            print("[ERROR][ComicVine] No API key provided")
+        return []
+    
     url = f"https://comicvine.gamespot.com/api/volume/4050-{volume_id}/"
     params = {
-        'api_key': api_key or COMICVINE_API_KEY,
+        'api_key': final_api_key,
         'format': 'json',
-        'field_list': 'issues',
+        'field_list': 'issues,name,start_year,publisher,description,image',
     }
     headers = {'User-Agent': 'ComicRenamerApp/1.0'}
     try:
@@ -136,3 +175,36 @@ def get_comicvine_volume_issues(volume_id, debug=True, api_key=None):
         if debug:
             print("[ERROR][ComicVine] Volume issue fetch failed:", e)
         return []
+
+def get_comicvine_issue_details(issue_id, debug=False, api_key=None):
+    """Get detailed information for a specific issue"""
+    # Clean and validate API key
+    final_api_key = (api_key or COMICVINE_API_KEY).strip()
+    if not final_api_key:
+        if debug:
+            print("[ERROR][ComicVine] No API key provided")
+        return {}
+    
+    url = f"https://comicvine.gamespot.com/api/issue/4000-{issue_id}/"
+    params = {
+        'api_key': final_api_key,
+        'format': 'json',
+        'field_list': 'id,name,issue_number,cover_date,store_date,description,image,volume,character_credits,person_credits,location_credits',
+    }
+    headers = {'User-Agent': 'ComicRenamerApp/1.0'}
+    try:
+        r = requests.get(url, params=params, headers=headers, timeout=10)
+        if debug:
+            print(f"[DEBUG][ComicVine] GET {r.url} (HTTP {r.status_code})")
+        r.raise_for_status()
+        data = r.json()
+        if debug:
+            if data.get('status_code') != 1:
+                print(f"[WARN][ComicVine] Issue detail fetch error: {data.get('error')}")
+            else:
+                print("[DEBUG][ComicVine] Issue details successfully retrieved")
+        return data.get('results', {}) if data.get('status_code') == 1 else {}
+    except Exception as e:
+        if debug:
+            print("[ERROR][ComicVine] Issue details fetch failed:", e)
+        return {}
