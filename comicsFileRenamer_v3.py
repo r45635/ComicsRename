@@ -42,20 +42,130 @@ class MetadataProvider:
         raise NotImplementedError
 
 class BDGestProvider(MetadataProvider):
-    def search_series(self, query, debug=False, verbose=False):
-        from bdgest_scraper_api import get_bdgest_albums
-        # Use QSettings to get credentials
+    def __init__(self):
+        self._session = None
+        self._authenticated = False
+        self._last_credentials = None
+    
+    def _get_credentials(self):
+        """Get current credentials from settings"""
         settings = QSettings("ComicsRename", "App")
         user = settings.value('bdgest_user', '')
         pwd = settings.value('bdgest_pass', '')
-        return get_bdgest_albums(query, user, pwd, debug=debug, verbose=verbose)
+        return user, pwd
+    
+    def _ensure_authenticated_session(self, debug=False, verbose=False):
+        """Ensure we have an authenticated session, create/authenticate if needed"""
+        from bdgest_scraper_api import login_bdgest, get_csrf_token
+        import requests
+        
+        user, pwd = self._get_credentials()
+        current_credentials = (user, pwd)
+        
+        # Check if we need to create a new session or re-authenticate
+        need_new_session = (
+            self._session is None or 
+            not self._authenticated or
+            self._last_credentials != current_credentials
+        )
+        
+        if need_new_session:
+            if debug:
+                print("[DEBUG][BDGest] Creating new session or re-authenticating")
+            
+            # Create new session
+            self._session = requests.Session()
+            self._authenticated = False
+            
+            # Get CSRF token
+            if not get_csrf_token(self._session, debug=debug, verbose=verbose):
+                if debug:
+                    print("[ERROR][BDGest] Failed to get CSRF token")
+                return False
+            
+            # Authenticate
+            if not login_bdgest(self._session, user, pwd, debug=debug, verbose=verbose):
+                if debug:
+                    print("[ERROR][BDGest] Authentication failed")
+                self._authenticated = False
+                return False
+            
+            self._authenticated = True
+            self._last_credentials = current_credentials
+            if debug:
+                print("[DEBUG][BDGest] Session authenticated successfully")
+        else:
+            if debug:
+                print("[DEBUG][BDGest] Using existing authenticated session")
+        
+        return True
+    
+    def _invalidate_session(self):
+        """Invalidate the current session (called when authentication fails)"""
+        self._session = None
+        self._authenticated = False
+        self._last_credentials = None
+
+    def search_series(self, query, debug=False, verbose=False):
+        from bdgest_scraper_api import fetch_albums
+        
+        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
+            return []
+        
+        try:
+            return fetch_albums(self._session, query, debug=debug, verbose=verbose)
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][BDGest] Error in search_series: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
+
+    def search_series_only(self, query, debug=False, verbose=False):
+        """Search only in series names using the new fetch_series function"""
+        from bdgest_scraper_api import fetch_series
+        
+        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
+            return []
+        
+        try:
+            return fetch_series(self._session, query, debug=debug, verbose=verbose)
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][BDGest] Error in search_series_only: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
 
     def search_albums(self, serie_name):
-        from bdgest_scraper_api import get_bdgest_albums
-        settings = QSettings("ComicsRename", "App")
-        user = settings.value('bdgest_user', '')
-        pwd = settings.value('bdgest_pass', '')
-        return get_bdgest_albums(serie_name, user, pwd)
+        from bdgest_scraper_api import fetch_albums
+        
+        if not self._ensure_authenticated_session():
+            return []
+        
+        try:
+            return fetch_albums(self._session, serie_name)
+        except Exception as e:
+            print(f"[ERROR][BDGest] Error in search_albums: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
+
+    def search_albums_by_series_id(self, series_id, series_name, debug=False, verbose=False, fetch_details=True):
+        """Search albums for a specific series using series ID"""
+        from bdgest_scraper_api import fetch_albums_by_series_id
+        
+        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
+            return []
+        
+        try:
+            return fetch_albums_by_series_id(self._session, series_id, series_name, debug=debug, verbose=verbose, fetch_details=fetch_details)
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][BDGest] Error in search_albums_by_series_id: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
 
 class ComicVineProvider(MetadataProvider):
     def search_series(self, query):
@@ -375,6 +485,8 @@ class ComicRenamer(QWidget):
         self.issues_by_series = defaultdict(list)
         self._populating = False
         self._bdgest_album_results = []
+        self._bdgest_series_results = []  # New: store series search results
+        self._original_cover_pixmap = None  # Store original pixmap for rescaling
         self._build_ui()
         self.series_cover_url = ''
 
@@ -384,6 +496,12 @@ class ComicRenamer(QWidget):
         if idx >= 0:
             self.source_combo.setCurrentIndex(idx)
         self._source = self.source_combo.currentText()
+        
+        # Show/hide SeriesName checkbox based on initial provider
+        if self._source == 'BDGest':
+            self.series_name_cb.setVisible(True)
+        else:
+            self.series_name_cb.setVisible(False)
 
         # Recharge automatiquement le dernier dossier utilisé
         last_folder = self.settings.value("last_folder", "")
@@ -399,11 +517,14 @@ class ComicRenamer(QWidget):
         self.search_btn = QPushButton('Search')
         self.dir_btn = QPushButton('Change Folder')
         self.recursive_cb = QCheckBox('Recursive')
+        self.series_name_cb = QCheckBox('SeriesName')  # New checkbox for BDGest series search
+        self.series_name_cb.setToolTip("Rechercher uniquement dans les noms de séries (BDGest uniquement)")
+        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest
         self.settings_btn = QPushButton("⚙️")
         self.settings_btn.setFixedWidth(30)
         self.settings_btn.setToolTip("Application Settings")
         self.rename_btn = QPushButton('Rename Selected')
-        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.settings_btn):
+        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):
             ctrl.addWidget(w)
         layout.addLayout(ctrl)
 
@@ -414,7 +535,7 @@ class ComicRenamer(QWidget):
         file_panel_layout = QVBoxLayout(file_panel)
         file_panel_layout.setContentsMargins(0, 0, 0, 0)
         folder_display_layout = QHBoxLayout()
-        self.folder_display = DraggableLineEdit()
+        self.folder_display = EditableFolderLineEdit(main_window=self)
         # Add the rename folder button
         self.folder_rename_btn = QPushButton("✎")
         self.folder_rename_btn.setToolTip("Renommer le dossier avec le nom de la série sélectionnée")
@@ -448,6 +569,13 @@ class ComicRenamer(QWidget):
         det_layout = QHBoxLayout(det_widget)
         self.detail_text = QTextEdit(readOnly=True)
         self.detail_image = QLabel()
+        # Configure image label to be responsive and centered
+        self.detail_image.setScaledContents(False)  # Don't force scaling to fill
+        self.detail_image.setAlignment(Qt.AlignCenter)  # Center the image
+        self.detail_image.setMinimumSize(50, 50)  # Small minimum size
+        self.detail_image.setMaximumSize(300, 400)  # Reasonable maximum
+        self.detail_image.setSizePolicy(self.detail_image.sizePolicy().horizontalPolicy(), 
+                                       self.detail_image.sizePolicy().verticalPolicy())
         det_layout.addWidget(self.detail_text,2)
         det_layout.addWidget(self.detail_image,1)
         splitter_right.addWidget(det_widget)
@@ -456,16 +584,22 @@ class ComicRenamer(QWidget):
         layout.addWidget(splitter_main)
         layout.addWidget(self.rename_btn)
 
+        # Store splitter reference for image resize handling
+        self.splitter_right = splitter_right
+
         self.source_combo.currentTextChanged.connect(self._change_source)
         self.dir_btn.clicked.connect(self._choose_folder)
         self.search_btn.clicked.connect(self._search)
         self.search_bar.returnPressed.connect(self._search)
-        self.series_combo.currentTextChanged.connect(self._populate_albums)
+        self.series_combo.currentTextChanged.connect(self._on_series_selection_changed)
         self.album_table.cellClicked.connect(self._show_details)
         self.album_table.cellClicked.connect(self._enable_folder_rename_btn)
         self.album_table.selectionModel().selectionChanged.connect(self._on_album_selection_changed)
         self.rename_btn.clicked.connect(self._rename_selected)
         self.settings_btn.clicked.connect(self._open_settings)
+        
+        # Connect splitter movement to image resize
+        splitter_right.splitterMoved.connect(self._update_cover_image_size)
 
         # Connect selection change to update folder display
         self.file_table.selectionModel().selectionChanged.connect(self._update_folder_display)
@@ -510,13 +644,57 @@ class ComicRenamer(QWidget):
         self.settings.setValue('album_cols',str(self.album_table.columnWidth(0)))
         super().closeEvent(ev)
 
+    def _scale_image_to_fit(self, pixmap):
+        """Scale the image to fit the available space while maintaining aspect ratio and centering"""
+        if not pixmap or pixmap.isNull():
+            return pixmap
+        
+        # Get available size (with some margin)
+        available_width = max(100, self.detail_image.width() - 20)
+        available_height = max(100, self.detail_image.height() - 20)
+        
+        # If the label is too small (not yet properly sized), use reasonable defaults
+        if available_width < 50 or available_height < 50:
+            available_width = 250
+            available_height = 300
+        
+        # Get original image dimensions
+        original_width = pixmap.width()
+        original_height = pixmap.height()
+        
+        # Calculate scaling factors to fit within available space
+        scale_x = available_width / original_width
+        scale_y = available_height / original_height
+        
+        # Use the smaller scale factor to maintain aspect ratio
+        scale_factor = min(scale_x, scale_y)
+        
+        # Calculate new dimensions
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
+        
+        # Scale the image maintaining aspect ratio
+        scaled_pixmap = pixmap.scaled(
+            new_width, new_height, 
+            Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        
+        return scaled_pixmap
+
     def _change_source(self,src):
         self._source=src
         self.series_combo.clear()
         self.album_table.clearContents();self.album_table.setRowCount(0); self.series_cover_url = ''
-        self.detail_text.clear();self.detail_image.clear()
+        self.detail_text.clear();self.detail_image.clear();self._original_cover_pixmap = None
         if self.folder_rename_btn is not None:
             self.folder_rename_btn.setEnabled(False)
+        
+        # Show/hide SeriesName checkbox based on provider
+        if src == 'BDGest':
+            self.series_name_cb.setVisible(True)
+        else:
+            self.series_name_cb.setVisible(False)
+            self.series_name_cb.setChecked(False)  # Reset checkbox when hiding
 
     def _choose_folder(self):
         current_folder = self.settings.value('last_folder', '')
@@ -579,14 +757,21 @@ class ComicRenamer(QWidget):
         self.series_cover_url = ''
         self.detail_text.clear()
         self.detail_image.clear()
+        self._original_cover_pixmap = None
 
         provider = PROVIDERS[self._source]
         # Pass debug/verbose to provider if supported
         debug = self.settings.value('debug', 'false') == 'true'
         verbose = self.settings.value('verbose', 'false') == 'true'
-        series_list = provider.search_series(q, debug=debug, verbose=verbose) \
-            if hasattr(provider, 'search_series') and provider.search_series.__code__.co_argcount > 2 \
-            else provider.search_series(q)
+        
+        # Only call search_series for ComicVine or BDGest in non-SeriesName mode
+        if self._source == 'ComicVine' or (self._source == 'BDGest' and not self.series_name_cb.isChecked()):
+            series_list = provider.search_series(q, debug=debug, verbose=verbose) \
+                if hasattr(provider, 'search_series') and provider.search_series.__code__.co_argcount > 2 \
+                else provider.search_series(q)
+        else:
+            # For BDGest in SeriesName mode, we'll call search_series_only later
+            series_list = []
 
         self.issues_by_series.clear()
         self._bdgest_album_results = []
@@ -621,25 +806,62 @@ class ComicRenamer(QWidget):
                 self.issues_by_series = issues_by_series
                 if not issues_by_series:
                     QMessageBox.warning(self, 'Résultat', 'Aucun album trouvé pour cette recherche.')
-        else:
-            albums = []
-            for album in series_list:
-                s = album.get('serie_name', '')
-                if s:
-                    albums.append(album)
-            self._bdgest_album_results = albums
-            series_seen = set()
-            for album in albums:
-                s = album.get('serie_name', '')
-                serie_id = album.get('series_id', '')
-                if s and s not in series_seen:
-                    self.series_combo.addItem(s)
-                    idx = self.series_combo.count() - 1
-                    self.series_combo.setItemData(idx, serie_id, Qt.UserRole)
-                    series_seen.add(s)
-            # Inform user if no BDGest results
-            if not albums:
-                QMessageBox.information(self, "Aucun résultat", "Aucun album trouvé pour cette recherche sur BDGest.")
+        else:  # BDGest
+            # Check if SeriesName checkbox is checked
+            if self.series_name_cb.isChecked():
+                # Use series-only search
+                series_results = provider.search_series_only(q, debug=debug, verbose=verbose) \
+                    if hasattr(provider, 'search_series_only') \
+                    else []
+                
+                self._bdgest_series_results = series_results
+                self._bdgest_album_results = []  # Clear album results when searching series
+                
+                # Populate series dropdown with series results
+                for series in series_results:
+                    series_name = series.get('serie_name', 'Unknown Series')
+                    if series_name and series_name != 'Unknown Series':
+                        self.series_combo.addItem(series_name)
+                        idx = self.series_combo.count() - 1
+                        # Store the full series data for later use
+                        self.series_combo.setItemData(idx, series, Qt.UserRole)
+                
+                # Inform user if no series results
+                if not series_results:
+                    QMessageBox.information(self, "Aucun résultat", "Aucune série trouvée pour cette recherche sur BDGest.")
+                else:
+                    # Clear album table since we're in series mode
+                    self.album_table.clearContents()
+                    self.album_table.setRowCount(0)
+                    
+                    # Automatically populate albums for the first (default selected) series
+                    if self.series_combo.count() > 0:
+                        # The first series is automatically selected by default
+                        # Trigger album population for the first series
+                        first_series_name = self.series_combo.itemText(0)
+                        self._populate_albums(first_series_name)
+            else:
+                # Use default album search
+                albums = []
+                for album in series_list:
+                    s = album.get('serie_name', '')
+                    if s:
+                        albums.append(album)
+                self._bdgest_album_results = albums
+                self._bdgest_series_results = []  # Clear series results when searching albums
+                
+                series_seen = set()
+                for album in albums:
+                    s = album.get('serie_name', '')
+                    serie_id = album.get('series_id', '')
+                    if s and s not in series_seen:
+                        self.series_combo.addItem(s)
+                        idx = self.series_combo.count() - 1
+                        self.series_combo.setItemData(idx, serie_id, Qt.UserRole)
+                        series_seen.add(s)
+                # Inform user if no BDGest results
+                if not albums:
+                    QMessageBox.information(self, "Aucun résultat", "Aucun album trouvé pour cette recherche sur BDGest.")
 
     def _enable_folder_rename_btn(self, *args):
         self.folder_rename_btn.setEnabled(True)
@@ -648,6 +870,20 @@ class ComicRenamer(QWidget):
         # Enable if any row is selected, else disable
         selected_rows = self.album_table.selectionModel().selectedRows()
         self.folder_rename_btn.setEnabled(bool(selected_rows))
+
+    def _on_series_selection_changed(self, txt):
+        """Handle series selection change - close dropdown and populate albums"""
+        if not txt:
+            return
+            
+        # Close the dropdown to provide immediate visual feedback
+        self.series_combo.hidePopup()
+        
+        # Force UI update to show dropdown is closed
+        QApplication.processEvents()
+        
+        # Now populate albums for the selected series
+        self._populate_albums(txt)
 
     def _populate_albums(self, txt):
         if not txt:
@@ -678,23 +914,125 @@ class ComicRenamer(QWidget):
                 itm = QTableWidgetItem(val)
                 itm.setData(Qt.UserRole, it)
                 self.album_table.setItem(r, 0, itm)
-        else:
-            series = self.series_combo.currentText()
-            alb_list = [a for a in self._bdgest_album_results if a.get('serie_name', '') == series]
-            self.album_table.setRowCount(len(alb_list))
-            for r, alb in enumerate(alb_list):
-                s = alb.get('serie_name', '')
-                t = alb.get('album_name', alb.get('nomAlbum', ''))
-                n = alb.get('album_number', alb.get('numeroAlbum', ''))
-                n_fmt = format_num(n)
-                y = extract_year(alb.get('date', '') or alb.get('dateAlbum', ''))
-                val = f"{s} - {n_fmt} - {t} ({y})"
-                itm = QTableWidgetItem(val)
-                itm.setData(Qt.UserRole, alb)
-                self.album_table.setItem(r, 0, itm)
-                if r == 0 and alb.get('cover_url'):
+        else:  # BDGest
+            # Check if we're in series mode (SeriesName checkbox checked)
+            if self.series_name_cb.isChecked() and self._bdgest_series_results:
+                # In series mode - fetch and display albums for the selected series
+                current_index = self.series_combo.currentIndex()
+                if current_index >= 0:
+                    series_data = self.series_combo.itemData(current_index, Qt.UserRole)
+                    if series_data:
+                        series_id = series_data.get('serie_id') or series_data.get('id')
+                        series_name = series_data.get('serie_name') or series_data.get('label') or series_data.get('value')
+                        
+                        if series_id and series_name:
+                            # Show series details
+                            html = "<b>Série sélectionnée :</b><br><ul>"
+                            for k, v in series_data.items():
+                                if v and str(v).strip():
+                                    html += f"<li><b>{k}</b> : {v}</li>"
+                            html += "</ul><br><i>Récupération des albums...</i>"
+                            self.detail_text.setHtml(html)
+                            
+                            # Set cover image if available
+                            if series_data.get('cover_url'):
+                                self.series_cover_url = series_data.get('cover_url')
+                                # Load and display the image
+                                img_url = self.series_cover_url
+                                if img_url and img_url.startswith('/'):
+                                    img_url = 'https://www.bedetheque.com' + img_url
+                                if img_url:
+                                    try:
+                                        data = requests.get(img_url, timeout=10).content
+                                        pm = QPixmap()
+                                        pm.loadFromData(data)
+                                        # Store original for future rescaling
+                                        self._original_cover_pixmap = pm
+                                        # Scale to fit available space while maintaining aspect ratio
+                                        scaled_pm = self._scale_image_to_fit(pm)
+                                        self.detail_image.setPixmap(scaled_pm)
+                                    except Exception as e:
+                                        print("[ERROR] Image load failed:", e)
+                                        self.detail_image.clear()
+                                else:
+                                    self.detail_image.clear()
+                            
+                            # Fetch albums for this series
+                            try:
+                                debug = self.debug_cb.isChecked() if hasattr(self, 'debug_cb') else False
+                                verbose = self.verbose_cb.isChecked() if hasattr(self, 'verbose_cb') else False
+                                albums = provider.search_albums_by_series_id(series_id, series_name, debug=debug, verbose=verbose)
+                                
+                                if albums:
+                                    # Populate album table with series albums
+                                    self.album_table.setRowCount(len(albums))
+                                    for r, alb in enumerate(albums):
+                                        s = alb.get('serie_name', series_name)
+                                        t = alb.get('album_name', alb.get('nomAlbum', ''))
+                                        n = alb.get('album_number', alb.get('numeroAlbum', ''))
+                                        n_fmt = format_num(n)
+                                        y = extract_year(alb.get('date', '') or alb.get('dateAlbum', ''))
+                                        val = f"{s} - {n_fmt} - {t} ({y})"
+                                        itm = QTableWidgetItem(val)
+                                        itm.setData(Qt.UserRole, alb)
+                                        self.album_table.setItem(r, 0, itm)
+                                        if r == 0 and alb.get('cover_url'):
+                                            self.series_cover_url = alb.get('cover_url')
+                                    
+                                    # Update the detail text with album count
+                                    html = "<b>Série sélectionnée :</b><br><ul>"
+                                    for k, v in series_data.items():
+                                        if v and str(v).strip():
+                                            html += f"<li><b>{k}</b> : {v}</li>"
+                                    html += f"</ul><br><b>{len(albums)} album(s) trouvé(s)</b>"
+                                    self.detail_text.setHtml(html)
+                                else:
+                                    # No albums found
+                                    self.album_table.setRowCount(0)
+                                    html = "<b>Série sélectionnée :</b><br><ul>"
+                                    for k, v in series_data.items():
+                                        if v and str(v).strip():
+                                            html += f"<li><b>{k}</b> : {v}</li>"
+                                    html += "</ul><br><i>Aucun album trouvé pour cette série.</i>"
+                                    self.detail_text.setHtml(html)
+                                    
+                            except Exception as e:
+                                print(f"[ERROR] Failed to fetch albums for series {series_name}: {e}")
+                                self.album_table.setRowCount(0)
+                                html = "<b>Série sélectionnée :</b><br><ul>"
+                                for k, v in series_data.items():
+                                    if v and str(v).strip():
+                                        html += f"<li><b>{k}</b> : {v}</li>"
+                                html += f"</ul><br><i>Erreur lors de la récupération des albums: {e}</i>"
+                                self.detail_text.setHtml(html)
+                        else:
+                            # Missing series ID or name
+                            self.album_table.setRowCount(0)
+                            html = "<b>Série sélectionnée :</b><br><ul>"
+                            for k, v in series_data.items():
+                                if v and str(v).strip():
+                                    html += f"<li><b>{k}</b> : {v}</li>"
+                            html += "</ul><br><i>ID ou nom de série manquant pour récupérer les albums.</i>"
+                            self.detail_text.setHtml(html)
+                return
+            else:
+                # Normal album mode
+                series = self.series_combo.currentText()
+                alb_list = [a for a in self._bdgest_album_results if a.get('serie_name', '') == series]
+                self.album_table.setRowCount(len(alb_list))
+                for r, alb in enumerate(alb_list):
+                    s = alb.get('serie_name', '')
+                    t = alb.get('album_name', alb.get('nomAlbum', ''))
+                    n = alb.get('album_number', alb.get('numeroAlbum', ''))
+                    n_fmt = format_num(n)
+                    y = extract_year(alb.get('date', '') or alb.get('dateAlbum', ''))
+                    val = f"{s} - {n_fmt} - {t} ({y})"
+                    itm = QTableWidgetItem(val)
+                    itm.setData(Qt.UserRole, alb)
+                    self.album_table.setItem(r, 0, itm)
+                    if r == 0 and alb.get('cover_url'):
+                        self.series_cover_url = alb.get('cover_url')
                     self.series_cover_url = alb.get('cover_url')
-                self.series_cover_url = alb.get('cover_url')
         if self.folder_rename_btn is not None:
             self.folder_rename_btn.setEnabled(False)  # Disable when repopulating albums
         # Adjust album table column after populating
@@ -727,7 +1065,11 @@ class ComicRenamer(QWidget):
                 data = requests.get(img_url, timeout=10).content
                 pm = QPixmap()
                 pm.loadFromData(data)
-                self.detail_image.setPixmap(pm.scaledToWidth(300, Qt.SmoothTransformation))
+                # Store original for future rescaling
+                self._original_cover_pixmap = pm
+                # Scale to fit available space while maintaining aspect ratio
+                scaled_pm = self._scale_image_to_fit(pm)
+                self.detail_image.setPixmap(scaled_pm)
             except Exception as e:
                 print("[ERROR] Image load failed:", e)
                 self.detail_image.clear()
@@ -758,7 +1100,6 @@ class ComicRenamer(QWidget):
                 return f"{n_int:02d}"
             except Exception:
                 return str(n)
-        num_fmt = format_num(num)
         # Only keep allowed characters: unicode letters, numbers, spaces, apostrophes, hyphens, underscores, parentheses
         def clean(s):
             print(f"[DEBUG] clean() input: {repr(s)}")
@@ -768,7 +1109,7 @@ class ComicRenamer(QWidget):
         print(f"[DEBUG] series before clean: {repr(series)}")
         print(f"[DEBUG] num before clean: {repr(num)}")
         print(f"[DEBUG] title before clean: {repr(title)}")
-        base = f"{clean(series)} - {num_fmt} - {clean(title)}"
+        base = f"{clean(series)} - {format_num(num)} - {clean(title)}"
         if y:
             base += f" ({y})"
         print(f"[DEBUG] base filename after clean: {repr(base)}")
@@ -793,6 +1134,11 @@ class ComicRenamer(QWidget):
     def _open_settings(self):
         dlg = SettingsDialog(self, self.settings)
         if dlg.exec():
+            # Invalidate BDGest session when settings change (credentials might have changed)
+            bdgest_provider = PROVIDERS.get('BDGest')
+            if bdgest_provider and hasattr(bdgest_provider, '_invalidate_session'):
+                bdgest_provider._invalidate_session()
+            
             # Met à jour le selector après modification des paramètres
             new_provider = self.settings.value("default_provider", "BDGest")
             idx = self.provider_combo.findText(new_provider)
@@ -891,6 +1237,25 @@ class ComicRenamer(QWidget):
                 print(f"[DEBUG] Exception during rename: {e}")
                 QMessageBox.critical(self, "Erreur", f"Erreur lors du renommage du dossier :\n{e}")
 
+    def resizeEvent(self, event):
+        """Handle window resize to update cover image scaling"""
+        super().resizeEvent(event)
+        # Re-scale the image if there's one displayed
+        self._update_cover_image_size()
+
+    def _update_cover_image_size(self):
+        """Update cover image scaling when detail panel size changes"""
+        if self._original_cover_pixmap and not self._original_cover_pixmap.isNull():
+            # Wait a bit for the layout to settle
+            from PySide6.QtCore import QTimer
+            QTimer.singleShot(50, self._rescale_cover_image)
+    
+    def _rescale_cover_image(self):
+        """Rescale the cover image to fit current space"""
+        if self._original_cover_pixmap and not self._original_cover_pixmap.isNull():
+            scaled_pixmap = self._scale_image_to_fit(self._original_cover_pixmap)
+            self.detail_image.setPixmap(scaled_pixmap)
+
 class DraggableLineEdit(QLineEdit):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -925,6 +1290,150 @@ class DroppableLineEdit(QLineEdit):
         text = re.sub(r'\s+', ' ', text).strip()
         self.setText(text)
         event.acceptProposedAction()
+
+class EditableFolderLineEdit(QLineEdit):
+    def __init__(self, main_window=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setReadOnly(True)
+        self.main_window = main_window
+        self._original_folder_path = None
+        self._drag_start_position = None
+
+    def mousePressEvent(self, event):
+        """Store the position where mouse was pressed for drag detection"""
+        if event.button() == Qt.LeftButton:
+            self._drag_start_position = event.position()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        """Handle dragging functionality only when mouse is pressed and moved sufficiently"""
+        # Only drag if we have text and mouse button is pressed
+        if (not self.text() or 
+            not (event.buttons() & Qt.LeftButton) or 
+            self._drag_start_position is None):
+            return
+        
+        # Calculate distance moved
+        distance = (event.position() - self._drag_start_position).manhattanLength()
+        
+        # Only start drag if moved far enough (avoid accidental drags)
+        if distance < QApplication.startDragDistance():
+            return
+        
+        # Start drag operation
+        mime = QMimeData()
+        mime.setText(self.text())
+        drag = QDrag(self)
+        drag.setMimeData(mime)
+        drag.exec(Qt.CopyAction)
+
+    def mouseDoubleClickEvent(self, event):
+        """Handle double-click to enable folder renaming"""
+        if not self.main_window or not self.main_window.files:
+            return
+        
+        # Get current folder path
+        current_folder = pathlib.Path(self.main_window.files[0]['folder'])
+        self._original_folder_path = current_folder
+        
+        # Switch to editable mode
+        self.setReadOnly(False)
+        self.setStyleSheet("background-color: #ffffcc; border: 2px solid #0078d4;")  # Light yellow background
+        self.selectAll()
+        self.setFocus()
+        
+        # Connect to handle when editing is finished
+        self.editingFinished.connect(self._on_editing_finished)
+        self.returnPressed.connect(self._on_return_pressed)
+
+    def _on_return_pressed(self):
+        """Handle Enter key press"""
+        self._on_editing_finished()
+
+    def _on_editing_finished(self):
+        """Handle when editing is finished (Enter pressed or focus lost)"""
+        # Disconnect signals to avoid multiple calls
+        self.editingFinished.disconnect()
+        if hasattr(self, '_return_connection'):
+            self.returnPressed.disconnect()
+        
+        new_name = self.text().strip()
+        if not new_name:
+            self._cancel_editing()
+            return
+        
+        # Check if name changed
+        if new_name == self._original_folder_path.name:
+            self._cancel_editing()
+            return
+        
+        # Validate new name (remove invalid characters)
+        import string
+        valid_chars = string.ascii_letters + string.digits + ' -_()[]'
+        cleaned_name = ''.join(c for c in new_name if c in valid_chars or ord(c) > 127)  # Allow unicode
+        cleaned_name = cleaned_name.strip()
+        
+        if not cleaned_name:
+            QMessageBox.warning(self.main_window, "Nom invalide", "Le nom du dossier ne peut pas être vide.")
+            self._cancel_editing()
+            return
+        
+        # Check if folder with new name already exists
+        new_folder_path = self._original_folder_path.parent / cleaned_name
+        if new_folder_path.exists():
+            QMessageBox.critical(self.main_window, "Erreur", f"Un dossier nommé '{cleaned_name}' existe déjà dans ce répertoire.")
+            self._cancel_editing()
+            return
+        
+        # Confirm rename
+        reply = QMessageBox.question(
+            self.main_window,
+            "Renommer le dossier",
+            f"Renommer le dossier de :\n'{self._original_folder_path.name}'\nà :\n'{cleaned_name}' ?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            try:
+                # Perform the rename
+                os.rename(str(self._original_folder_path), str(new_folder_path))
+                
+                # Update the settings and reload files
+                self.main_window.settings.setValue('last_folder', str(new_folder_path))
+                self.main_window._load_files(str(new_folder_path))
+                
+                # Success message
+                QMessageBox.information(self.main_window, "Succès", f"Dossier renommé en '{cleaned_name}'")
+                
+            except Exception as e:
+                QMessageBox.critical(self.main_window, "Erreur", f"Erreur lors du renommage :\n{e}")
+                self._cancel_editing()
+                return
+        
+        # Reset to read-only mode
+        self._reset_to_readonly()
+
+    def _cancel_editing(self):
+        """Cancel editing and restore original name"""
+        if self._original_folder_path:
+            self.setText(self._original_folder_path.name)
+        self._reset_to_readonly()
+
+    def _reset_to_readonly(self):
+        """Reset the widget to read-only mode"""
+        self.setReadOnly(True)
+        self.setStyleSheet("")  # Clear custom styling
+        self.clearFocus()
+        self._original_folder_path = None
+
+    def keyPressEvent(self, event):
+        """Handle key presses during editing"""
+        if event.key() == Qt.Key_Escape:
+            # Cancel editing on Escape
+            self._cancel_editing()
+        else:
+            super().keyPressEvent(event)
 
 if __name__ == "__main__":
     import sys
