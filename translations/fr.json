@@ -35,10 +35,11 @@
     },
     "placeholders": {
       "search": "Entrez un terme de recherche..."
-    },
-    "menus": {
+    },    "menus": {
       "open_file": "Ouvrir le fichier",
       "reveal_in_finder": "Afficher dans le Finder",
+      "show_in_explorer": "Afficher dans l'Explorateur",
+      "show_in_file_manager": "Afficher dans le gestionnaire de fichiers",
       "refresh_folder_files": "Rafraîchir les fichiers du dossier"
     }
   },

@@ -15,6 +15,7 @@ Requirements:
 import sys
 import os
 from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -29,13 +30,31 @@ def main():
         from i18n import get_current_language
         # Only show language info in debug mode
         # print(f"[INFO] Starting ComicsRename with language: {get_current_language()}")
-        
-        # Create the QApplication
+          # Create the QApplication
         app = QApplication(sys.argv)
         app.setApplicationName("ComicsRename")
         app.setApplicationVersion("3.0")
         app.setOrganizationName("ComicsRename")
         app.setOrganizationDomain("github.com")
+          # Set application icon
+        try:
+            from comicsFileRenamer_v3 import get_app_icon
+            app_icon = get_app_icon()
+            if not app_icon.isNull():
+                app.setWindowIcon(app_icon)
+        except ImportError:
+            # Fallback if comicsFileRenamer_v3 is not available
+            icon_paths = [
+                os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename.ico'),
+                os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_64x64.png'),
+                os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_32x32.png'),
+                os.path.join(os.path.dirname(__file__), 'icons', 'icon.ico')
+            ]
+            
+            for icon_path in icon_paths:
+                if os.path.exists(icon_path):
+                    app.setWindowIcon(QIcon(icon_path))
+                    break
         
         # Create and show the main window
         window = ComicRenamer()

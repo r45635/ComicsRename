@@ -28,13 +28,29 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QHeaderView, QMenu, QDialog, QFormLayout, QDialogButtonBox, QMenuBar
 )
 from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings
-from PySide6.QtGui import QPixmap, QDrag, QAction
+from PySide6.QtGui import QPixmap, QDrag, QAction, QIcon
 
 from utils import scan_comic_files, load_bdgest_credentials, extract_year, open_file_cross_platform, reveal_file_cross_platform, get_system_info
 from bdgest_scraper_api import get_bdgest_series
 
 # Import internationalization system
 from i18n import tr, set_language, get_current_language, get_supported_languages
+
+# ---------- Icon utility function ----------
+def get_app_icon():
+    """Get the application icon, with fallback options"""
+    icon_paths = [
+        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename.ico'),
+        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_64x64.png'),
+        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_32x32.png'),
+        os.path.join(os.path.dirname(__file__), 'icons', 'icon.ico')
+    ]
+    
+    for icon_path in icon_paths:
+        if os.path.exists(icon_path):
+            return QIcon(icon_path)
+    
+    return QIcon()  # Return empty icon if none found
 
 # ---------- Providers (API abstraction layer) ----------
 class MetadataProvider:
@@ -439,23 +455,21 @@ class FileTable(QTableWidget):
         menu = QMenu(self)
         
         # Get system info for appropriate menu labels
-        system_info = get_system_info()
-        
-        # Adaptive menu labels based on OS
+        system_info = get_system_info()        # Adaptive menu labels based on OS
         if system_info['is_windows']:
-            open_label = tr("menus.open_file")  # "Open File"
-            reveal_label = "Show in Explorer"  # Windows-specific
+            open_label = tr("ui.menus.open_file")  # "Open File"
+            reveal_label = tr("ui.menus.show_in_explorer")  # "Show in Explorer"
         elif system_info['is_macos']:
-            open_label = tr("menus.open_file")  # "Open File" 
-            reveal_label = tr("menus.reveal_in_finder")  # "Reveal in Finder"
+            open_label = tr("ui.menus.open_file")  # "Open File" 
+            reveal_label = tr("ui.menus.reveal_in_finder")  # "Reveal in Finder"
         else:  # Linux
-            open_label = tr("menus.open_file")  # "Open File"
-            reveal_label = "Show in File Manager"  # Linux-generic
+            open_label = tr("ui.menus.open_file")  # "Open File"
+            reveal_label = tr("ui.menus.show_in_file_manager")  # "Show in File Manager"
             
         open_action = menu.addAction(open_label)
         reveal_action = menu.addAction(reveal_label)
         menu.addSeparator()
-        refresh_action = menu.addAction(tr("menus.refresh_folder_files"))
+        refresh_action = menu.addAction(tr("ui.menus.refresh_folder_files"))
         
         action = menu.exec(self.viewport().mapToGlobal(pos))
         f = self.main.files[row]
@@ -517,7 +531,11 @@ class AlbumTable(QTableWidget):
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, settings=None):
         super().__init__(parent)
-        self.setWindowTitle(tr("dialogs.settings.title"))
+        self.setWindowTitle(tr("dialogs.settings.title"))        # Set dialog icon
+        app_icon = get_app_icon()
+        if not app_icon.isNull():
+            self.setWindowIcon(app_icon)
+        
         self.layout = QFormLayout(self)
 
         self.settings = settings or QSettings("ComicsRename", "App")
@@ -598,7 +616,11 @@ class ComicRenamer(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(tr("app.title"))
-        self.resize(1400, 800)
+        self.resize(1400, 800)        # Set application icon
+        app_icon = get_app_icon()
+        if not app_icon.isNull():
+            self.setWindowIcon(app_icon)
+        
         self.settings = QSettings("ComicsRename", "App")
         
         # Initialize debug/verbose early to avoid AttributeError
@@ -1580,7 +1602,11 @@ class EditableFolderLineEdit(QLineEdit):
 
 if __name__ == "__main__":
     import sys
-    app = QApplication(sys.argv)
+    app = QApplication(sys.argv)    # Set application icon globally
+    app_icon = get_app_icon()
+    if not app_icon.isNull():
+        app.setWindowIcon(app_icon)
+    
     win = ComicRenamer()
     win.show()
     sys.exit(app.exec())

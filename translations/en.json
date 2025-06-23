@@ -35,10 +35,11 @@
     },
     "placeholders": {
       "search": "Enter search term..."
-    },
-    "menus": {
+    },    "menus": {
       "open_file": "Open File",
       "reveal_in_finder": "Reveal in Finder",
+      "show_in_explorer": "Show in Explorer",
+      "show_in_file_manager": "Show in File Manager",
       "refresh_folder_files": "Refresh Folder Files"
     }
   },

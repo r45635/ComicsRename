@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QHeaderView, QMenu, QDialog, QFormLayout, QDialogButtonBox, QMenuBar
 )
 from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings
-from PySide6.QtGui import QPixmap, QDrag, QAction
+from PySide6.QtGui import QPixmap, QDrag, QAction, QIcon
 
 from utils import scan_comic_files, load_bdgest_credentials, extract_year, open_file_cross_platform, reveal_file_cross_platform, get_system_info
 from bdgest_scraper_api import get_bdgest_series
@@ -948,6 +948,20 @@ class DroppableLineEdit(QLineEdit):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
+    
+    # Set application icon
+    icon_paths = [
+        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename.ico'),
+        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_64x64.png'),
+        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_32x32.png'),
+        os.path.join(os.path.dirname(__file__), 'icons', 'icon.ico')
+    ]
+    
+    for icon_path in icon_paths:
+        if os.path.exists(icon_path):
+            app.setWindowIcon(QIcon(icon_path))
+            break
+    
     win = ComicRenamer()
     win.show()
     sys.exit(app.exec())
