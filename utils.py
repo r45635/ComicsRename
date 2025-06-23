@@ -1,6 +1,8 @@
 import os
 import pathlib
 import unicodedata
+import platform
+import subprocess
 
 def list_comic_files(folder, extensions=None):
     """Retourne la liste des fichiers comics dans un dossier."""
@@ -44,3 +46,73 @@ def extract_year(date_str):
     if '/' in date_str:
         return date_str.split('/')[-1]
     return date_str[:4]
+
+def open_file_cross_platform(file_path):
+    """Opens a file using the default system application, cross-platform compatible."""
+    try:
+        # Check if file exists first
+        if not os.path.exists(file_path):
+            return False, f"File does not exist: {file_path}"
+            
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            subprocess.Popen(['open', file_path])
+        elif system == "Windows":  # Windows
+            os.startfile(file_path)
+        elif system == "Linux":  # Linux
+            subprocess.Popen(['xdg-open', file_path])
+        else:
+            raise OSError(f"Unsupported operating system: {system}")
+        return True
+    except Exception as e:
+        return False, str(e)
+
+def reveal_file_cross_platform(file_path):
+    """Reveals/shows a file in the system file manager, cross-platform compatible."""
+    try:
+        # Check if file exists first
+        if not os.path.exists(file_path):
+            return False, f"File does not exist: {file_path}"
+            
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            subprocess.Popen(['open', '-R', file_path])
+        elif system == "Windows":  # Windows
+            subprocess.Popen(['explorer', '/select,', file_path])
+        elif system == "Linux":  # Linux
+            # Try different file managers (most common ones)
+            file_managers = [
+                ['nautilus', '--select', file_path],  # GNOME
+                ['dolphin', '--select', file_path],   # KDE
+                ['thunar', file_path],                # XFCE
+                ['pcmanfm', file_path],               # LXDE
+                ['nemo', file_path],                  # Cinnamon
+            ]
+            
+            folder_path = os.path.dirname(file_path)
+            for fm_cmd in file_managers:
+                try:
+                    subprocess.Popen(fm_cmd)
+                    break
+                except FileNotFoundError:
+                    continue
+            else:
+                # Fallback: just open the folder
+                subprocess.Popen(['xdg-open', folder_path])
+        else:
+            raise OSError(f"Unsupported operating system: {system}")
+        return True
+    except Exception as e:
+        return False, str(e)
+
+def get_system_info():
+    """Returns information about the current operating system."""
+    system = platform.system()
+    return {
+        'system': system,
+        'is_windows': system == "Windows",
+        'is_macos': system == "Darwin", 
+        'is_linux': system == "Linux",
+        'version': platform.version(),
+        'platform': platform.platform(),
+    }

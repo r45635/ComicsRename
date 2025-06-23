@@ -1,0 +1,157 @@
+name: Build Executables
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build executable
+      run: |
+        python -m PyInstaller ComicsRename.spec
+        
+    - name: Test executable
+      run: |
+        dist\ComicsRename.exe --version
+      continue-on-error: true  # GUI app might not support --version
+      
+    - name: Get file info
+      run: |
+        dir dist\ComicsRename.exe
+        
+    - name: Upload Windows executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: ComicsRename-Windows
+        path: dist/ComicsRename.exe
+        
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build executable
+      run: |
+        python -m PyInstaller ComicsRename.spec
+        
+    - name: Create DMG (optional)
+      run: |
+        # Create a simple DMG for distribution
+        mkdir -p dist/dmg
+        cp -r dist/ComicsRename.app dist/dmg/
+        # Note: Would need additional setup for signed DMG
+        
+    - name: Upload macOS executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: ComicsRename-macOS
+        path: dist/ComicsRename.app
+        
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxcb-xinerama0 libxcb-cursor0 libxkbcommon-x11-0
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build executable
+      run: |
+        python -m PyInstaller ComicsRename.spec
+        
+    - name: Upload Linux executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: ComicsRename-Linux
+        path: dist/ComicsRename
+        
+  create-release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ComicsRename-Windows/ComicsRename.exe
+          ComicsRename-macOS/ComicsRename.app
+          ComicsRename-Linux/ComicsRename
+        draft: false
+        prerelease: false
+        body: |
+          ## ComicsRename Release
+          
+          ### Downloads
+          - **Windows**: ComicsRename.exe (standalone executable)
+          - **macOS**: ComicsRename.app (application bundle) 
+          - **Linux**: ComicsRename (standalone executable)
+          
+          ### Installation
+          1. Download the appropriate file for your platform
+          2. Run directly - no installation required!
+          
+          ### Requirements
+          - **Windows**: Windows 10/11 (64-bit)
+          - **macOS**: macOS 10.14+ 
+          - **Linux**: Modern Linux distribution with X11
+          
+          All executables are self-contained and include all dependencies.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

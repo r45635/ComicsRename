@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings
 from PySide6.QtGui import QPixmap, QDrag, QAction
 
-from utils import scan_comic_files, load_bdgest_credentials, extract_year
+from utils import scan_comic_files, load_bdgest_credentials, extract_year, open_file_cross_platform, reveal_file_cross_platform, get_system_info
 from bdgest_scraper_api import get_bdgest_series
 
 # Import internationalization system
@@ -437,23 +437,44 @@ class FileTable(QTableWidget):
         if row < 0:
             return
         menu = QMenu(self)
-        open_action = menu.addAction("Open File")
-        reveal_action = menu.addAction("Reveal in Finder")
+        
+        # Get system info for appropriate menu labels
+        system_info = get_system_info()
+        
+        # Adaptive menu labels based on OS
+        if system_info['is_windows']:
+            open_label = tr("menus.open_file")  # "Open File"
+            reveal_label = "Show in Explorer"  # Windows-specific
+        elif system_info['is_macos']:
+            open_label = tr("menus.open_file")  # "Open File" 
+            reveal_label = tr("menus.reveal_in_finder")  # "Reveal in Finder"
+        else:  # Linux
+            open_label = tr("menus.open_file")  # "Open File"
+            reveal_label = "Show in File Manager"  # Linux-generic
+            
+        open_action = menu.addAction(open_label)
+        reveal_action = menu.addAction(reveal_label)
         menu.addSeparator()
-        refresh_action = menu.addAction("Rafraîchir les fichiers du dossier")
+        refresh_action = menu.addAction(tr("menus.refresh_folder_files"))
+        
         action = menu.exec(self.viewport().mapToGlobal(pos))
         f = self.main.files[row]
         file_path = str(f['path'])
+        
         if action == open_action:
-            try:
-                subprocess.Popen(['open', file_path])
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not open file:\n{e}")
+            result = open_file_cross_platform(file_path)
+            if result is not True:
+                success, error_msg = result
+                if not success:
+                    QMessageBox.critical(self, tr("messages.errors.error"), 
+                                       tr("messages.errors.could_not_open_file", error=error_msg))
         elif action == reveal_action:
-            try:
-                subprocess.Popen(['open', '-R', file_path])
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not reveal file:\n{e}")
+            result = reveal_file_cross_platform(file_path)
+            if result is not True:
+                success, error_msg = result
+                if not success:
+                    QMessageBox.critical(self, tr("messages.errors.error"), 
+                                       tr("messages.errors.could_not_reveal_file", error=error_msg))
         elif action == refresh_action:
             folder = self.main.settings.value('last_folder', '')
             if folder and pathlib.Path(folder).exists():
