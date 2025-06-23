@@ -1,6 +1,12 @@
 # ComicsRename 📚
 
-A powerful Python GUI application for organizing and renaming comic book files using metadata from **BDGest** and **ComicVine** databases.
+## 💭 Why ComicsRename?
+
+Are you **too lazy** to rename manually all your comic files in your storage? **Too lazy** to search manually for the correct series name, the proper title, and all those details? That's exactly why I created and use **ComicsRename**! 
+
+I was tired of spending hours organizing my comic collection, hunting down metadata, and fixing inconsistent file names. So I built this tool to automate the entire process. Now I'm happy to share it with you - and I'd love to hear from you if it helps you too! 🎉
+
+**ComicsRename** is a powerful Python GUI application that transforms the tedious task of organizing comic book files into a breeze, using metadata from **BDGest** and **ComicVine** databases.
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PySide6](https://img.shields.io/badge/PySide6-6.4+-green.svg)
