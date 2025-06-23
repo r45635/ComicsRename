@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Minimal concept: Simple comic + rename symbol -->
+  <circle cx="256" cy="256" r="240" fill="#FFFFFF" stroke="#E3F2FD" stroke-width="8"/>
+  
+  <!-- Comic book simplified -->
+  <rect x="180" y="150" width="120" height="160" rx="8" ry="8" 
+        fill="#FF5722" stroke="#D84315" stroke-width="3"/>
+  <rect x="190" y="160" width="100" height="140" rx="4" ry="4" 
+        fill="#FFFFFF"/>
+  
+  <!-- Comic panels -->
+  <rect x="200" y="180" width="35" height="25" fill="#FFEB3B"/>
+  <rect x="245" y="180" width="35" height="25" fill="#4CAF50"/>
+  <rect x="200" y="215" width="80" height="20" fill="#2196F3"/>
+  <rect x="200" y="245" width="80" height="35" fill="#FF9800"/>
+  
+  <!-- Rename symbol -->
+  <circle cx="350" cy="220" r="40" fill="#4CAF50" stroke="#2E7D32" stroke-width="3"/>
+  <text x="350" y="230" font-family="Arial" font-size="24" fill="white" text-anchor="middle">✏️</text>
+</svg>

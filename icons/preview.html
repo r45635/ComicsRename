@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ComicsRename - Icônes Générées</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; 
+               padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+               color: white; min-height: 100vh; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: 3em; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.2em; opacity: 0.9; margin: 10px 0; }
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+                     gap: 20px; margin: 40px 0; }
+        .icon-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); 
+                     border-radius: 15px; padding: 20px; text-align: center; 
+                     border: 1px solid rgba(255,255,255,0.2); }
+        .icon-card img { max-width: 100%; height: auto; margin: 10px 0; 
+                         background: white; border-radius: 8px; padding: 10px; }
+        .icon-title { font-weight: bold; margin: 10px 0; }
+        .icon-info { font-size: 0.9em; opacity: 0.8; }
+        .usage-section { background: rgba(255,255,255,0.1); border-radius: 15px; 
+                        padding: 30px; margin: 40px 0; }
+        .usage-section h2 { margin-top: 0; }
+        .usage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+                     gap: 20px; margin: 20px 0; }
+        .usage-item { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 20px; }
+        .usage-item h3 { margin-top: 0; color: #FFE66D; }
+        .code { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; 
+                font-family: Monaco, monospace; font-size: 0.9em; }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+                   gap: 15px; margin: 20px 0; }
+        .feature { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px; }
+        .feature h4 { margin: 0 0 10px 0; color: #A8E6CF; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 ComicsRename</h1>
+            <p>Icônes de l'Application</p>
+            <p><em>Générées avec Pillow - Prêtes pour toutes les plateformes</em></p>
+        </div>
+
+        <div class="icon-grid">
+            <div class="icon-card">
+                <img src="comicsrename_16x16.png" alt="Icône 16x16">
+                <div class="icon-title">16×16 pixels</div>
+                <div class="icon-info">Barre des tâches Windows</div>
+            </div>
+            <div class="icon-card">
+                <img src="comicsrename_32x32.png" alt="Icône 32x32">
+                <div class="icon-title">32×32 pixels</div>
+                <div class="icon-info">Icône système, listes</div>
+            </div>
+            <div class="icon-card">
+                <img src="comicsrename_48x48.png" alt="Icône 48x48">
+                <div class="icon-title">48×48 pixels</div>
+                <div class="icon-info">Icône bureau Windows</div>
+            </div>
+            <div class="icon-card">
+                <img src="comicsrename_64x64.png" alt="Icône 64x64">
+                <div class="icon-title">64×64 pixels</div>
+                <div class="icon-info">Icône détaillée</div>
+            </div>
+            <div class="icon-card">
+                <img src="comicsrename_128x128.png" alt="Icône 128x128">
+                <div class="icon-title">128×128 pixels</div>
+                <div class="icon-info">Dock macOS, aperçus</div>
+            </div>
+            <div class="icon-card">
+                <img src="comicsrename_256x256.png" alt="Icône 256x256">
+                <div class="icon-title">256×256 pixels</div>
+                <div class="icon-info">Haute résolution</div>
+            </div>
+            <div class="icon-card">
+                <img src="comicsrename_512x512.png" alt="Icône 512x512">
+                <div class="icon-title">512×512 pixels</div>
+                <div class="icon-info">Très haute résolution</div>
+            </div>
+        </div>
+
+        <div class="usage-section">
+            <h2>🚀 Utilisation des Icônes</h2>
+            
+            <div class="usage-grid">
+                <div class="usage-item">
+                    <h3>🪟 Windows (PyInstaller)</h3>
+                    <p>Utilisez le fichier <strong>icon.ico</strong> dans votre spec :</p>
+                    <div class="code">icon='icon.ico'</div>
+                </div>
+                
+                <div class="usage-item">
+                    <h3>🍎 macOS (Bundle)</h3>
+                    <p>Utilisez les PNG haute résolution :</p>
+                    <div class="code">comicsrename_512x512.png<br>comicsrename_1024x1024.png</div>
+                </div>
+                
+                <div class="usage-item">
+                    <h3>🐧 Linux (Desktop)</h3>
+                    <p>Fichiers PNG pour .desktop :</p>
+                    <div class="code">Icon=comicsrename_256x256.png</div>
+                </div>
+                
+                <div class="usage-item">
+                    <h3>📦 Distribution</h3>
+                    <p>GitHub, documentation, sites web :</p>
+                    <div class="code">comicsrename_128x128.png<br>comicsrename_256x256.png</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="usage-section">
+            <h2>🎯 Caractéristiques du Design</h2>
+            
+            <div class="features">
+                <div class="feature">
+                    <h4>📚 Livre de BD</h4>
+                    <p>Représente les comics avec des panels colorés et une couverture attrayante</p>
+                </div>
+                
+                <div class="feature">
+                    <h4>🏷️ Tag de Renommage</h4>
+                    <p>Symbole vert avec icône d'édition pour indiquer la fonction de renommage</p>
+                </div>
+                
+                <div class="feature">
+                    <h4>📁 Organisation</h4>
+                    <p>Base de dossier suggérant l'organisation et la structure des fichiers</p>
+                </div>
+                
+                <div class="feature">
+                    <h4>🎨 Couleurs Vibrantes</h4>
+                    <p>Palette moderne avec rouge, bleu, vert et jaune pour un look dynamique</p>
+                </div>
+                
+                <div class="feature">
+                    <h4>📐 Scalabilité</h4>
+                    <p>Design vectoriel adapté de 16×16 à 1024×1024 pixels</p>
+                </div>
+                
+                <div class="feature">
+                    <h4>🔍 Visibilité</h4>
+                    <p>Contrastes élevés et éléments distincts pour une reconnaissance facile</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="usage-section">
+            <h2>📋 Étapes Suivantes</h2>
+            <ol>
+                <li><strong>Testez</strong> les icônes dans votre application</li>
+                <li><strong>Copiez</strong> icon.ico vers la racine du projet pour PyInstaller</li>
+                <li><strong>Utilisez</strong> les PNG appropriés selon la plateforme</li>
+                <li><strong>Distribuez</strong> avec votre application</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
