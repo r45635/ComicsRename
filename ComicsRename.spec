@@ -5,16 +5,12 @@ PyInstaller specification file for ComicsRename
 
 import os
 import sys
-from pathlib import Path
-
-# Get the project root directory (current directory where spec file is located)
-project_root = Path('.')
 
 block_cipher = None
 
 a = Analysis(
     ['main.py'],
-    pathex=[str(project_root)],
+    pathex=[],
     binaries=[],
     datas=[
         # Include translation files
@@ -33,15 +29,8 @@ a = Analysis(
         'PySide6.QtPdfWidgets',
         # Other modules
         'requests',
-        'bs4',  # Changed from 'beautifulsoup4' to 'bs4'
+        'bs4',
         'lxml',
-        'json',
-        'pathlib',
-        'subprocess',
-        're',
-        'collections',
-        'urllib.parse',
-        'urllib.request',
         # Project modules
         'utils',
         'bdgest_scraper_api',
@@ -89,7 +78,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=str(project_root / 'icons' / 'comicsrename.ico') if (project_root / 'icons' / 'comicsrename.ico').exists() else None,
+    icon='icons/comicsrename.ico' if os.path.exists('icons/comicsrename.ico') else None,
 )
 
 # macOS app bundle configuration
@@ -97,7 +86,7 @@ if sys.platform == 'darwin':
     app = BUNDLE(
         exe,
         name='ComicsRename.app',
-        icon=str(project_root / 'icons' / 'comicsrename.ico') if (project_root / 'icons' / 'comicsrename.ico').exists() else None,
+        icon='icons/comicsrename.ico' if os.path.exists('icons/comicsrename.ico') else None,
         bundle_identifier='com.github.r45635.comicsrename',
         info_plist={
             'CFBundleName': 'ComicsRename',
