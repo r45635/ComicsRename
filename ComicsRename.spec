@@ -76,7 +76,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='icons/comicsrename.ico' if os.path.exists('icons/comicsrename.ico') else None,
+    icon=None,  # Disable icon for cross-platform compatibility
 )
 
 # macOS app bundle configuration
@@ -84,7 +84,7 @@ if sys.platform == 'darwin':
     app = BUNDLE(
         exe,
         name='ComicsRename.app',
-        icon='icons/comicsrename.ico' if os.path.exists('icons/comicsrename.ico') else None,
+        icon=None,  # Disable icon to avoid format issues
         bundle_identifier='com.github.r45635.comicsrename',
         info_plist={
             'CFBundleName': 'ComicsRename',
