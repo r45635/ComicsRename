@@ -14,8 +14,27 @@ Requirements:
 
 import sys
 import os
+
+# Fix Qt plugin path issue - this must be done before ANY Qt import
+def setup_qt_environment():
+    import PySide6
+    qt_dir = os.path.join(os.path.dirname(PySide6.__file__), 'Qt')
+    plugins_dir = os.path.join(qt_dir, 'plugins')
+    platforms_dir = os.path.join(plugins_dir, 'platforms')
+    
+    # Set the environment variable
+    os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = platforms_dir
+    
+    # Also try alternative approaches
+    if 'QT_PLUGIN_PATH' not in os.environ:
+        os.environ['QT_PLUGIN_PATH'] = plugins_dir
+
+# Call setup before importing Qt
+setup_qt_environment()
+
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon  
+from PySide6.QtCore import QCoreApplication
 
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

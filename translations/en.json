@@ -40,7 +40,8 @@
       "reveal_in_finder": "Reveal in Finder",
       "show_in_explorer": "Show in Explorer",
       "show_in_file_manager": "Show in File Manager",
-      "refresh_folder_files": "Refresh Folder Files"
+      "refresh_folder_files": "Refresh Folder Files",
+      "quick_view": "Quick View"
     }
   },
   "dialogs": {
@@ -67,7 +68,10 @@
       "username": "Username:",
       "password": "Password:",
       "comicvine_settings": "ComicVine Settings",
-      "api_key": "API Key:"
+      "api_key": "API Key:",
+      "quick_view": {
+        "title": "Quick View - {title}"
+      }
     }
   },
   "messages": {
@@ -96,7 +100,9 @@
       "unsupported_format": "Only PDF, EPUB, CBZ or CBR files are accepted.",
       "could_not_open_file": "Could not open file:\\n{error}",
       "could_not_reveal_file": "Could not reveal file:\\n{error}",
-      "selection_required": "Please select one file and one album"
+      "selection_required": "Please select one file and one album",
+      "could_not_load_pdf_viewer": "Could not load PDF viewer. PySide6 PDF modules are not available.",
+      "pdf_load_error": "Could not load PDF file: {file}"
     },
     "warnings": {
       "file_overwrite": "A file named '{name}' already exists.\\nOverwrite?",

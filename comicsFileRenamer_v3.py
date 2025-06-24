@@ -468,14 +468,161 @@ class FileTable(QTableWidget):
             
         open_action = menu.addAction(open_label)
         reveal_action = menu.addAction(reveal_label)
+        # Quick View option for PDF files
+        quick_view_action = menu.addAction(tr("ui.menus.quick_view"))  # "Quick View"
         menu.addSeparator()
         refresh_action = menu.addAction(tr("ui.menus.refresh_folder_files"))
         
         action = menu.exec(self.viewport().mapToGlobal(pos))
         f = self.main.files[row]
         file_path = str(f['path'])
-        
-        if action == open_action:
+        # Handle Quick View action
+        if action == quick_view_action:
+            # Only for PDF files
+            ext = os.path.splitext(file_path)[1].lower()
+            if ext != '.pdf':
+                QMessageBox.warning(self, tr("messages.warnings.unsupported_format"), tr("messages.errors.unsupported_format"))
+                return
+            # Try to import Qt PDF modules
+            try:
+                from PySide6.QtPdf import QPdfDocument
+                from PySide6.QtPdfWidgets import QPdfView
+            except ImportError:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.could_not_load_pdf_viewer"))
+                return
+            # Create dialog to display first page
+            dialog = QDialog(self)
+            dialog.setWindowTitle(tr("dialogs.settings.quick_view.title", title=os.path.basename(file_path)))
+            dialog.setModal(False)  # Allow window to be resized and moved freely
+            
+            # Restore window geometry from settings
+            settings = QSettings("ComicsRename", "App")
+            saved_geometry = settings.value('quick_view_geometry')
+            if saved_geometry:
+                dialog.restoreGeometry(saved_geometry)
+            else:
+                dialog.resize(700, 900)  # Default size, slightly larger
+            
+            layout = QVBoxLayout(dialog)
+            layout.setContentsMargins(5, 5, 5, 5)  # Small margins
+            
+            # Create PDF document and view
+            pdf_doc = QPdfDocument(dialog)
+            load_err = pdf_doc.load(file_path)
+            if load_err != QPdfDocument.Error.None_:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.pdf_load_error", file=file_path))
+                return
+            
+            view = QPdfView(dialog)
+            view.setDocument(pdf_doc)
+            view.setPageMode(QPdfView.PageMode.SinglePage)
+            
+            # Function to fit page to window
+            def fit_to_window():
+                if pdf_doc.pageCount() > 0:
+                    # Get the current page size and available view size
+                    current_page = view.pageNavigator().currentPage()
+                    page_size = pdf_doc.pagePointSize(current_page)
+                    view_size = view.viewport().size()
+                    
+                    # Calculate zoom to fit with some padding
+                    padding = 20
+                    scale_x = (view_size.width() - padding) / page_size.width()
+                    scale_y = (view_size.height() - padding) / page_size.height()
+                    
+                    # Use the smaller scale to ensure the page fits completely
+                    zoom_factor = min(scale_x, scale_y)
+                    
+                    # Set the zoom level
+                    view.setZoomFactor(zoom_factor)
+            
+            # Custom resize event for the dialog to trigger fit-to-window
+            original_resize_event = dialog.resizeEvent
+            def custom_resize_event(event):
+                original_resize_event(event)
+                # Delay the fit to ensure layout is updated
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(10, fit_to_window)
+            dialog.resizeEvent = custom_resize_event
+            
+            # Create navigation controls
+            nav_layout = QHBoxLayout()
+            nav_layout.setContentsMargins(0, 5, 0, 0)  # Small top margin
+            prev_btn = QPushButton("◀ Previous")
+            next_btn = QPushButton("Next ▶")
+            fit_btn = QPushButton("🔍 Fit")  # Manual fit button
+            page_label = QLabel("Page 1 of " + str(pdf_doc.pageCount()))
+            page_label.setAlignment(Qt.AlignCenter)
+            
+            # Set button sizes
+            prev_btn.setMinimumWidth(80)
+            next_btn.setMinimumWidth(80)
+            fit_btn.setMinimumWidth(60)
+            page_label.setMinimumWidth(120)
+            
+            # Navigation button handlers
+            def update_page_label():
+                current = view.pageNavigator().currentPage()
+                total = pdf_doc.pageCount()
+                page_label.setText(f"Page {current + 1} of {total}")
+                prev_btn.setEnabled(current > 0)
+                next_btn.setEnabled(current < total - 1)
+                # Fit to window when page changes
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(50, fit_to_window)
+            
+            def go_prev():
+                navigator = view.pageNavigator()
+                if navigator.currentPage() > 0:
+                    from PySide6.QtCore import QPointF
+                    navigator.jump(navigator.currentPage() - 1, QPointF(0, 0))
+                    update_page_label()
+            
+            def go_next():
+                navigator = view.pageNavigator()
+                if navigator.currentPage() < pdf_doc.pageCount() - 1:
+                    from PySide6.QtCore import QPointF
+                    navigator.jump(navigator.currentPage() + 1, QPointF(0, 0))
+                    update_page_label()
+            
+            prev_btn.clicked.connect(go_prev)
+            next_btn.clicked.connect(go_next)
+            fit_btn.clicked.connect(fit_to_window)
+            
+            # Add navigation controls to layout
+            nav_layout.addWidget(prev_btn)
+            nav_layout.addWidget(fit_btn)
+            nav_layout.addStretch()
+            nav_layout.addWidget(page_label)
+            nav_layout.addStretch()
+            nav_layout.addWidget(next_btn)
+            
+            # Navigate to first page using QPointF
+            from PySide6.QtCore import QPointF
+            view.pageNavigator().jump(0, QPointF(0, 0))
+            
+            # Add widgets to main layout - PDF view gets most space
+            layout.addWidget(view, 1)  # stretch factor 1 = takes available space
+            layout.addLayout(nav_layout, 0)  # stretch factor 0 = fixed size
+            
+            # Update initial button states and fit to window
+            update_page_label()
+            
+            # Initial fit to window after dialog is shown
+            from PySide6.QtCore import QTimer
+            QTimer.singleShot(100, fit_to_window)
+            
+            # Save window geometry when dialog is closed
+            def save_geometry():
+                settings.setValue('quick_view_geometry', dialog.saveGeometry())
+            
+            # Connect to dialog finished signal to save geometry
+            dialog.finished.connect(save_geometry)
+            
+            dialog.show()
+            return
+        # Existing code...
+        elif action == open_action:
             result = open_file_cross_platform(file_path)
             if result is not True:
                 success, error_msg = result
