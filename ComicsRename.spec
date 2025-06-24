@@ -17,8 +17,6 @@ a = Analysis(
         ('translations/*.json', 'translations'),
         # Include icons
         ('icons/*', 'icons'),
-        # Include any config files
-        ('*.conf', '.'),
     ],
     hiddenimports=[
         # PySide6 modules that might not be auto-detected
