@@ -33,7 +33,7 @@ a = Analysis(
         'PySide6.QtPdfWidgets',
         # Other modules
         'requests',
-        'beautifulsoup4',
+        'bs4',  # Changed from 'beautifulsoup4' to 'bs4'
         'lxml',
         'json',
         'pathlib',
