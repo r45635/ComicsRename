@@ -46,7 +46,7 @@ jobs:
         dir dist\ComicsRename.exe
         
     - name: Upload Windows executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ComicsRename-Windows
         path: dist/ComicsRename.exe
@@ -80,7 +80,7 @@ jobs:
         # Note: Would need additional setup for signed DMG
         
     - name: Upload macOS executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ComicsRename-macOS
         path: dist/ComicsRename.app
@@ -112,7 +112,7 @@ jobs:
         python -m PyInstaller ComicsRename.spec
         
     - name: Upload Linux executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ComicsRename-Linux
         path: dist/ComicsRename
@@ -124,7 +124,7 @@ jobs:
     
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       
     - name: Create Release
       uses: softprops/action-gh-release@v1
