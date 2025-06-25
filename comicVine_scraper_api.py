@@ -64,7 +64,7 @@ def search_comicvine_issues(query, debug=False, api_key=None):
     }
     headers = {'User-Agent': 'ComicRenamerApp/1.0'}
     try:
-        r = requests.get(COMICVINE_SEARCH_URL, params=params, headers=headers, timeout=10)
+        r = requests.get(COMICVINE_SEARCH_URL, params=params, headers=headers, timeout=5)  # Reduced timeout for speed
         if debug:
             print(f"[DEBUG][ComicVine] GET {r.url} (HTTP {r.status_code})")
         r.raise_for_status()
@@ -87,7 +87,7 @@ def get_comicvine_issue_details(issue_url, debug=False, api_key=None):
     }
     headers = {'User-Agent': 'ComicRenamerApp/1.0'}
     try:
-        r = requests.get(issue_url, params=params, headers=headers, timeout=10)
+        r = requests.get(issue_url, params=params, headers=headers, timeout=5)  # Reduced timeout for speed
         if debug:
             print(f"[DEBUG][ComicVine] GET {r.url} (HTTP {r.status_code})")
         r.raise_for_status()
@@ -123,7 +123,7 @@ def search_comicvine_series(query, debug=True, api_key=None):
     }
     headers = {'User-Agent': 'ComicRenamerApp/1.0'}
     try:
-        r = requests.get(url, params=params, headers=headers, timeout=10)
+        r = requests.get(url, params=params, headers=headers, timeout=5)  # Reduced timeout for speed
         if debug:
             print(f"[DEBUG][ComicVine] GET {r.url} (HTTP {r.status_code})")
         r.raise_for_status()
@@ -157,7 +157,7 @@ def get_comicvine_volume_issues(volume_id, debug=True, api_key=None):
     }
     headers = {'User-Agent': 'ComicRenamerApp/1.0'}
     try:
-        r = requests.get(url, params=params, headers=headers, timeout=10)
+        r = requests.get(url, params=params, headers=headers, timeout=5)  # Reduced timeout for speed
         if debug:
             print(f"[DEBUG][ComicVine] GET {r.url} (HTTP {r.status_code})")
         r.raise_for_status()
@@ -193,7 +193,7 @@ def get_comicvine_issue_details(issue_id, debug=False, api_key=None):
     }
     headers = {'User-Agent': 'ComicRenamerApp/1.0'}
     try:
-        r = requests.get(url, params=params, headers=headers, timeout=10)
+        r = requests.get(url, params=params, headers=headers, timeout=5)  # Reduced timeout for speed
         if debug:
             print(f"[DEBUG][ComicVine] GET {r.url} (HTTP {r.status_code})")
         r.raise_for_status()
@@ -207,4 +207,39 @@ def get_comicvine_issue_details(issue_id, debug=False, api_key=None):
     except Exception as e:
         if debug:
             print("[ERROR][ComicVine] Issue details fetch failed:", e)
+        return {}
+
+def get_comicvine_volume_details(volume_id, debug=True, api_key=None):
+    """Get detailed information for a specific volume, including concepts"""
+    # Clean and validate API key
+    final_api_key = (api_key or COMICVINE_API_KEY).strip()
+    if not final_api_key:
+        if debug:
+            print("[ERROR][ComicVine] No API key provided")
+        return {}
+    
+    url = f"https://comicvine.gamespot.com/api/volume/4050-{volume_id}/"
+    params = {
+        'api_key': final_api_key,
+        'format': 'json',
+        'field_list': 'id,name,start_year,publisher,description,image,concepts,character_credits,person_credits,location_credits',
+    }
+    headers = {'User-Agent': 'ComicRenamerApp/1.0'}
+    try:
+        r = requests.get(url, params=params, headers=headers, timeout=5)  # Reduced timeout for speed
+        if debug:
+            print(f"[DEBUG][ComicVine] GET {r.url} (HTTP {r.status_code})")
+        r.raise_for_status()
+        data = r.json()
+        if debug:
+            if data.get('status_code') != 1:
+                print(f"[WARN][ComicVine] Volume detail fetch error: {data.get('error')}")
+            else:
+                volume_data = data.get('results', {})
+                concepts = volume_data.get('concepts', [])
+                print(f"[DEBUG][ComicVine] Volume {volume_id} details retrieved with {len(concepts)} concepts")
+        return data.get('results', {}) if data.get('status_code') == 1 else {}
+    except Exception as e:
+        if debug:
+            print("[ERROR][ComicVine] Volume details fetch failed:", e)
         return {}

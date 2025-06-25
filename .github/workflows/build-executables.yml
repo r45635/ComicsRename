@@ -15,14 +15,14 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
     - name: Cache pip dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
-        path: ~\AppData\Local\pip\Cache
+        path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
@@ -32,15 +32,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Debug environment
-      run: |
-        python --version
-        pip list
-        dir
-        
     - name: Build executable
       run: |
-        python -m PyInstaller --clean ComicsRename.spec
+        python -m PyInstaller ComicsRename.spec
         
     - name: Test executable
       run: |
@@ -52,7 +46,7 @@ jobs:
         dir dist\ComicsRename.exe
         
     - name: Upload Windows executable
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: ComicsRename-Windows
         path: dist/ComicsRename.exe
@@ -65,32 +59,18 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/Library/Caches/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
         
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Debug environment
-      run: |
-        python --version
-        pip list
-        ls -la
-        
     - name: Build executable
       run: |
-        python -m PyInstaller --clean ComicsRename.spec
+        python -m PyInstaller ComicsRename.spec
         
     - name: Create DMG (optional)
       run: |
@@ -100,7 +80,7 @@ jobs:
         # Note: Would need additional setup for signed DMG
         
     - name: Upload macOS executable
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: ComicsRename-macOS
         path: dist/ComicsRename.app
@@ -113,55 +93,26 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          libxcb-xinerama0 \
-          libxcb-cursor0 \
-          libxkbcommon-x11-0 \
-          libxcb-icccm4 \
-          libxcb-image0 \
-          libxcb-keysyms1 \
-          libxcb-randr0 \
-          libxcb-render-util0 \
-          libxcb-shape0 \
-          libxcb-sync1 \
-          libxcb-xfixes0 \
-          libxcb-xkb1 \
-          libxkbcommon-x11-0 \
-          libfontconfig1 \
-          libfreetype6
-          
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+        sudo apt-get install -y libxcb-xinerama0 libxcb-cursor0 libxkbcommon-x11-0
         
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Debug environment
-      run: |
-        python --version
-        pip list
-        ls -la
-        
     - name: Build executable
       run: |
-        python -m PyInstaller --clean ComicsRename.spec
+        python -m PyInstaller ComicsRename.spec
         
     - name: Upload Linux executable
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: ComicsRename-Linux
         path: dist/ComicsRename
@@ -170,47 +121,33 @@ jobs:
     needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    permissions:
-      contents: write
     
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v3
       
-    - name: List downloaded files
-      run: |
-        find . -type f -name "*" | head -20
-        
     - name: Create Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v1
       with:
         files: |
-          ComicsRename-Windows/*
-          ComicsRename-macOS/*
-          ComicsRename-Linux/*
+          ComicsRename-Windows/ComicsRename.exe
+          ComicsRename-macOS/ComicsRename.app
+          ComicsRename-Linux/ComicsRename
         draft: false
         prerelease: false
         body: |
-          ## ComicsRename v3.1.0 - Quick View PDF Preview Feature
+          ## ComicsRename Release
           
-          ### 🎉 New Features
-          - **Quick View**: Right-click PDF files to preview them in a floating window
-          - **Navigation Controls**: Previous/Next buttons with page indicators
-          - **Auto-fit Zoom**: Content automatically fits window size
-          - **Window Persistence**: Size and position remembered between sessions
-          - **Non-modal Interface**: Continue using main app while previewing
-          - **Bilingual Support**: English and French translations
+          ### Downloads
+          - **Windows**: ComicsRename.exe (standalone executable)
+          - **macOS**: ComicsRename.app (application bundle) 
+          - **Linux**: ComicsRename (standalone executable)
           
-          ### 📦 Downloads
-          - **Windows**: `ComicsRename.exe` (standalone executable)
-          - **macOS**: `ComicsRename.app` (application bundle) 
-          - **Linux**: `ComicsRename` (standalone executable)
-          
-          ### 🚀 Installation
+          ### Installation
           1. Download the appropriate file for your platform
           2. Run directly - no installation required!
           
-          ### ⚙️ Requirements
+          ### Requirements
           - **Windows**: Windows 10/11 (64-bit)
           - **macOS**: macOS 10.14+ 
           - **Linux**: Modern Linux distribution with X11

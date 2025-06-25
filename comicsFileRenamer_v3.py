@@ -24,7 +24,7 @@ import re
 from PySide6.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QVBoxLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QPushButton, QLineEdit,
-    QLabel, QFileDialog, QMessageBox, QComboBox, QTextEdit, QCheckBox,
+    QLabel, QFileDialog, QMessageBox, QComboBox, QTextEdit, QTextBrowser, QCheckBox,
     QAbstractItemView, QHeaderView, QMenu, QDialog, QFormLayout, QDialogButtonBox, QMenuBar
 )
 from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings
@@ -192,12 +192,29 @@ class ComicVineProvider(MetadataProvider):
         # Pass API key from settings if available
         settings = QSettings("ComicsRename", "App")
         api_key = settings.value('comicvine_api', '')
-        return search_comicvine_series(query, api_key=api_key) if api_key else search_comicvine_series(query)
+        if api_key:
+            return search_comicvine_series(query, api_key=api_key)
+        else:
+            return search_comicvine_series(query)
 
     def search_albums(self, volume_id, debug=False):
-        from comicVine_scraper_api import get_comicvine_volume_issues, get_comicvine_issue_details
+        from comicVine_scraper_api import get_comicvine_volume_issues, get_comicvine_issue_details, get_comicvine_volume_details
         settings = QSettings("ComicsRename", "App")
         api_key = settings.value('comicvine_api', '')
+        
+        # First, get volume details to extract concepts (genres/styles)
+        volume_details = get_comicvine_volume_details(volume_id, api_key=api_key, debug=debug) if api_key else get_comicvine_volume_details(volume_id, debug=debug)
+        volume_concepts = []
+        volume_style = ""
+        
+        if volume_details and volume_details.get('concepts'):
+            concepts = volume_details.get('concepts', [])
+            volume_concepts = [concept.get('name') for concept in concepts if concept.get('name')]
+            # Use the first concept as the main style, or join multiple concepts
+            if volume_concepts:
+                volume_style = volume_concepts[0] if len(volume_concepts) == 1 else ', '.join(volume_concepts[:3])
+                if debug:
+                    print(f"[DEBUG] Volume style from concepts: {volume_style}")
         
         # Get basic volume and issues data
         issues_list = get_comicvine_volume_issues(volume_id, api_key=api_key, debug=debug) if api_key else get_comicvine_volume_issues(volume_id, debug=debug)
@@ -205,68 +222,162 @@ class ComicVineProvider(MetadataProvider):
         if not issues_list:
             return []
         
-        # Enrich each issue with detailed information
+        # Use the data we already have without additional API calls for speed
         enriched_issues = []
-        for issue in issues_list[:20]:  # Limit to first 20 issues to avoid too many API calls
+        for issue in issues_list:  # Process all issues, not just first 20
             issue_id = issue.get('id')
             if issue_id:
-                if debug:
-                    print(f"[DEBUG] Fetching details for issue {issue_id}...")
-                # Get detailed information for this issue
-                details = get_comicvine_issue_details(issue_id, api_key=api_key, debug=debug) if api_key else get_comicvine_issue_details(issue_id, debug=debug)
-                
-                # Merge basic issue data with detailed data
+                # Use the data we already have from the volume issues call
+                # This is much faster than making individual API calls
                 enriched_issue = {
                     'id': issue.get('id'),
-                    'issue_number': issue.get('issue_number') or details.get('issue_number', 'N/A'),
-                    'name': issue.get('name') or details.get('name', 'Sans titre'),
-                    'cover_date': details.get('cover_date', 'Date inconnue'),
-                    'store_date': details.get('store_date', ''),
-                    'description': details.get('description', ''),
-                    'image': details.get('image', {}),
-                    'volume': details.get('volume', {}),
-                    'character_credits': details.get('character_credits', []),
-                    'person_credits': details.get('person_credits', []),
-                    'location_credits': details.get('location_credits', []),
+                    'issue_number': issue.get('issue_number', 'N/A'),
+                    'name': issue.get('name', 'Sans titre'),
+                    'cover_date': issue.get('cover_date', 'Date inconnue'),
+                    'store_date': issue.get('store_date', ''),
+                    'description': issue.get('description', ''),
+                    'image': volume_details.get('image', {}) if volume_details else issue.get('image', {}),  # Use volume image if available
+                    'volume': volume_details,  # Use volume details we already fetched
+                    'api_detail_url': issue.get('api_detail_url', ''),
                     # Add computed fields for consistency with BDGest
-                    'title': issue.get('name') or details.get('name', 'Sans titre'),
-                    'cover_url': details.get('image', {}).get('original_url', ''),
+                    'title': issue.get('name', 'Sans titre'),
+                    # Use volume image since individual issues don't have detailed image data
+                    'cover_url': volume_details.get('image', {}).get('original_url', '') if volume_details and volume_details.get('image') else '',
                     'album_url': f"https://comicvine.gamespot.com/issue/4000-{issue_id}/",
                 }
                 
-                # Create details section like BDGest
+                # Create details section like BDGest with automatic structure detection
                 details_dict = {}
-                if details.get('cover_date'):
-                    details_dict['Date de publication'] = details.get('cover_date')
-                if details.get('store_date'):
-                    details_dict['Date en magasin'] = details.get('store_date')
-                if details.get('description'):
+                
+                # Helper function to format any complex data structure
+                def format_complex_data(key, value, label):
+                    """Format complex data (arrays, objects) into structured display format"""
+                    if isinstance(value, list) and value:
+                        if isinstance(value[0], dict):
+                            # Array of objects - extract meaningful info
+                            if key == 'character_credits':
+                                items = [char.get('name', 'Unknown') for char in value[:10]]
+                            elif key == 'person_credits':
+                                items = [f"{person.get('name', 'Unknown')} ({person.get('role', 'N/A')})" for person in value]
+                            elif key == 'location_credits':
+                                items = [loc.get('name', 'Unknown') for loc in value]
+                            else:
+                                # Generic handling for any array of objects
+                                items = []
+                                for item in value[:10]:  # Limit to 10 items
+                                    if isinstance(item, dict):
+                                        # Try to find a meaningful display value
+                                        display_value = (item.get('name') or 
+                                                       item.get('title') or 
+                                                       item.get('id') or 
+                                                       str(item)[:50] + '...' if len(str(item)) > 50 else str(item))
+                                        items.append(str(display_value))
+                                    else:
+                                        items.append(str(item))
+                            
+                            if items:
+                                details_dict[label] = {'type': 'list', 'items': items}
+                        else:
+                            # Array of simple values
+                            details_dict[label] = {'type': 'list', 'items': [str(item) for item in value[:10]]}
+                    
+                    elif isinstance(value, dict) and value:
+                        # Single object - show key-value pairs
+                        items = []
+                        for k, v in value.items():
+                            if isinstance(v, (str, int, float)) and v:
+                                # Format key names nicely
+                                display_key = k.replace('_', ' ').title()
+                                items.append(f"{display_key}: {v}")
+                        
+                        if items:
+                            details_dict[label] = {'type': 'list', 'items': items[:10]}  # Limit to 10 items
+                
+                # Add basic fields
+                if enriched_issue.get('cover_date'):
+                    details_dict['Date de publication'] = enriched_issue.get('cover_date')
+                if enriched_issue.get('store_date'):
+                    details_dict['Date en magasin'] = enriched_issue.get('store_date')
+                if enriched_issue.get('description'):
                     # Clean HTML from description
                     import re
-                    clean_desc = re.sub('<[^<]+?>', '', details.get('description', ''))
+                    clean_desc = re.sub('<[^<]+?>', '', enriched_issue.get('description', ''))
                     details_dict['Description'] = clean_desc[:500] + ('...' if len(clean_desc) > 500 else '')
                 
-                # Add character credits
-                if details.get('character_credits'):
-                    char_names = [char.get('name', '') for char in details.get('character_credits', [])[:5]]
-                    if char_names:
-                        details_dict['Personnages'] = ', '.join(char_names)
+                # Add volume style/genre information
+                if volume_style:
+                    details_dict['Style/Genre'] = volume_style
                 
-                # Add person credits (writers, artists, etc.)
-                if details.get('person_credits'):
-                    person_names = [f"{person.get('name', '')} ({person.get('role', 'N/A')})" for person in details.get('person_credits', [])[:5]]
-                    if person_names:
-                        details_dict['Équipe créative'] = ', '.join(person_names)
+                # For now, skip the complex field processing since we don't have detailed issue data
+                # This makes the loading much faster while still providing essential information
+                
+                # Add volume information if available
+                if volume_details:
+                    vol_info = []
+                    if volume_details.get('name'):
+                        vol_info.append(f"Nom: {volume_details.get('name')}")
+                    if volume_details.get('start_year'):
+                        vol_info.append(f"Année: {volume_details.get('start_year')}")
+                    if volume_details.get('publisher', {}).get('name'):
+                        vol_info.append(f"Éditeur: {volume_details.get('publisher', {}).get('name')}")
+                    if vol_info:
+                        details_dict['Volume'] = {'type': 'list', 'items': vol_info}
                 
                 enriched_issue['details'] = details_dict
+                
+                # Add volume style/genre information for folder renaming
+                if volume_style:
+                    enriched_issue['style'] = volume_style
+                    # Also add to details for consistency with BDGest
+                    enriched_issue['details']['Style'] = volume_style
+                
                 enriched_issues.append(enriched_issue)
             else:
                 # Fallback for issues without ID
-                enriched_issues.append(issue)
+                fallback_issue = issue.copy()
+                if volume_style:
+                    fallback_issue['style'] = volume_style
+                enriched_issues.append(fallback_issue)
         
         if debug:
             print(f"[DEBUG] Enriched {len(enriched_issues)} issues with detailed information")
         return enriched_issues
+
+    def search_series_only(self, query, debug=False, verbose=False):
+        """Search only for series names without fetching detailed album data"""
+        from comicVine_scraper_api import search_comicvine_series
+        # Pass API key from settings if available
+        settings = QSettings("ComicsRename", "App")
+        api_key = settings.value('comicvine_api', '')
+        
+        try:
+            if api_key:
+                results = search_comicvine_series(query, api_key=api_key, debug=debug)
+            else:
+                results = search_comicvine_series(query, debug=debug)
+            
+            # Transform results to match expected format
+            series_list = []
+            for volume in results:
+                series_data = {
+                    'serie_name': volume.get('name', 'Unknown'),
+                    'volume_id': str(volume.get('id', '')),
+                    'start_year': volume.get('start_year'),
+                    'publisher': volume.get('publisher', {}).get('name', 'Unknown') if volume.get('publisher') else 'Unknown',
+                    'image': volume.get('image'),
+                    'api_detail_url': volume.get('api_detail_url'),
+                    'raw_data': volume  # Store original data for later use
+                }
+                series_list.append(series_data)
+            
+            if debug:
+                print(f"[DEBUG][ComicVine] search_series_only returned {len(series_list)} series")
+            
+            return series_list
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][ComicVine] Error in search_series_only: {e}")
+            return []
 
 PROVIDERS = {
     'ComicVine': ComicVineProvider(),
@@ -788,6 +899,7 @@ class ComicRenamer(QWidget):
         self._populating = False
         self._bdgest_album_results = []
         self._bdgest_series_results = []  # New: store series search results
+        self._comicvine_series_results = []  # New: store Comic Vine series search results
         self._original_cover_pixmap = None  # Store original pixmap for rescaling
         self._build_ui()
         self.series_cover_url = ''
@@ -869,7 +981,15 @@ class ComicRenamer(QWidget):
 
         det_widget = QWidget()
         det_layout = QHBoxLayout(det_widget)
-        self.detail_text = QTextEdit(readOnly=True)
+        self.detail_text = QTextBrowser()  # Use QTextBrowser instead of QTextEdit for better link support
+        
+        # Configure QTextBrowser for better link handling and styling
+        self.detail_text.setTextInteractionFlags(
+            Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard | Qt.LinksAccessibleByMouse
+        )
+        # QTextBrowser has built-in support for opening external links
+        self.detail_text.setOpenExternalLinks(True)
+        
         self.detail_image = QLabel()
         # Configure image label to be responsive and centered
         self.detail_image.setScaledContents(False)  # Don't force scaling to fill
@@ -1078,22 +1198,54 @@ class ComicRenamer(QWidget):
 
         if self._source == 'ComicVine':
             from comicVine_scraper_api import search_comicvine_series, search_comicvine_issues
-            volumes = search_comicvine_series(q)
+            # Load all album details immediately (original behavior)
+            volumes = search_comicvine_series(q, debug=debug)
             if volumes:
                 if debug:
-                    print(f"[DEBUG][UI] {len(volumes)} volumes found for '{q}'")
-                for series in volumes:
+                    print(f"[DEBUG][UI] {len(volumes)} volumes found for '{q}' - loading all albums immediately")
+                
+                # Fetch albums for all series immediately - optimized for speed
+                total_volumes = len(volumes)
+                
+                # Show initial loading message
+                self.detail_text.setHtml(f"<i>Loading albums from {total_volumes} series...</i>")
+                QApplication.processEvents()  # Single UI update at start
+                
+                for vol_idx, series in enumerate(volumes, 1):
                     series_name = series.get('name', 'Unknown')
                     volume_id = str(series.get('id', ''))
+                    
+                    if debug:
+                        print(f"[DEBUG][UI] Fetching albums for volume {vol_idx}/{total_volumes}: {series_name}")
+                    
+                    # Fetch issues for this series without UI updates in the loop for maximum speed
                     issues = provider.search_albums(volume_id, debug=debug)
                     for issue in issues:
                         issue['volume'] = {'name': series_name}
-                        self.issues_by_series[series_name].append(issue)
+                        self.issues_by_series.setdefault(series_name, []).append(issue)
+                
+                # Clear loading message after all fetching is complete
+                self.detail_text.clear()
+                
                 if not self.issues_by_series:
                     QMessageBox.warning(self, tr("messages.info.no_result"), tr("messages.errors.no_results"))
                     return
+                
+                # Populate series dropdown with album counts
                 for s in sorted(self.issues_by_series):
                     self.series_combo.addItem(f"{s} ({len(self.issues_by_series[s])})")
+                
+                # Auto-select the first series to show albums immediately
+                if self.series_combo.count() > 0:
+                    self.series_combo.setCurrentIndex(0)
+                    # Trigger the selection manually to populate albums
+                    first_series_text = self.series_combo.currentText()
+                    self._populate_albums(first_series_text)
+                
+                if debug:
+                    total_albums = sum(len(albums) for albums in self.issues_by_series.values())
+                    print(f"[DEBUG][UI] Loaded {total_albums} total albums across {len(self.issues_by_series)} series")
+                    print(f"[DEBUG][UI] Auto-selected first series: {first_series_text if self.series_combo.count() > 0 else 'None'}")
             else:
                 if debug:
                     print(f"[DEBUG][UI] No volumes found for '{q}', fallback to issues search")
@@ -1205,18 +1357,20 @@ class ComicRenamer(QWidget):
                 return str(n)
 
         if self._source == 'ComicVine':
+            # Extract series name from dropdown text (remove count)
             series = txt.rsplit(' (', 1)[0]
-            lst = sorted(self.issues_by_series[series], key=lambda x: ((x.get('cover_date') or ''), x.get('issue_number') or ''))
-            self.album_table.setRowCount(len(lst))
-            for r, it in enumerate(lst):
-                t = it.get('name') or 'Untitled'
-                n = it.get('issue_number') or '?'
-                n_fmt = format_num(n)
-                y = (it.get('cover_date') or '')[:4]
-                val = f"{series} - {n_fmt} - {t} ({y})"
-                itm = QTableWidgetItem(val)
-                itm.setData(Qt.UserRole, it)
-                self.album_table.setItem(r, 0, itm)
+            if series in self.issues_by_series:
+                lst = sorted(self.issues_by_series[series], key=lambda x: ((x.get('cover_date') or ''), x.get('issue_number') or ''))
+                self.album_table.setRowCount(len(lst))
+                for r, it in enumerate(lst):
+                    t = it.get('name') or 'Untitled'
+                    n = it.get('issue_number') or '?'
+                    n_fmt = format_num(n)
+                    y = (it.get('cover_date') or '')[:4]
+                    val = f"{series} - {n_fmt} - {t} ({y})"
+                    itm = QTableWidgetItem(val)
+                    itm.setData(Qt.UserRole, it)
+                    self.album_table.setItem(r, 0, itm)
         else:  # BDGest
             # Check if we're in series mode (SeriesName checkbox checked)
             if self.series_name_cb.isChecked() and self._bdgest_series_results:
@@ -1346,25 +1500,172 @@ class ComicRenamer(QWidget):
         meta = itm.data(Qt.UserRole) if itm else None
         if not meta:
             return
-        html = "<b>Détails complets :</b><br><ul>"
-        # Affiche tous les champs principaux sauf 'details'
+        html = """
+        <style>
+        body, div, ul, li, p { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+            background: transparent !important; 
+            margin: 0; 
+            padding: 0; 
+        }
+        .details-container { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+            background: transparent !important;
+            color: #333;
+            line-height: 1.4;
+        }
+        .details-container ul { 
+            margin: 5px 0; 
+            padding-left: 20px; 
+            background: transparent !important;
+        }
+        .details-container li { 
+            margin: 2px 0; 
+            background: transparent !important;
+            list-style-type: disc;
+            line-height: 1.3;
+        }
+        .sub-section { 
+            background-color: #f8f9fa !important; 
+            padding: 6px 8px; 
+            margin: 4px 0; 
+            border-radius: 4px; 
+            border: 1px solid #e9ecef;
+        }
+        .sub-section > b { 
+            color: #495057; 
+            background: transparent !important;
+        }
+        .sub-list { 
+            margin: 5px 0 5px 15px; 
+            background: transparent !important;
+        }
+        .sub-list li { 
+            margin: 1px 0; 
+            color: #6c757d; 
+            font-size: 0.95em; 
+            background: transparent !important;
+            list-style-type: circle;
+        }
+        .complex-data { 
+            background-color: #e9ecef !important; 
+            padding: 4px 6px; 
+            border-radius: 3px; 
+            margin: 2px 0;
+        }
+        a { 
+            color: #007bff !important; 
+            text-decoration: underline;
+            background: transparent !important;
+        }
+        a:hover { 
+            color: #0056b3 !important; 
+            background: transparent !important;
+            text-decoration: underline;
+        }
+        b, strong { 
+            background: transparent !important; 
+            font-weight: 600;
+        }
+        /* Ensure no unwanted backgrounds appear */
+        * { 
+            background-attachment: scroll !important;
+        }
+        </style>
+        <div class="details-container">
+        <b>Détails complets :</b><br><ul>"""
+        
+        # Helper function to detect and make URLs clickable
+        def make_links_clickable(text):
+            """Convert URLs in text to clickable HTML links"""
+            import re
+            # URL pattern to match http/https URLs
+            url_pattern = r'(https?://[^\s<>"]{2,})'
+            # Replace URLs with HTML links
+            def replace_url(match):
+                url = match.group(1)
+                # Truncate very long URLs for display
+                display_url = url if len(url) <= 50 else url[:47] + '...'
+                return f'<a href="{url}" title="{url}">{display_url}</a>'
+            
+            return re.sub(url_pattern, replace_url, str(text))
+        
+        # Helper function to format any data type for display
+        def format_display_value(value):
+            """Format any value for HTML display"""
+            if isinstance(value, dict):
+                if value.get('type') == 'list':
+                    # Already structured list data
+                    return value
+                else:
+                    # Convert dict to structured list
+                    items = []
+                    for k, v in value.items():
+                        if isinstance(v, (str, int, float)) and v:
+                            display_key = str(k).replace('_', ' ').title()
+                            items.append(f"{display_key}: {make_links_clickable(v)}")
+                    return {'type': 'list', 'items': items} if items else make_links_clickable(str(value))
+            elif isinstance(value, list):
+                # Convert list to structured format
+                items = []
+                for item in value[:10]:  # Limit display
+                    if isinstance(item, dict):
+                        # Try to extract meaningful info from dict
+                        display_val = (item.get('name') or 
+                                     item.get('title') or 
+                                     item.get('id') or 
+                                     str(item)[:60] + '...' if len(str(item)) > 60 else str(item))
+                        items.append(make_links_clickable(str(display_val)))
+                    else:
+                        items.append(make_links_clickable(str(item)))
+                return {'type': 'list', 'items': items} if items else make_links_clickable(str(value))
+            else:
+                return make_links_clickable(str(value))
+        
+        # Display all main fields except 'details'
         for k, v in meta.items():
             if k != "details":
-                html += f"<li><b>{k}</b> : {v}</li>"
-        # Ajoute les détails à la fin, bien mis en forme
+                formatted_value = format_display_value(v)
+                if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                    html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
+                    for item in formatted_value.get('items', []):
+                        html += f"<li>{make_links_clickable(item)}</li>"
+                    html += "</ul></li>"
+                else:
+                    html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value)}</li>"
+        
+        # Add the details with improved formatting
         details = meta.get("details")
         if isinstance(details, dict):
             html += "<li><b>Détails :</b><ul>"
             for label, value in details.items():
-                html += f"<li><b>{label}</b> : {value}</li>"
+                formatted_value = format_display_value(value)
+                if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                    # Handle structured list data as styled sub-sections
+                    html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
+                    for item in formatted_value.get('items', []):
+                        html += f"<li>{make_links_clickable(item)}</li>"
+                    html += "</ul></li>"
+                else:
+                    # Handle regular string/simple data
+                    html += f"<li><b>{label}</b> : {make_links_clickable(formatted_value)}</li>"
             html += "</ul></li>"
-        html += "</ul>"
+        html += "</ul></div>"
         self.detail_text.setHtml(html)
         img_url = meta.get('cover_url') or meta.get('image', {}).get('original_url')
-        if img_url and img_url.startswith('/'):
-            img_url = 'https://www.bedetheque.com' + img_url
+        
+        # Handle different URL formats for different providers
+        if img_url:
+            # BDGest URLs start with '/' and need domain prepended
+            if img_url.startswith('/'):
+                img_url = 'https://www.bedetheque.com' + img_url
+            # Comic Vine URLs are already complete URLs (start with http)
+            # No modification needed for Comic Vine URLs
+        
         if img_url:
             try:
+                if self.debug:
+                    print(f"[DEBUG] Loading cover image from: {img_url}")
                 data = requests.get(img_url, timeout=10).content
                 pm = QPixmap()
                 pm.loadFromData(data)
@@ -1373,10 +1674,14 @@ class ComicRenamer(QWidget):
                 # Scale to fit available space while maintaining aspect ratio
                 scaled_pm = self._scale_image_to_fit(pm)
                 self.detail_image.setPixmap(scaled_pm)
+                if self.debug:
+                    print(f"[DEBUG] Cover image loaded successfully, size: {pm.width()}x{pm.height()}")
             except Exception as e:
-                print("[ERROR] Image load failed:", e)
+                print(f"[ERROR] Image load failed for URL {img_url}: {e}")
                 self.detail_image.clear()
         else:
+            if self.debug:
+                print("[DEBUG] No cover image URL found")
             self.detail_image.clear()
 
     def _rename_selected(self):
@@ -1746,14 +2051,3 @@ class EditableFolderLineEdit(QLineEdit):
             self._cancel_editing()
         else:
             super().keyPressEvent(event)
-
-if __name__ == "__main__":
-    import sys
-    app = QApplication(sys.argv)    # Set application icon globally
-    app_icon = get_app_icon()
-    if not app_icon.isNull():
-        app.setWindowIcon(app_icon)
-    
-    win = ComicRenamer()
-    win.show()
-    sys.exit(app.exec())
