@@ -6,6 +6,11 @@ on:
       - 'v*'  # Trigger on version tags
   workflow_dispatch:  # Allow manual trigger
 
+# Add permissions for GitHub token
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -38,6 +43,13 @@ jobs:
       run: |
         python -m PyInstaller ComicsRename.spec
         
+    - name: List build output
+      run: |
+        echo "Build completed. Contents of dist directory:"
+        ls -la dist/
+        echo "All files in dist:"
+        find dist/ -type f | head -10
+        
     - name: Test executable
       run: |
         dist\ComicsRename.exe --version
@@ -52,6 +64,7 @@ jobs:
       with:
         name: ComicsRename-Windows
         path: dist/ComicsRename.exe
+        if-no-files-found: warn
         
   build-macos:
     runs-on: macos-latest
@@ -76,6 +89,13 @@ jobs:
       run: |
         python -m PyInstaller ComicsRename.spec
         
+    - name: List build output
+      run: |
+        echo "Build completed. Contents of dist directory:"
+        ls -la dist/
+        echo "All files in dist:"
+        find dist/ -type f | head -10
+        
     - name: Create DMG (optional)
       run: |
         # Create a simple DMG for distribution
@@ -87,7 +107,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ComicsRename-macOS
-        path: dist/ComicsRename.app
+        path: dist/ComicsRename.app/
+        if-no-files-found: warn
         
   build-linux:
     runs-on: ubuntu-latest
@@ -117,11 +138,19 @@ jobs:
       run: |
         python -m PyInstaller ComicsRename.spec
         
+    - name: List build output
+      run: |
+        echo "Build completed. Contents of dist directory:"
+        ls -la dist/
+        echo "All files in dist:"
+        find dist/ -type f | head -10
+        
     - name: Upload Linux executable
       uses: actions/upload-artifact@v4
       with:
         name: ComicsRename-Linux
         path: dist/ComicsRename
+        if-no-files-found: warn
         
   create-release:
     needs: [build-windows, build-macos, build-linux]
@@ -132,17 +161,24 @@ jobs:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       
+    - name: List downloaded artifacts
+      run: |
+        echo "Downloaded artifacts:"
+        find . -type f -name "*" | head -20
+        ls -la
+        
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ComicsRename-Windows/ComicsRename.exe
-          ComicsRename-macOS/ComicsRename.app
-          ComicsRename-Linux/ComicsRename
+          ComicsRename-Windows/*
+          ComicsRename-macOS/*
+          ComicsRename-Linux/*
         draft: false
         prerelease: false
+        fail_on_unmatched_files: false
         body: |
-          ## ComicsRename Release
+          ## ComicsRename Release v${{ github.ref_name }}
           
           ### Downloads
           - **Windows**: ComicsRename.exe (standalone executable)
@@ -159,5 +195,8 @@ jobs:
           - **Linux**: Modern Linux distribution with X11
           
           All executables are self-contained and include all dependencies.
+          
+          ### Release Notes
+          See the full commit history for detailed changes in this release.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
