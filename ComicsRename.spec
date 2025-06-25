@@ -30,7 +30,7 @@ hiddenimports = [
     'lxml',
     'lxml.etree',
     'lxml.html',
-    'python_dotenv',
+    'dotenv',
     'json',
     'urllib3',
 ]
@@ -81,6 +81,19 @@ if sys.platform == 'win32':
 
 elif sys.platform == 'darwin':
     # macOS app bundle
+    # Try to use PNG icon and let Pillow convert it
+    icon_path = None
+    possible_icons = [
+        str(spec_dir / 'icons' / 'comicsrename.icns'),
+        str(spec_dir / 'icons' / 'comicsrename_1024x1024.png'),
+        str(spec_dir / 'icons' / 'comicsrename_512x512.png'),
+        str(spec_dir / 'icons' / 'comicsrename_256x256.png'),
+    ]
+    for icon in possible_icons:
+        if os.path.exists(icon):
+            icon_path = icon
+            break
+    
     exe = EXE(
         pyz,
         a.scripts,
@@ -97,7 +110,7 @@ elif sys.platform == 'darwin':
         target_arch=None,
         codesign_identity=None,
         entitlements_file=None,
-        icon=str(spec_dir / 'icons' / 'comicsrename.ico'),
+        icon=icon_path,
     )
     
     coll = COLLECT(
@@ -114,7 +127,7 @@ elif sys.platform == 'darwin':
     app = BUNDLE(
         coll,
         name='ComicsRename.app',
-        icon=str(spec_dir / 'icons' / 'comicsrename.ico'),
+        icon=icon_path,
         bundle_identifier='com.comicsrename.app',
         version='3.2.0',
         info_plist={
