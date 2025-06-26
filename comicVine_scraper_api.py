@@ -210,7 +210,7 @@ def get_comicvine_issue_details(issue_id, debug=False, api_key=None):
         return {}
 
 def get_comicvine_volume_details(volume_id, debug=True, api_key=None):
-    """Get detailed information for a specific volume, including concepts"""
+    """Get detailed information for a specific volume"""
     # Clean and validate API key
     final_api_key = (api_key or COMICVINE_API_KEY).strip()
     if not final_api_key:
@@ -222,7 +222,7 @@ def get_comicvine_volume_details(volume_id, debug=True, api_key=None):
     params = {
         'api_key': final_api_key,
         'format': 'json',
-        'field_list': 'id,name,start_year,publisher,description,image,concepts,character_credits,person_credits,location_credits',
+        'field_list': 'id,name,start_year,publisher,description,image,character_credits,person_credits,location_credits',
     }
     headers = {'User-Agent': 'ComicRenamerApp/1.0'}
     try:
@@ -236,8 +236,7 @@ def get_comicvine_volume_details(volume_id, debug=True, api_key=None):
                 print(f"[WARN][ComicVine] Volume detail fetch error: {data.get('error')}")
             else:
                 volume_data = data.get('results', {})
-                concepts = volume_data.get('concepts', [])
-                print(f"[DEBUG][ComicVine] Volume {volume_id} details retrieved with {len(concepts)} concepts")
+                print(f"[DEBUG][ComicVine] Volume {volume_id} details retrieved successfully")
         return data.get('results', {}) if data.get('status_code') == 1 else {}
     except Exception as e:
         if debug:
