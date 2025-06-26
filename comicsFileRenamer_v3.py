@@ -1518,6 +1518,8 @@ class ComicRenamer(QWidget):
         self.album_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
 
     def _show_details(self, r, c):
+        if self.debug:
+            print(f"[DEBUG] _show_details called for row {r}, col {c}")
         itm = self.album_table.item(r, 0)
         meta = itm.data(Qt.UserRole) if itm else None
         if not meta:
@@ -1527,9 +1529,16 @@ class ComicRenamer(QWidget):
             self._original_cover_pixmap = None
             return
         
+        if self.debug:
+            print(f"[DEBUG] Clearing existing image before loading new one")
         # Clear the existing image before loading new one
         self.detail_image.clear()
+        self.detail_image.setPixmap(QPixmap())  # Set empty pixmap explicitly
         self._original_cover_pixmap = None
+        # Force UI update to ensure image is cleared
+        self.detail_image.repaint()
+        self.detail_image.update()
+        QApplication.processEvents()
         html = """
         <style>
         body, div, ul, li, p { 
@@ -1746,14 +1755,31 @@ class ComicRenamer(QWidget):
             try:
                 if self.debug:
                     print(f"[DEBUG] Loading cover image from: {img_url}")
-                data = requests.get(img_url, timeout=10).content
+                # Add headers to prevent caching issues
+                headers = {
+                    'User-Agent': 'ComicsRename/3.2',
+                    'Cache-Control': 'no-cache'
+                }
+                data = requests.get(img_url, timeout=10, headers=headers).content
                 pm = QPixmap()
                 pm.loadFromData(data)
+                
+                # Ensure we have a valid image
+                if pm.isNull():
+                    if self.debug:
+                        print(f"[DEBUG] Failed to create QPixmap from data")
+                    self.detail_image.clear()
+                    return
+                    
                 # Store original for future rescaling
                 self._original_cover_pixmap = pm
                 # Scale to fit available space while maintaining aspect ratio
                 scaled_pm = self._scale_image_to_fit(pm)
                 self.detail_image.setPixmap(scaled_pm)
+                # Force update to ensure the new image is displayed
+                self.detail_image.update()
+                self.detail_image.repaint()
+                QApplication.processEvents()
                 if self.debug:
                     print(f"[DEBUG] Cover image loaded successfully, size: {pm.width()}x{pm.height()}")
             except Exception as e:
