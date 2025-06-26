@@ -1521,7 +1521,15 @@ class ComicRenamer(QWidget):
         itm = self.album_table.item(r, 0)
         meta = itm.data(Qt.UserRole) if itm else None
         if not meta:
+            # Clear the details and image when no metadata
+            self.detail_text.setHtml("<p>No details available.</p>")
+            self.detail_image.clear()
+            self._original_cover_pixmap = None
             return
+        
+        # Clear the existing image before loading new one
+        self.detail_image.clear()
+        self._original_cover_pixmap = None
         html = """
         <style>
         body, div, ul, li, p { 
@@ -1608,17 +1616,29 @@ class ComicRenamer(QWidget):
                 url = match.group(1)
                 # Truncate very long URLs for display
                 display_url = url if len(url) <= 50 else url[:47] + '...'
-                return f'<a href="{url}" title="{url}">{display_url}</a>'
+                return f'<a href="{url}">{display_url}</a>'
             
             return re.sub(url_pattern, replace_url, str(text))
         
         # Helper function to format any data type for display
-        def format_display_value(value):
+        def format_display_value(value, field_name=None):
             """Format any value for HTML display"""
             if isinstance(value, dict):
                 if value.get('type') == 'list':
                     # Already structured list data
                     return value
+                elif field_name == 'volume':
+                    # Special handling for volume field - show just the name
+                    if value.get('name'):
+                        return f"Name: {value.get('name')}"
+                    else:
+                        # Convert dict to structured list for other volume info
+                        items = []
+                        for k, v in value.items():
+                            if isinstance(v, (str, int, float)) and v:
+                                display_key = str(k).replace('_', ' ').title()
+                                items.append(f"{display_key}: {make_links_clickable(v)}")
+                        return {'type': 'list', 'items': items} if items else make_links_clickable(str(value))
                 else:
                     # Convert dict to structured list
                     items = []
@@ -1645,23 +1665,49 @@ class ComicRenamer(QWidget):
                 return make_links_clickable(str(value))
         
         # Display all main fields except 'details'
-        for k, v in meta.items():
-            if k != "details":
-                formatted_value = format_display_value(v)
+        # Define the preferred order for ComicVine fields
+        field_order = [
+            'issue_number',
+            'name', 
+            'store_date',
+            'title',
+            'details',  # This will be handled specially
+            'volume',
+            'description',
+            'album_url',
+            'id',
+            'image',
+            'api_detail_url',
+            'cover_url',
+            'cover_date'
+        ]
+        
+        # Display fields in the preferred order
+        displayed_fields = set()
+        
+        for field in field_order:
+            if field in meta:
+                if field == "details":
+                    # Handle details specially - will be processed later
+                    continue
+                    
+                v = meta[field]
+                formatted_value = format_display_value(v, field)
                 if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                    html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
+                    html += f'<li class="sub-section"><b>{field} :</b><ul class="sub-list">'
                     for item in formatted_value.get('items', []):
                         html += f"<li>{make_links_clickable(item)}</li>"
                     html += "</ul></li>"
                 else:
-                    html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value)}</li>"
+                    html += f"<li><b>{field}</b> : {make_links_clickable(formatted_value)}</li>"
+                displayed_fields.add(field)
         
-        # Add the details with improved formatting
+        # Add the details section after 'title' and before 'volume'
         details = meta.get("details")
         if isinstance(details, dict):
             html += "<li><b>Détails :</b><ul>"
             for label, value in details.items():
-                formatted_value = format_display_value(value)
+                formatted_value = format_display_value(value, label)
                 if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
                     # Handle structured list data as styled sub-sections
                     html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
@@ -1672,6 +1718,18 @@ class ComicRenamer(QWidget):
                     # Handle regular string/simple data
                     html += f"<li><b>{label}</b> : {make_links_clickable(formatted_value)}</li>"
             html += "</ul></li>"
+        
+        # Display any remaining fields that weren't in our preferred order
+        for k, v in meta.items():
+            if k not in displayed_fields and k != "details":
+                formatted_value = format_display_value(v, k)
+                if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                    html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
+                    for item in formatted_value.get('items', []):
+                        html += f"<li>{make_links_clickable(item)}</li>"
+                    html += "</ul></li>"
+                else:
+                    html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value)}</li>"
         html += "</ul></div>"
         self.detail_text.setHtml(html)
         img_url = meta.get('cover_url') or meta.get('image', {}).get('original_url')
