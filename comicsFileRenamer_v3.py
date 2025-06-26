@@ -229,11 +229,20 @@ class ComicVineProvider(MetadataProvider):
             if issue_id:
                 # Use the data we already have from the volume issues call
                 # This is much faster than making individual API calls
+                # Determine publication date with fallback logic
+                publication_date = issue.get('cover_date')
+                if not publication_date or publication_date == 'Date inconnue':
+                    # Use volume start year as fallback
+                    if volume_details and volume_details.get('start_year'):
+                        publication_date = str(volume_details.get('start_year'))
+                    else:
+                        publication_date = 'Date inconnue'
+                
                 enriched_issue = {
                     'id': issue.get('id'),
                     'issue_number': issue.get('issue_number', 'N/A'),
                     'name': issue.get('name', 'Sans titre'),
-                    'cover_date': issue.get('cover_date', 'Date inconnue'),
+                    'cover_date': publication_date,
                     'store_date': issue.get('store_date', ''),
                     'description': issue.get('description', ''),
                     'image': volume_details.get('image', {}) if volume_details else issue.get('image', {}),  # Use volume image if available
@@ -293,9 +302,22 @@ class ComicVineProvider(MetadataProvider):
                         if items:
                             details_dict[label] = {'type': 'list', 'items': items[:10]}  # Limit to 10 items
                 
-                # Add basic fields
+                # Add basic fields with date fallback logic
+                publication_date = None
                 if enriched_issue.get('cover_date'):
-                    details_dict['Date de publication'] = enriched_issue.get('cover_date')
+                    publication_date = enriched_issue.get('cover_date')
+                    details_dict['Date de publication'] = publication_date
+                elif volume_details and volume_details.get('start_year'):
+                    # Use volume start year as fallback when cover_date is not available
+                    publication_date = str(volume_details.get('start_year'))
+                    details_dict['Date de publication'] = f"{publication_date} (Année du volume)"
+                else:
+                    details_dict['Date de publication'] = "Date inconnue"
+                
+                # Store the resolved date for use in issue data
+                if publication_date:
+                    enriched_issue['cover_date'] = publication_date if enriched_issue.get('cover_date') else publication_date
+                
                 if enriched_issue.get('store_date'):
                     details_dict['Date en magasin'] = enriched_issue.get('store_date')
                 if enriched_issue.get('description'):

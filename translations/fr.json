@@ -40,7 +40,8 @@
       "reveal_in_finder": "Afficher dans le Finder",
       "show_in_explorer": "Afficher dans l'Explorateur",
       "show_in_file_manager": "Afficher dans le gestionnaire de fichiers",
-      "refresh_folder_files": "Rafraîchir les fichiers du dossier"
+      "refresh_folder_files": "Rafraîchir les fichiers du dossier",
+      "quick_view": "Aperçu rapide"
     }
   },
   "dialogs": {
@@ -67,7 +68,10 @@
       "username": "Nom d'utilisateur :",
       "password": "Mot de passe :",
       "comicvine_settings": "Paramètres ComicVine",
-      "api_key": "Clé API :"
+      "api_key": "Clé API :",
+      "quick_view": {
+        "title": "Aperçu rapide - {title}"
+      }
     }
   },
   "messages": {
