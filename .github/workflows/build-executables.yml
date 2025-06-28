@@ -46,9 +46,9 @@ jobs:
     - name: List build output
       run: |
         echo "Build completed. Contents of dist directory:"
-        ls -la dist/
+        Get-ChildItem -Path dist/ -Force
         echo "All files in dist:"
-        find dist/ -type f | head -10
+        Get-ChildItem -Path dist/ -Recurse -File | Select-Object -First 10
         
     - name: Test executable
       run: |
@@ -57,7 +57,7 @@ jobs:
       
     - name: Get file info
       run: |
-        dir dist\ComicsRename.exe
+        Get-ChildItem -Path dist\ComicsRename.exe -Force
         
     - name: Upload Windows executable
       uses: actions/upload-artifact@v4
