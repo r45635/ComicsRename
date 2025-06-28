@@ -27,6 +27,7 @@ import re
 import datetime
 import concurrent.futures
 import json
+import html
 
 LOGIN_URL = "https://online.bdgest.com/login"
 ALBUMS_URL = (
@@ -38,6 +39,12 @@ def _log(text, log_path):
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(f"[{datetime.datetime.now().isoformat()}] {text}\n")
             f.flush()
+
+def _decode_html_entities(text):
+    """Decode HTML entities like &amp; to & and &lt; to <"""
+    if not text:
+        return text
+    return html.unescape(str(text))
 
 def _get_soup(text, debug=False):
     try:
@@ -147,17 +154,17 @@ def fetch_album_details(album_url, session, debug=False, verbose=False, log_path
             if not label_tag:
                 continue
             # Remove trailing and leading spaces from label
-            label = label_tag.get_text(strip=True).rstrip(":").strip()
+            label = _decode_html_entities(label_tag.get_text(strip=True).rstrip(":").strip())
             label_tag.extract()
-            value = li.get_text(strip=True)
+            value = _decode_html_entities(li.get_text(strip=True))
             # Si la valeur est vide, on regarde les <a> ou <i>
             if not value:
                 a_tag = li.find("a")
                 if a_tag:
-                    value = a_tag.get_text(strip=True)
+                    value = _decode_html_entities(a_tag.get_text(strip=True))
                 i_tag = li.find("i")
                 if i_tag and i_tag.has_attr("title"):
-                    value = i_tag["title"]
+                    value = _decode_html_entities(i_tag["title"])
             orig_label = label
             i = 2
             while label in details:
@@ -172,7 +179,7 @@ def fetch_album_details(album_url, session, debug=False, verbose=False, log_path
     if autres_div:
         resume_span = autres_div.find("span", id="ResumeAffiche")
         if resume_span:
-            details["Résumé"] = resume_span.get_text(strip=True)
+            details["Résumé"] = _decode_html_entities(resume_span.get_text(strip=True))
             if verbose:
                 print(f"[VERBOSE][fetch_album_details] Résumé: {details['Résumé']}")
 
@@ -207,12 +214,12 @@ def fetch_albums(session, term, debug=True, verbose=False, log_path=None, fetch_
 
         cover_img = tds[1].find("img")["src"] if tds[1].find("img") else ""
         serie_tag = tds[2].find("span", class_="serie")
-        serie_name = serie_tag.get_text(strip=True) if serie_tag else ""
+        serie_name = _decode_html_entities(serie_tag.get_text(strip=True)) if serie_tag else ""
         titre_tag = tds[2].find("span", class_="titre")
         titre_raw = titre_tag.get_text(" ", strip=True) if titre_tag else ""
         m = re.match(r"-?\s*([A-Z0-9\-]+)\s*-\s*(.+)", titre_raw)
         album_number = m.group(1) if m else ""
-        album_name = m.group(2) if m else titre_raw
+        album_name = _decode_html_entities(m.group(2)) if m else _decode_html_entities(titre_raw)
 
         editor = tds[3].contents[0].strip() if tds[3].contents else ""
         date = tds[3].find("span", class_="dl").get_text(strip=True) if tds[3].find("span", class_="dl") else ""
@@ -322,7 +329,7 @@ def fetch_albums_by_series_id(session, series_id, series_name=None, debug=True, 
 
             cover_img = tds[1].find("img")["src"] if tds[1].find("img") else ""
             serie_tag = tds[2].find("span", class_="serie")
-            serie_name_extracted = serie_tag.get_text(strip=True) if serie_tag else ""
+            serie_name_extracted = _decode_html_entities(serie_tag.get_text(strip=True)) if serie_tag else ""
             titre_tag = tds[2].find("span", class_="titre")
             titre_raw = titre_tag.get_text(" ", strip=True) if titre_tag else ""
             
@@ -350,12 +357,12 @@ def fetch_albums_by_series_id(session, series_id, series_name=None, debug=True, 
                     m = re.search(pattern, titre_clean, re.DOTALL)
                     if m:
                         album_number = m.group(1)
-                        album_name = m.group(2).strip()
+                        album_name = _decode_html_entities(m.group(2).strip())
                         break
                 
                 # Si aucun pattern ne marche, garder le titre tel quel
                 if not album_number and not album_name:
-                    album_name = titre_raw
+                    album_name = _decode_html_entities(titre_raw)
             
             if debug and album_number == "13":
                 print(f"[DEBUG][BDGest] Album 13 parsing - Raw: {repr(titre_raw)}")
@@ -524,7 +531,7 @@ def fetch_series(session, term, debug=True, verbose=False, log_path=None):
                     if isinstance(item, dict):
                         serie_info = {
                             "search_term": term,
-                            "serie_name": item.get("label", item.get("value", item.get("name", "Unknown"))),
+                            "serie_name": _decode_html_entities(item.get("label", item.get("value", item.get("name", "Unknown")))),
                             "serie_id": item.get("id"),
                             "value": item.get("value"),
                             "label": item.get("label"),
@@ -563,10 +570,10 @@ def fetch_series(session, term, debug=True, verbose=False, log_path=None):
                         
                         # Extract data attributes if they exist
                         if li.has_attr("data-value"):
-                            serie_info["serie_name"] = li["data-value"]
+                            serie_info["serie_name"] = _decode_html_entities(li["data-value"])
                         else:
                             # Fallback to text content
-                            serie_info["serie_name"] = text_content
+                            serie_info["serie_name"] = _decode_html_entities(text_content)
                         
                         # Look for additional information in spans or other elements
                         spans = li.find_all("span")

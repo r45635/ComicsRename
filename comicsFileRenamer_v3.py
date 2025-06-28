@@ -406,6 +406,136 @@ PROVIDERS = {
     'BDGest': BDGestProvider(),
 }
 
+# ---------- Custom UI Components ----------
+class DroppableLineEdit(QLineEdit):
+    """A QLineEdit that accepts drag and drop of text/files"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+    
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+    
+    def dropEvent(self, event):
+        if event.mimeData().hasText():
+            text = event.mimeData().text().strip()
+            # Remove file:// prefix if present
+            if text.startswith('file://'):
+                text = text[7:]
+            self.setText(text)
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+
+class EditableFolderLineEdit(QLineEdit):
+    """A QLineEdit for displaying folder names (not full paths) with drag support for search"""
+    
+    def __init__(self, main_window=None, parent=None):
+        super().__init__(parent)
+        self.main_window = main_window
+        self.setAcceptDrops(False)  # Disable drop to avoid conflicts
+        self.setReadOnly(True)  # Read-only by default, editable on double-click
+        self.original_text = ""  # Store original text for comparison
+        
+    def mouseDoubleClickEvent(self, event):
+        """Enable editing on double-click"""
+        if event.button() == Qt.LeftButton:
+            self.original_text = self.text()  # Store original text
+            self.setReadOnly(False)
+            self.selectAll()
+            self.setFocus()
+        super().mouseDoubleClickEvent(event)
+    
+    def keyPressEvent(self, event):
+        """Handle Enter/Return and Escape keys during editing"""
+        if not self.isReadOnly():
+            if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+                self._finish_editing(save=True)
+                return
+            elif event.key() == Qt.Key_Escape:
+                self._finish_editing(save=False)
+                return
+        super().keyPressEvent(event)
+    
+    def focusOutEvent(self, event):
+        """Finish editing when focus is lost"""
+        if not self.isReadOnly():
+            self._finish_editing(save=True)
+        super().focusOutEvent(event)
+    
+    def _finish_editing(self, save=True):
+        """Finish editing and optionally save changes"""
+        if self.isReadOnly():
+            return
+            
+        new_text = self.text().strip()
+        
+        if save and new_text != self.original_text and new_text:
+            # Confirm rename operation
+            if self.main_window and hasattr(self.main_window, '_confirm_and_rename_folder'):
+                success = self.main_window._confirm_and_rename_folder(self.original_text, new_text)
+                if not success:
+                    # Revert to original text if rename failed
+                    self.setText(self.original_text)
+            else:
+                # Fallback: just revert to original text
+                self.setText(self.original_text)
+        elif not save:
+            # Restore original text on cancel
+            self.setText(self.original_text)
+        
+        self.setReadOnly(True)
+        self.clearFocus()
+        
+    def mousePressEvent(self, event):
+        """Handle mouse press to start drag operation"""
+        if event.button() == Qt.LeftButton:
+            self.drag_start_position = event.pos()
+        super().mousePressEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        """Handle mouse move to start drag if conditions are met"""
+        if not (event.buttons() & Qt.LeftButton):
+            return
+        
+        if not hasattr(self, 'drag_start_position'):
+            return
+            
+        if ((event.pos() - self.drag_start_position).manhattanLength() < 
+            QApplication.startDragDistance()):
+            return
+        
+        # Start drag operation with folder name
+        folder_name = self.text()
+        if folder_name:
+            # Clean the folder name by removing bracketed and parenthetical content
+            cleaned_name = self._clean_folder_name(folder_name)
+            drag = QDrag(self)
+            mime_data = QMimeData()
+            mime_data.setText(cleaned_name)
+            drag.setMimeData(mime_data)
+            drag.exec(Qt.CopyAction)
+    
+    def _clean_folder_name(self, folder_name):
+        """Clean folder name by removing bracketed and parenthetical content"""
+        import re
+        
+        # Remove content in square brackets like [Fantastique]
+        cleaned = re.sub(r'\[.*?\]', '', folder_name)
+        
+        # Remove content in parentheses like (PeruMartino)
+        cleaned = re.sub(r'\(.*?\)', '', cleaned)
+        
+        # Remove extra whitespace and strip
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        
+        return cleaned
+
 # ---------- Custom Tables ----------
 class FileTable(QTableWidget):
     def __init__(self, parent=None):
@@ -771,8 +901,14 @@ class FileTable(QTableWidget):
                                        tr("messages.errors.could_not_reveal_file", error=error_msg))
         elif action == refresh_action:
             folder = self.main.settings.value('last_folder', '')
-            if folder and pathlib.Path(folder).exists():
-                self.main._load_files(folder)
+            if folder:
+                # D'abord essayer le chemin exact tel qu'il est stocké
+                if pathlib.Path(folder).exists():
+                    self.main._load_files(folder)
+                else:
+                    # Seulement si le chemin exact n'existe pas, utiliser la logique de fallback
+                    best_folder = self.main._get_fallback_folder_path(folder)
+                    self.main._load_files(best_folder)
 
 class AlbumTable(QTableWidget):
     def __init__(self, parent=None):
@@ -942,7 +1078,13 @@ class ComicRenamer(QWidget):
         # Recharge automatiquement le dernier dossier utilisé
         last_folder = self.settings.value("last_folder", "")
         if last_folder:
-            self._load_files(last_folder)
+            # D'abord essayer le chemin exact tel qu'il est stocké
+            if pathlib.Path(last_folder).exists():
+                self._load_files(last_folder)
+            else:
+                # Seulement si le chemin exact n'existe pas, utiliser la logique de fallback
+                best_folder = self._get_fallback_folder_path(last_folder)
+                self._load_files(best_folder)
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
@@ -1075,8 +1217,14 @@ class ComicRenamer(QWidget):
         if ac:
             self.album_table.setColumnWidth(0,int(ac))
         # Note: debug/verbose are now initialized earlier in __init__
-        if folder and pathlib.Path(folder).exists():
-            self._load_files(folder)
+        if folder:
+            # D'abord essayer le chemin exact tel qu'il est stocké
+            if pathlib.Path(folder).exists():
+                self._load_files(folder)
+            else:
+                # Seulement si le chemin exact n'existe pas, utiliser la logique de fallback
+                best_folder = self._get_fallback_folder_path(folder)
+                self._load_files(best_folder)
 
     def closeEvent(self,ev):
         self.settings.setValue('last_folder', self.settings.value('last_folder'))
@@ -1151,8 +1299,12 @@ class ComicRenamer(QWidget):
         msg.exec()
         if msg.clickedButton() == btn_volumes:
             start_dir = "/Volumes"
-        elif msg.clickedButton() == btn_last and current_folder:
-            start_dir = current_folder
+        elif msg.clickedButton() == btn_last:
+            if current_folder:
+                start_dir = self._get_fallback_folder_path(current_folder)
+            else:
+                QMessageBox.information(self, "Information", "Aucun dossier précédent enregistré. Utilisation du dossier personnel.")
+                start_dir = str(pathlib.Path.home())
         elif msg.clickedButton() == btn_home:
             start_dir = str(pathlib.Path.home())
         else:
@@ -1969,13 +2121,61 @@ class ComicRenamer(QWidget):
                 if self.debug:
                     print(f"[DEBUG] Renaming {current_folder} -> {new_folder_path}")
                 os.rename(str(current_folder), str(new_folder_path))
-                self.settings.setValue('last_folder', str(new_folder_path))
+                # NE PAS mettre à jour last_folder - garder l'ancien chemin pour la logique de fallback
+                # self.settings.setValue('last_folder', str(new_folder_path))  # Supprimé
                 self._load_files(str(new_folder_path))
                 QMessageBox.information(self, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=new_folder_name))
             except Exception as e:
                 if self.debug:
                     print(f"[DEBUG] Exception during rename: {e}")
                 QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=str(e)))
+
+    def _confirm_and_rename_folder(self, old_name, new_name):
+        """Handle folder rename from direct editing of folder name"""
+        if not self.files:
+            QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.no_files_in_folder"))
+            return False
+            
+        current_folder = pathlib.Path(self.files[0]['folder'])
+        parent_dir = current_folder.parent
+        
+        # Clean up the new name to prevent filesystem issues
+        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in "-_(),' ").strip()
+        new_name_clean = clean(new_name)
+        
+        if not new_name_clean:
+            QMessageBox.warning(self, tr("messages.errors.error"), "Le nouveau nom de dossier ne peut pas être vide.")
+            return False
+            
+        new_folder_path = parent_dir / new_name_clean
+        
+        # Check if target folder already exists
+        if new_folder_path.exists():
+            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_name_clean))
+            return False
+            
+        # Confirm the rename operation
+        if QMessageBox.question(
+            self,
+            tr("messages.errors.rename_folder_title"),
+            tr("dialogs.rename_confirmation.folder_message", old_name=old_name, new_name=new_name_clean),
+            QMessageBox.Yes | QMessageBox.No
+        ) == QMessageBox.Yes:
+            try:
+                if self.debug:
+                    print(f"[DEBUG] Direct rename: {current_folder} -> {new_folder_path}")
+                os.rename(str(current_folder), str(new_folder_path))
+                # NE PAS mettre à jour last_folder - garder l'ancien chemin pour la logique de fallback
+                self._load_files(str(new_folder_path))
+                QMessageBox.information(self, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=new_name_clean))
+                return True
+            except Exception as e:
+                if self.debug:
+                    print(f"[DEBUG] Exception during direct rename: {e}")
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=str(e)))
+                return False
+        else:
+            return False  # User cancelled
 
     def resizeEvent(self, event):
         """Handle window resize to update cover image scaling"""
@@ -1996,181 +2196,181 @@ class ComicRenamer(QWidget):
             scaled_pixmap = self._scale_image_to_fit(self._original_cover_pixmap)
             self.detail_image.setPixmap(scaled_pixmap)
 
-class DraggableLineEdit(QLineEdit):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setReadOnly(True)
-
-    def mouseMoveEvent(self, event):
-        if not self.text():
-            return
-        mime = QMimeData()
-        mime.setText(self.text())
-        drag = QDrag(self)
-        drag.setMimeData(mime)
-        drag.exec(Qt.CopyAction)
-
-class DroppableLineEdit(QLineEdit):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setAcceptDrops(True)
-
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        raw_text = event.mimeData().text()
-        # Remove all text within () or []
-        text = re.sub(r'\(.*?\)|\[.*?\]', '', raw_text)
-        # Keep unicode letters, numbers, spaces, apostrophes, hyphens, and underscores
-        # Use regex with re.UNICODE and add explicit ' to the allowed set
-        text = re.sub(r"[^\w\s'\-_]", '', text, flags=re.UNICODE)
-        # Collapse multiple spaces and strip
-        text = re.sub(r'\s+', ' ', text).strip()
-        self.setText(text)
-        event.acceptProposedAction()
-
-class EditableFolderLineEdit(QLineEdit):
-    def __init__(self, main_window=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setReadOnly(True)
-        self.main_window = main_window
-        self._original_folder_path = None
-        self._drag_start_position = None
-
-    def mousePressEvent(self, event):
-        """Store the position where mouse was pressed for drag detection"""
-        if event.button() == Qt.LeftButton:
-            self._drag_start_position = event.position()
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        """Handle dragging functionality only when mouse is pressed and moved sufficiently"""
-        # Only drag if we have text and mouse button is pressed
-        if (not self.text() or 
-            not (event.buttons() & Qt.LeftButton) or 
-            self._drag_start_position is None):
-            return
+    def _get_fallback_folder_path(self, stored_folder_path):
+        """
+        Get the best available folder path when the stored path might not exist.
         
-        # Calculate distance moved
-        distance = (event.position() - self._drag_start_position).manhattanLength()
+        Strategy:
+        1. If the exact stored path exists, use it
+        2. EXHAUSTIVE search for exact folder name in common locations
+        3. Fall back to renamed folders only as last resort
         
-        # Only start drag if moved far enough (avoid accidental drags)
-        if distance < QApplication.startDragDistance():
-            return
+        Args:
+            stored_folder_path (str): The folder path stored in settings
+            
+        Returns:
+            str: The best available folder path to use
+        """
+        if not stored_folder_path:
+            return str(pathlib.Path.home())
         
-        # Start drag operation
-        mime = QMimeData()
-        mime.setText(self.text())
-        drag = QDrag(self)
-        drag.setMimeData(mime)
-        drag.exec(Qt.CopyAction)
-
-    def mouseDoubleClickEvent(self, event):
-        """Handle double-click to enable folder renaming"""
-        if not self.main_window or not self.main_window.files:
-            return
+        stored_path = pathlib.Path(stored_folder_path)
         
-        # Get current folder path
-        current_folder = pathlib.Path(self.main_window.files[0]['folder'])
-        self._original_folder_path = current_folder
+        # First, try the exact stored path
+        if stored_path.exists():
+            return str(stored_path)
         
-        # Switch to editable mode
-        self.setReadOnly(False)
-        self.setStyleSheet("background-color: #ffffcc; border: 2px solid #0078d4;")  # Light yellow background
-        self.selectAll()
-        self.setFocus()
-        
-        # Connect to handle when editing is finished
-        self.editingFinished.connect(self._on_editing_finished)
-        self.returnPressed.connect(self._on_return_pressed)
-
-    def _on_return_pressed(self):
-        """Handle Enter key press"""
-        self._on_editing_finished()
-
-    def _on_editing_finished(self):
-        """Handle when editing is finished (Enter pressed or focus lost)"""
-        # Disconnect signals to avoid multiple calls
-        self.editingFinished.disconnect()
-        if hasattr(self, '_return_connection'):
-            self.returnPressed.disconnect()
-        
-        new_name = self.text().strip()
-        if not new_name:
-            self._cancel_editing()
-            return
-        
-        # Check if name changed
-        if new_name == self._original_folder_path.name:
-            self._cancel_editing()
-            return
-        
-        # Validate new name (remove invalid characters)
-        import string
-        valid_chars = string.ascii_letters + string.digits + ' -_()[]'
-        cleaned_name = ''.join(c for c in new_name if c in valid_chars or ord(c) > 127)  # Allow unicode
-        cleaned_name = cleaned_name.strip()
-        
-        if not cleaned_name:
-            QMessageBox.warning(self.main_window, tr("messages.errors.error"), tr("messages.errors.invalid_folder_name"))
-            self._cancel_editing()
-            return
-        
-        # Check if folder with new name already exists
-        new_folder_path = self._original_folder_path.parent / cleaned_name
-        if new_folder_path.exists():
-            QMessageBox.critical(self.main_window, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=cleaned_name))
-            self._cancel_editing()
-            return
-        
-        # Confirm rename
-        reply = QMessageBox.question(
-            self.main_window,
-            tr("messages.errors.rename_folder_title"),
-            tr("messages.errors.rename_folder_message", old_name=self._original_folder_path.name, new_name=cleaned_name),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        
-        if reply == QMessageBox.Yes:
-            try:
-                # Perform the rename
-                os.rename(str(self._original_folder_path), str(new_folder_path))
+        # If the folder doesn't exist, search for exact folder name in multiple locations
+        try:
+            parent_dir = stored_path.parent
+            original_folder_name = stored_path.name
+            
+            # Force debug for this critical function
+            force_debug = True
+            
+            # Debug info
+            if force_debug or self.debug:
+                print(f"[DEBUG] Original folder '{original_folder_name}' not found at '{stored_path}'")
+                print(f"[DEBUG] Starting EXHAUSTIVE search for exact folder name '{original_folder_name}'...")
+            
+            # Function to search for exact folder name in a directory
+            def find_exact_folder_in_directory(search_dir, folder_name, max_depth=2):
+                """Search for exact folder name in directory, up to max_depth levels deep"""
+                if not search_dir.exists() or not search_dir.is_dir():
+                    return None
                 
-                # Update the settings and reload files
-                self.main_window.settings.setValue('last_folder', str(new_folder_path))
-                self.main_window._load_files(str(new_folder_path))
+                # Check current directory
+                exact_path = search_dir / folder_name
+                if exact_path.exists() and exact_path.is_dir():
+                    return exact_path
                 
-                # Success message
-                QMessageBox.information(self.main_window, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=cleaned_name))
+                # Search subdirectories if max_depth > 0
+                if max_depth > 0:
+                    try:
+                        for subdir in search_dir.iterdir():
+                            if subdir.is_dir() and not subdir.name.startswith('.'):
+                                result = find_exact_folder_in_directory(subdir, folder_name, max_depth - 1)
+                                if result:
+                                    return result
+                    except:
+                        pass
                 
-            except Exception as e:
-                QMessageBox.critical(self.main_window, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=str(e)))
-                self._cancel_editing()
-                return
-        
-        # Reset to read-only mode
-        self._reset_to_readonly()
-
-    def _cancel_editing(self):
-        """Cancel editing and restore original name"""
-        if self._original_folder_path:
-            self.setText(self._original_folder_path.name)
-        self._reset_to_readonly()
-
-    def _reset_to_readonly(self):
-        """Reset the widget to read-only mode"""
-        self.setReadOnly(True)
-        self.setStyleSheet("")  # Clear custom styling
-        self.clearFocus()
-        self._original_folder_path = None
-
-    def keyPressEvent(self, event):
-        """Handle key presses during editing"""
-        if event.key() == Qt.Key_Escape:
-            # Cancel editing on Escape
-            self._cancel_editing()
-        else:
-            super().keyPressEvent(event)
+                return None
+            
+            # FIRST PRIORITY: Look for exact folder name in the original parent directory
+            if parent_dir.exists():
+                exact_match = find_exact_folder_in_directory(parent_dir, original_folder_name, 0)  # Only current level
+                if exact_match:
+                    if force_debug or self.debug:
+                        print(f"[DEBUG] Found exact folder name '{original_folder_name}' in original parent directory")
+                    return str(exact_match)
+            
+            # SECOND PRIORITY: Search in common locations for the exact folder name
+            search_locations = []
+            
+            # Add Desktop
+            desktop_path = pathlib.Path.home() / "Desktop"
+            if desktop_path.exists():
+                search_locations.append(desktop_path)
+            
+            # Add Documents
+            documents_path = pathlib.Path.home() / "Documents"
+            if documents_path.exists():
+                search_locations.append(documents_path)
+            
+            # Add Downloads
+            downloads_path = pathlib.Path.home() / "Downloads"
+            if downloads_path.exists():
+                search_locations.append(downloads_path)
+            
+            # Add /Volumes for external drives (macOS)
+            volumes_path = pathlib.Path("/Volumes")
+            if volumes_path.exists():
+                search_locations.append(volumes_path)
+                # Also search one level deep in /Volumes
+                try:
+                    for volume in volumes_path.iterdir():
+                        if volume.is_dir() and not volume.name.startswith('.'):
+                            search_locations.append(volume)
+                except:
+                    pass
+            
+            # Add grandparent and its siblings if available
+            if parent_dir.exists():
+                grandparent_dir = parent_dir.parent
+                if grandparent_dir.exists():
+                    search_locations.append(grandparent_dir)
+                    # Add sibling directories of the parent
+                    try:
+                        for sibling in grandparent_dir.iterdir():
+                            if sibling.is_dir() and sibling != parent_dir:
+                                search_locations.append(sibling)
+                    except:
+                        pass
+            
+            # Search in all these locations for the exact folder name
+            for search_location in search_locations:
+                if force_debug or self.debug:
+                    print(f"[DEBUG] Searching in: {search_location}")
+                
+                exact_match = find_exact_folder_in_directory(search_location, original_folder_name, 1)
+                if exact_match:
+                    if force_debug or self.debug:
+                        print(f"[DEBUG] Found exact folder name '{original_folder_name}' in '{search_location}'")
+                    return str(exact_match)
+            
+            # THIRD PRIORITY: Look for potential renamed folders ONLY in the original parent directory
+            # This is only done after ALL exact name searches have been exhausted
+            if force_debug or self.debug:
+                print(f"[DEBUG] Exact folder name '{original_folder_name}' not found anywhere!")
+                print(f"[DEBUG] As a last resort, looking for potential renamed folders in original parent directory...")
+            
+            potential_matches = []
+            
+            # Only search for renamed folders if the original parent directory exists
+            if parent_dir.exists():
+                try:
+                    for child in parent_dir.iterdir():
+                        if child.is_dir():
+                            child_name = child.name
+                            
+                            # Case-insensitive comparison
+                            original_lower = original_folder_name.lower()
+                            child_lower = child_name.lower()
+                            
+                            # Check if one name contains the other (indicating potential rename)
+                            # BUT make sure it's not an exact match (which we already checked)
+                            if (original_lower in child_lower or child_lower in original_lower) and \
+                               original_lower != child_lower:
+                                potential_matches.append((child, child_name))
+                                if force_debug or self.debug:
+                                    print(f"[DEBUG] Found potential renamed folder: '{child_name}' (contains '{original_folder_name}')")
+                except:
+                    pass
+            
+            # If we found potential matches, use the first one
+            if potential_matches:
+                best_match = potential_matches[0][0]
+                if force_debug or self.debug:
+                    print(f"[DEBUG] No exact name found anywhere, using potential renamed folder: '{best_match.name}'")
+                return str(best_match)
+            
+            # FOURTH PRIORITY: Fall back to a reasonable directory
+            if force_debug or self.debug:
+                print(f"[DEBUG] No exact folder name or renamed folder found anywhere")
+            
+            # Try to fall back to parent directory if it exists, otherwise home
+            if parent_dir.exists():
+                if force_debug or self.debug:
+                    print(f"[DEBUG] Falling back to original parent directory: '{parent_dir}'")
+                return str(parent_dir)
+            else:
+                if force_debug or self.debug:
+                    print(f"[DEBUG] Original parent directory doesn't exist, falling back to home directory")
+                return str(pathlib.Path.home())
+            
+        except Exception as e:
+            if force_debug or self.debug:
+                print(f"[DEBUG] Error in fallback folder detection: {e}")
+            # If anything goes wrong, fall back to home directory
+            return str(pathlib.Path.home())

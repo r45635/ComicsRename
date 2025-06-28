@@ -5,6 +5,34 @@ All notable changes to the ComicsRename project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.1] - 2025-06-27
+
+### 🐛 Bug Fixes
+
+#### **Folder Management**
+- Fixed fallback logic for "Last used folder" to always try the exact stored path first
+- Prevented automatic updating of `last_folder` setting after folder renames to maintain fallback functionality
+- Enhanced folder search logic with exhaustive search in common locations (/Volumes, Desktop, Documents, Downloads)
+- Improved handling of renamed folders while preserving original path references
+
+#### **HTML Entity Decoding**
+- Fixed HTML entities in BDGest search results (e.g., `&amp;` now displays as `&`)
+- Added `_decode_html_entities()` function to properly decode HTML entities in series and album names
+- Applied HTML decoding to all text content from BDGest including series names, album names, and metadata
+
+#### **User Interface**
+- Restored double-click editing functionality for folder names in the folder display
+- Added `_confirm_and_rename_folder()` method for direct folder renaming from the UI
+- Enhanced `EditableFolderLineEdit` with proper editing states and keyboard shortcuts (Enter to save, Escape to cancel)
+
+### 🔧 Technical Improvements
+- Improved error handling and user feedback for folder operations
+- Enhanced folder path resolution with better debugging information
+- Strengthened HTML parsing and entity decoding throughout the BDGest scraper
+- Added comprehensive testing for folder management and HTML decoding features
+
+---
+
 ## [3.0.1] - 2025-06-22
 
 ### 🐛 Bug Fixes
