@@ -1770,13 +1770,17 @@ class ComicRenamer(QWidget):
         def make_links_clickable(text, field_name=None):
             """Convert URLs in text to clickable HTML links with clean display text"""
             import re
+            
+            # If the text already contains HTML links, return as-is
+            if '<a href=' in str(text):
+                return str(text)
+            
             # URL pattern to match http/https URLs
             url_pattern = r'(https?://[^\s<>"]{2,})'
-            # Replace URLs with HTML links
-            def replace_url(match):
-                url = match.group(1)
-                
-                # Special handling for specific URL types with clean display text
+            
+            # If this is a URL field and the entire text is just a URL, make a clean link
+            if field_name in ['album_url', 'cover_url', 'api_detail_url', 'image_url'] and re.match(r'^https?://', str(text).strip()):
+                url = str(text).strip()
                 if field_name == 'album_url':
                     if 'comicvine.gamespot.com' in url:
                         return f'<a href="{url}">ComicVine Page</a>'
@@ -1788,13 +1792,21 @@ class ComicRenamer(QWidget):
                     return f'<a href="{url}">API Details</a>'
                 elif field_name == 'cover_url':
                     return f'<a href="{url}">View Cover</a>'
+                elif field_name == 'image_url':
+                    return f'<a href="{url}">View Image</a>'
                 else:
-                    # For other fields, show a shortened URL
-                    if len(url) <= 50:
-                        return f'<a href="{url}">{url}</a>'
-                    else:
-                        display_url = url[:47] + '...'
-                        return f'<a href="{url}">{display_url}</a>'
+                    return f'<a href="{url}">Link</a>'
+            
+            # Replace URLs with HTML links
+            def replace_url(match):
+                url = match.group(1)
+                
+                # For other fields, show a shortened URL
+                if len(url) <= 50:
+                    return f'<a href="{url}">{url}</a>'
+                else:
+                    display_url = url[:47] + '...'
+                    return f'<a href="{url}">{display_url}</a>'
             
             return re.sub(url_pattern, replace_url, str(text))
         
@@ -1835,12 +1847,14 @@ class ComicRenamer(QWidget):
                                      item.get('title') or 
                                      item.get('id') or 
                                      str(item)[:60] + '...' if len(str(item)) > 60 else str(item))
-                        items.append(make_links_clickable(str(display_val), field_name))
+                        items.append(str(display_val))
                     else:
-                        items.append(make_links_clickable(str(item), field_name))
-                return {'type': 'list', 'items': items} if items else make_links_clickable(str(value), field_name)
+                        items.append(str(item))
+                return {'type': 'list', 'items': items} if items else str(value)
             else:
-                return make_links_clickable(str(value), field_name)
+                # For URL fields, don't process with make_links_clickable here
+                # Let the main display logic handle it
+                return str(value)
         
         # Display all main fields except 'details'
         # Define the preferred order for ComicVine fields
@@ -1874,7 +1888,7 @@ class ComicRenamer(QWidget):
                 if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
                     html += f'<li class="sub-section"><b>{field} :</b><ul class="sub-list">'
                     for item in formatted_value.get('items', []):
-                        html += f"<li>{make_links_clickable(item, field)}</li>"
+                        html += f"<li>{item}</li>"
                     html += "</ul></li>"
                 else:
                     html += f"<li><b>{field}</b> : {make_links_clickable(formatted_value, field)}</li>"
@@ -1890,7 +1904,7 @@ class ComicRenamer(QWidget):
                     # Handle structured list data as styled sub-sections
                     html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
                     for item in formatted_value.get('items', []):
-                        html += f"<li>{make_links_clickable(item, label)}</li>"
+                        html += f"<li>{item}</li>"
                     html += "</ul></li>"
                 else:
                     # Handle regular string/simple data
@@ -1904,7 +1918,7 @@ class ComicRenamer(QWidget):
                 if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
                     html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
                     for item in formatted_value.get('items', []):
-                        html += f"<li>{make_links_clickable(item, k)}</li>"
+                        html += f"<li>{item}</li>"
                     html += "</ul></li>"
                 else:
                     html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value, k)}</li>"
