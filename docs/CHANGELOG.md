@@ -5,6 +5,42 @@ All notable changes to the ComicsRename project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.2] - 2025-06-28
+
+### 🐛 Bug Fixes
+
+#### **Folder Renaming**
+- Fixed missing brackets around style names in folder renaming functionality
+- Enhanced style extraction logic to intelligently extract style from existing folder names when metadata doesn't provide it
+- Added support for extracting style from both `[Style] Series` and `Style Series` folder name patterns
+- Improved folder rename function to preserve and properly format style information with brackets
+
+#### **User Interface**
+- Fixed double confirmation dialog issue when editing folder names directly
+- Added `editing_finished` flag to prevent multiple processing of folder rename events
+- Preserved brackets `[]` in folder names during direct editing (double-click rename)
+- Updated clean function to allow brackets in folder names while filtering other invalid characters
+
+#### **Metadata Display**
+- Reordered BDGest metadata display to show key fields first: serie_name, style, album_name, album_number, ISBN, date
+- Restructured "Détails complets" section to show album_url and cover_url before nested details
+- Enhanced URL display formatting with cleaner, clickable links
+- Fixed duplicate section headers in metadata display
+
+#### **Amazon Search Integration**
+- Implemented Amazon search feature accessible via cover image click or context menu
+- Added proper Amazon domain selection based on provider (BDGest → amazon.fr, ComicVine → amazon.com)
+- Integrated partner ID (`bdma-21`) for affiliate tracking
+- Added translation keys for Amazon search functionality in both English and French
+
+### 🔧 Technical Improvements
+- Enhanced debug logging for folder rename operations with comprehensive metadata inspection
+- Improved style field detection across multiple possible field names (Style, Genre, Style/Genre, etc.)
+- Added intelligent folder name pattern matching for style extraction
+- Optimized metadata display logic with provider-specific field ordering
+
+---
+
 ## [3.2.1] - 2025-06-27
 
 ### 🐛 Bug Fixes

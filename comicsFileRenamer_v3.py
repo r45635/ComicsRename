@@ -441,11 +441,13 @@ class EditableFolderLineEdit(QLineEdit):
         self.setAcceptDrops(False)  # Disable drop to avoid conflicts
         self.setReadOnly(True)  # Read-only by default, editable on double-click
         self.original_text = ""  # Store original text for comparison
+        self.editing_finished = False  # Flag to prevent double processing
         
     def mouseDoubleClickEvent(self, event):
         """Enable editing on double-click"""
         if event.button() == Qt.LeftButton:
             self.original_text = self.text()  # Store original text
+            self.editing_finished = False  # Reset flag
             self.setReadOnly(False)
             self.selectAll()
             self.setFocus()
@@ -470,9 +472,10 @@ class EditableFolderLineEdit(QLineEdit):
     
     def _finish_editing(self, save=True):
         """Finish editing and optionally save changes"""
-        if self.isReadOnly():
+        if self.isReadOnly() or self.editing_finished:
             return
             
+        self.editing_finished = True  # Set flag to prevent double processing
         new_text = self.text().strip()
         
         if save and new_text != self.original_text and new_text:
@@ -937,11 +940,28 @@ class AlbumTable(QTableWidget):
         row = self.rowAt(pos.y())
         if row < 0:
             return
+        
+        # Get the album metadata for the selected row
+        item = self.item(row, 0)
+        if not item:
+            return
+        
+        meta = item.data(Qt.UserRole)
+        if not meta:
+            return
+        
         menu = QMenu(self)
-        # Aucune action spéciale pour le moment - peut être étendu plus tard
-        # Exemple : menu.addAction("Voir détails de l'album")
-        # Pour l'instant, le menu contextuel reste vide mais peut être développé
-        # action = menu.exec(self.viewport().mapToGlobal(pos))
+        
+        # Add Amazon search action
+        amazon_action = menu.addAction(tr("ui.menus.search_on_amazon"))
+        
+        # Execute menu and handle action
+        action = menu.exec(self.viewport().mapToGlobal(pos))
+        
+        if action == amazon_action:
+            # Use main window's Amazon search functionality
+            if hasattr(self.main, '_search_amazon_for_album'):
+                self.main._search_amazon_for_album(meta)
 
 # ---------- Settings Dialog ----------
 class SettingsDialog(QDialog):
@@ -1162,6 +1182,9 @@ class ComicRenamer(QWidget):
         self.detail_image.setMaximumSize(300, 400)  # Reasonable maximum
         self.detail_image.setSizePolicy(self.detail_image.sizePolicy().horizontalPolicy(), 
                                        self.detail_image.sizePolicy().verticalPolicy())
+        # Make cover image clickable for Amazon search
+        self.detail_image.setCursor(Qt.PointingHandCursor)
+        self.detail_image.mousePressEvent = self._on_cover_image_clicked
         det_layout.addWidget(self.detail_text,2)
         det_layout.addWidget(self.detail_image,1)
         splitter_right.addWidget(det_widget)
@@ -1763,8 +1786,13 @@ class ComicRenamer(QWidget):
             background-attachment: scroll !important;
         }
         </style>
-        <div class="details-container">
-        <b>Détails complets :</b><br><ul>"""
+        <div class="details-container">"""
+        
+        # For BDGest, we'll handle the structure differently
+        if self._source == 'BDGest':
+            html += "<ul>"
+        else:
+            html += "<b>Détails complets :</b><br><ul>"
         
         # Helper function to detect and make URLs clickable
         def make_links_clickable(text, field_name=None):
@@ -1857,22 +1885,35 @@ class ComicRenamer(QWidget):
                 return str(value)
         
         # Display all main fields except 'details'
-        # Define the preferred order for ComicVine fields
-        field_order = [
-            'issue_number',
-            'name', 
-            'store_date',
-            'title',
-            'details',  # This will be handled specially
-            'volume',
-            'description',
-            'album_url',
-            'id',
-            'image',
-            'api_detail_url',
-            'cover_url',
-            'cover_date'
-        ]
+        # Define the preferred order - different for BDGest vs ComicVine
+        if self._source == 'BDGest':
+            # BDGest-specific order: show most important info first
+            field_order = [
+                'serie_name',
+                'style', 
+                'album_name',
+                'album_number',
+                'ISBN',
+                'date',
+                'details'  # This will be handled specially
+            ]
+        else:
+            # ComicVine order (original)
+            field_order = [
+                'issue_number',
+                'name', 
+                'store_date',
+                'title',
+                'details',  # This will be handled specially
+                'volume',
+                'description',
+                'album_url',
+                'id',
+                'image',
+                'api_detail_url',
+                'cover_url',
+                'cover_date'
+            ]
         
         # Display fields in the preferred order
         displayed_fields = set()
@@ -1894,34 +1935,77 @@ class ComicRenamer(QWidget):
                     html += f"<li><b>{field}</b> : {make_links_clickable(formatted_value, field)}</li>"
                 displayed_fields.add(field)
         
-        # Add the details section after 'title' and before 'volume'
-        details = meta.get("details")
-        if isinstance(details, dict):
-            html += "<li><b>Détails :</b><ul>"
-            for label, value in details.items():
-                formatted_value = format_display_value(value, label)
-                if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                    # Handle structured list data as styled sub-sections
-                    html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
-                    for item in formatted_value.get('items', []):
-                        html += f"<li>{item}</li>"
-                    html += "</ul></li>"
-                else:
-                    # Handle regular string/simple data
-                    html += f"<li><b>{label}</b> : {make_links_clickable(formatted_value, label)}</li>"
+        # Add the details section
+        if self._source == 'BDGest':
+            # For BDGest, show "Détails complets" with album_url, cover_url, then details, then remaining fields
+            html += "<li><b>Détails complets :</b><ul>"
+            
+            # First add album_url and cover_url if they exist
+            for url_field in ['album_url', 'cover_url']:
+                if url_field in meta and meta[url_field]:
+                    formatted_value = format_display_value(meta[url_field], url_field)
+                    html += f"<li><b>{url_field}</b> : {make_links_clickable(formatted_value, url_field)}</li>"
+                    displayed_fields.add(url_field)
+            
+            # Then add the details dict content
+            details = meta.get("details")
+            if isinstance(details, dict):
+                html += "<li><b>Détails :</b><ul>"
+                for label, value in details.items():
+                    formatted_value = format_display_value(value, label)
+                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                        # Handle structured list data as styled sub-sections
+                        html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
+                        for item in formatted_value.get('items', []):
+                            html += f"<li>{item}</li>"
+                        html += "</ul></li>"
+                    else:
+                        # Handle regular string/simple data
+                        html += f"<li><b>{label}</b> : {make_links_clickable(formatted_value, label)}</li>"
+                html += "</ul></li>"
+            
+            # Then add any remaining fields
+            for k, v in meta.items():
+                if k not in displayed_fields and k != "details":
+                    formatted_value = format_display_value(v, k)
+                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                        html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
+                        for item in formatted_value.get('items', []):
+                            html += f"<li>{item}</li>"
+                        html += "</ul></li>"
+                    else:
+                        html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value, k)}</li>"
+            
             html += "</ul></li>"
-        
-        # Display any remaining fields that weren't in our preferred order
-        for k, v in meta.items():
-            if k not in displayed_fields and k != "details":
-                formatted_value = format_display_value(v, k)
-                if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                    html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
-                    for item in formatted_value.get('items', []):
-                        html += f"<li>{item}</li>"
-                    html += "</ul></li>"
-                else:
-                    html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value, k)}</li>"
+        else:
+            # For ComicVine, use the original logic
+            details = meta.get("details")
+            if isinstance(details, dict):
+                html += "<li><b>Détails complets :</b><ul>"
+                for label, value in details.items():
+                    formatted_value = format_display_value(value, label)
+                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                        # Handle structured list data as styled sub-sections
+                        html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
+                        for item in formatted_value.get('items', []):
+                            html += f"<li>{item}</li>"
+                        html += "</ul></li>"
+                    else:
+                        # Handle regular string/simple data
+                        html += f"<li><b>{label}</b> : {make_links_clickable(formatted_value, label)}</li>"
+                html += "</ul></li>"
+            
+            # Display any remaining fields that weren't in our preferred order
+            for k, v in meta.items():
+                if k not in displayed_fields and k != "details":
+                    formatted_value = format_display_value(v, k)
+                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                        html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
+                        for item in formatted_value.get('items', []):
+                            html += f"<li>{item}</li>"
+                        html += "</ul></li>"
+                    else:
+                        html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value, k)}</li>"
         html += "</ul></div>"
         self.detail_text.setHtml(html)
         img_url = meta.get('cover_url') or meta.get('image', {}).get('original_url')
@@ -2078,18 +2162,64 @@ class ComicRenamer(QWidget):
             return
         # Extract serie_name
         serie_name = meta.get('serie_name') or (meta.get('volume') or {}).get('name', '')
-        # Extract style from details['Détails'] if present
+        # Extract style from various possible locations
         style = ''
         details = meta.get('details', {})
-        # Some BDGest scrapers put all details in a subkey 'Détails'
-        if isinstance(details, dict):
-            # Try both 'Style' and 'Détails'->'Style'
-            if 'Style' in details:
-                style = details['Style']
-            elif 'Détails' in details and isinstance(details['Détails'], dict):
-                style = details['Détails'].get('Style', '')
+        
+        # Try multiple field names and locations for style information
+        style_fields = ['Style', 'Genre', 'Style/Genre', 'Styles', 'Genres']
+        
+        # First try top-level meta
+        for field in style_fields:
+            if meta.get(field):
+                style = meta.get(field)
+                break
+        
+        # Then try details dict
+        if not style and isinstance(details, dict):
+            for field in style_fields:
+                if field in details and details[field]:
+                    style = details[field]
+                    break
+            
+            # Try nested 'Détails' structure
+            if not style and 'Détails' in details and isinstance(details['Détails'], dict):
+                for field in style_fields:
+                    if field in details['Détails'] and details['Détails'][field]:
+                        style = details['Détails'][field]
+                        break
+        
+        # Finally try the original 'style' field
         if not style:
             style = meta.get('style', '')
+        
+        # If no style found in metadata, try to extract from current folder name
+        if not style:
+            import re
+            current_name = current_folder.name
+            
+            # Try to extract style from patterns like "[Style] Series" or "Style Series"
+            # First try bracketed style: [Style] Series
+            bracket_match = re.match(r'^\[([^\]]+)\]\s*(.+)$', current_name)
+            if bracket_match:
+                potential_style = bracket_match.group(1).strip()
+                potential_series = bracket_match.group(2).strip()
+                # Check if the series part matches our serie_name
+                if potential_series.lower() == serie_name.lower():
+                    style = potential_style
+                    if self.debug:
+                        print(f"[DEBUG] Extracted style from bracketed folder name: '{style}'")
+            
+            # If not bracketed, try "Style Series" pattern
+            if not style and serie_name:
+                # Check if folder name starts with a style followed by the series name
+                if current_name.lower().endswith(serie_name.lower()):
+                    potential_style = current_name[:-len(serie_name)].strip()
+                    # Only consider it a style if it's a reasonable length and not empty
+                    if potential_style and len(potential_style) <= 30 and not potential_style.isdigit():
+                        style = potential_style
+                        if self.debug:
+                            print(f"[DEBUG] Extracted style from folder name pattern: '{style}'")
         if not serie_name:
             QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.cannot_determine_series"))
             return
@@ -2104,9 +2234,16 @@ class ComicRenamer(QWidget):
         if self.debug:
             print(f"[DEBUG] current_folder: {current_folder}")
             print(f"[DEBUG] current_folder.name: {current_folder.name}")
+            print(f"[DEBUG] serie_name: '{serie_name}'")
+            print(f"[DEBUG] extracted style: '{style}'")
+            print(f"[DEBUG] style_clean: '{style_clean}'")
+            print(f"[DEBUG] serie_clean: '{serie_clean}'")
             print(f"[DEBUG] new_folder_name: {new_folder_name}")
             print(f"[DEBUG] new_folder_path: {parent_dir / new_folder_name}")
-            print(f"[DEBUG] details: {details}")
+            print(f"[DEBUG] meta keys: {list(meta.keys())}")
+            print(f"[DEBUG] details keys: {list(details.keys()) if isinstance(details, dict) else 'Not a dict'}")
+            if isinstance(details, dict) and 'Détails' in details:
+                print(f"[DEBUG] nested Détails keys: {list(details['Détails'].keys()) if isinstance(details['Détails'], dict) else 'Not a dict'}")
 
         if current_folder.name == new_folder_name:
             if self.debug:
@@ -2153,8 +2290,8 @@ class ComicRenamer(QWidget):
         current_folder = pathlib.Path(self.files[0]['folder'])
         parent_dir = current_folder.parent
         
-        # Clean up the new name to prevent filesystem issues
-        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in "-_(),' ").strip()
+        # Clean up the new name to prevent filesystem issues but allow brackets for style formatting
+        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in "-_(),' []").strip()
         new_name_clean = clean(new_name)
         
         if not new_name_clean:
@@ -2240,151 +2377,166 @@ class ComicRenamer(QWidget):
             original_folder_name = stored_path.name
             
             # Force debug for this critical function
-            force_debug = True
+            force_debug = False  # Respect user's debug setting
             
             # Debug info
-            if force_debug or self.debug:
+            if force_debug or (hasattr(self, 'debug') and self.debug):
                 print(f"[DEBUG] Original folder '{original_folder_name}' not found at '{stored_path}'")
-                print(f"[DEBUG] Starting EXHAUSTIVE search for exact folder name '{original_folder_name}'...")
+                print(f"[DEBUG] Searching for exact folder name in common locations...")
             
-            # Function to search for exact folder name in a directory
-            def find_exact_folder_in_directory(search_dir, folder_name, max_depth=2):
-                """Search for exact folder name in directory, up to max_depth levels deep"""
-                if not search_dir.exists() or not search_dir.is_dir():
-                    return None
-                
-                # Check current directory
-                exact_path = search_dir / folder_name
-                if exact_path.exists() and exact_path.is_dir():
-                    return exact_path
-                
-                # Search subdirectories if max_depth > 0
-                if max_depth > 0:
-                    try:
-                        for subdir in search_dir.iterdir():
-                            if subdir.is_dir() and not subdir.name.startswith('.'):
-                                result = find_exact_folder_in_directory(subdir, folder_name, max_depth - 1)
-                                if result:
-                                    return result
-                    except:
-                        pass
-                
-                return None
-            
-            # FIRST PRIORITY: Look for exact folder name in the original parent directory
-            if parent_dir.exists():
-                exact_match = find_exact_folder_in_directory(parent_dir, original_folder_name, 0)  # Only current level
-                if exact_match:
-                    if force_debug or self.debug:
-                        print(f"[DEBUG] Found exact folder name '{original_folder_name}' in original parent directory")
-                    return str(exact_match)
-            
-            # SECOND PRIORITY: Search in common locations for the exact folder name
+            # EXHAUSTIVE search in parent directory and common locations
             search_locations = []
             
-            # Add Desktop
-            desktop_path = pathlib.Path.home() / "Desktop"
-            if desktop_path.exists():
-                search_locations.append(desktop_path)
-            
-            # Add Documents
-            documents_path = pathlib.Path.home() / "Documents"
-            if documents_path.exists():
-                search_locations.append(documents_path)
-            
-            # Add Downloads
-            downloads_path = pathlib.Path.home() / "Downloads"
-            if downloads_path.exists():
-                search_locations.append(downloads_path)
-            
-            # Add /Volumes for external drives (macOS)
-            volumes_path = pathlib.Path("/Volumes")
-            if volumes_path.exists():
-                search_locations.append(volumes_path)
-                # Also search one level deep in /Volumes
-                try:
-                    for volume in volumes_path.iterdir():
-                        if volume.is_dir() and not volume.name.startswith('.'):
-                            search_locations.append(volume)
-                except:
-                    pass
-            
-            # Add grandparent and its siblings if available
+            # 1. Parent directory of the original path
             if parent_dir.exists():
-                grandparent_dir = parent_dir.parent
-                if grandparent_dir.exists():
-                    search_locations.append(grandparent_dir)
-                    # Add sibling directories of the parent
-                    try:
-                        for sibling in grandparent_dir.iterdir():
-                            if sibling.is_dir() and sibling != parent_dir:
-                                search_locations.append(sibling)
-                    except:
-                        pass
+                search_locations.append(parent_dir)
             
-            # Search in all these locations for the exact folder name
-            for search_location in search_locations:
-                if force_debug or self.debug:
-                    print(f"[DEBUG] Searching in: {search_location}")
-                
-                exact_match = find_exact_folder_in_directory(search_location, original_folder_name, 1)
-                if exact_match:
+            # 2. Common folder locations
+            home = pathlib.Path.home()
+            common_locations = [
+                home / "Downloads",
+                home / "Documents", 
+                home / "Desktop",
+                home,  # Home directory itself
+                pathlib.Path("/Users") / "Shared",  # macOS shared folder
+                pathlib.Path("/Volumes")  # macOS external drives
+            ]
+            
+            # Add existing locations to search
+            for loc in common_locations:
+                if loc.exists() and loc not in search_locations:
+                    search_locations.append(loc)
+            
+            # Search each location for exact folder name match
+            for search_dir in search_locations:
+                try:
                     if force_debug or self.debug:
-                        print(f"[DEBUG] Found exact folder name '{original_folder_name}' in '{search_location}'")
-                    return str(exact_match)
+                        print(f"[DEBUG] Searching in: {search_dir}")
+                    
+                    for item in search_dir.iterdir():
+                        if item.is_dir() and item.name == original_folder_name:
+                            if force_debug or self.debug:
+                                print(f"[DEBUG] FOUND exact match: {item}")
+                            return str(item)
+                except (PermissionError, OSError) as e:
+                    if force_debug or self.debug:
+                        print(f"[DEBUG] Cannot search {search_dir}: {e}")
+                    continue
             
-            # THIRD PRIORITY: Look for potential renamed folders ONLY in the original parent directory
-            # This is only done after ALL exact name searches have been exhausted
+            # If we still haven't found it, do a broader search for similar names
             if force_debug or self.debug:
-                print(f"[DEBUG] Exact folder name '{original_folder_name}' not found anywhere!")
-                print(f"[DEBUG] As a last resort, looking for potential renamed folders in original parent directory...")
+                print(f"[DEBUG] Exact match not found, searching for similar folder names...")
             
-            potential_matches = []
-            
-            # Only search for renamed folders if the original parent directory exists
-            if parent_dir.exists():
+            for search_dir in search_locations:
                 try:
-                    for child in parent_dir.iterdir():
-                        if child.is_dir():
-                            child_name = child.name
-                            
-                            # Case-insensitive comparison
-                            original_lower = original_folder_name.lower()
-                            child_lower = child_name.lower()
-                            
-                            # Check if one name contains the other (indicating potential rename)
-                            # BUT make sure it's not an exact match (which we already checked)
-                            if (original_lower in child_lower or child_lower in original_lower) and \
-                               original_lower != child_lower:
-                                potential_matches.append((child, child_name))
+                    for item in search_dir.iterdir():
+                        if item.is_dir():
+                            # Check if folder name contains the original name (case-insensitive)
+                            if original_folder_name.lower() in item.name.lower():
                                 if force_debug or self.debug:
-                                    print(f"[DEBUG] Found potential renamed folder: '{child_name}' (contains '{original_folder_name}')")
-                except:
-                    pass
+                                    print(f"[DEBUG] Found similar folder: {item}")
+                                return str(item)
+                except (PermissionError, OSError):
+                    continue
             
-            # If we found potential matches, use the first one
-            if potential_matches:
-                best_match = potential_matches[0][0]
-                if force_debug or self.debug:
-                    print(f"[DEBUG] No exact name found anywhere, using potential renamed folder: '{best_match.name}'")
-                return str(best_match)
-            
-            # FOURTH PRIORITY: Fall back to a reasonable directory
+            # Last resort: return home directory
             if force_debug or self.debug:
-                print(f"[DEBUG] No exact folder name or renamed folder found anywhere")
-            
-            # Try to fall back to parent directory if it exists, otherwise home
-            if parent_dir.exists():
-                if force_debug or self.debug:
-                    print(f"[DEBUG] Falling back to original parent directory: '{parent_dir}'")
-                return str(parent_dir)
-            else:
-                if force_debug or self.debug:
-                    print(f"[DEBUG] Original parent directory doesn't exist, falling back to home directory")
-                return str(pathlib.Path.home())
+                print(f"[DEBUG] No matches found, falling back to home directory")
+            return str(home)
             
         except Exception as e:
-            if force_debug or self.debug:
-                print(f"[DEBUG] Error in fallback folder detection: {e}")
-            # If anything goes wrong, fall back to home directory
+            if self.debug:
+                print(f"[DEBUG] Exception in _get_fallback_folder_path: {e}")
             return str(pathlib.Path.home())
+
+    def _get_amazon_domain_for_provider(self, provider):
+        """Get the appropriate Amazon domain based on the provider"""
+        if provider == 'BDGest':
+            return 'amazon.fr'  # French provider -> French Amazon
+        else:  # ComicVine or other international providers
+            return 'amazon.com'  # International provider -> US Amazon
+
+    def _construct_amazon_search_url(self, album_title, series_name=None, provider=None):
+        """Construct Amazon search URL with partner ID"""
+        # Use current provider if not specified
+        if provider is None:
+            provider = self._source
+        
+        # Get appropriate Amazon domain
+        domain = self._get_amazon_domain_for_provider(provider)
+        
+        # Construct search query
+        search_terms = []
+        if series_name:
+            search_terms.append(series_name)
+        if album_title:
+            search_terms.append(album_title)
+        
+        # Add "comic" or "BD" to help Amazon find the right products
+        if provider == 'BDGest':
+            search_terms.append('BD')
+        else:
+            search_terms.append('comic')
+        
+        query = ' '.join(search_terms)
+        
+        # URL encode the query
+        import urllib.parse
+        encoded_query = urllib.parse.quote_plus(query)
+        
+        # Construct Amazon URL with partner ID
+        amazon_url = f"https://www.{domain}/s?k={encoded_query}&tag=bdma-21"
+        
+        return amazon_url
+
+    def _on_cover_image_clicked(self, event):
+        """Handle click on cover image to search Amazon"""
+        if event.button() == Qt.LeftButton:
+            # Get current album metadata
+            selected_rows = self.album_table.selectionModel().selectedRows()
+            if not selected_rows:
+                return
+            
+            row = selected_rows[0].row()
+            item = self.album_table.item(row, 0)
+            if not item:
+                return
+            
+            meta = item.data(Qt.UserRole)
+            if not meta:
+                return
+            
+            # Extract album info for Amazon search
+            album_title = meta.get('title', '') or meta.get('issue_title', '') or meta.get('name', '')
+            series_name = meta.get('serie_name', '') or meta.get('volume', {}).get('name', '')
+            
+            if not album_title and not series_name:
+                QMessageBox.information(self, tr("messages.info.amazon_search_title"), tr("messages.info.amazon_no_info"))
+                return
+            
+            # Construct and open Amazon URL
+            amazon_url = self._construct_amazon_search_url(album_title, series_name, self._source)
+            
+            # Open URL in default browser
+            import webbrowser
+            webbrowser.open(amazon_url)
+
+    def _search_amazon_for_album(self, album_meta):
+        """Search Amazon for a specific album"""
+        if not album_meta:
+            return
+        
+        # Extract album info
+        album_title = album_meta.get('title', '') or album_meta.get('issue_title', '') or album_meta.get('name', '')
+        series_name = album_meta.get('serie_name', '') or album_meta.get('volume', {}).get('name', '')
+        
+        if not album_title and not series_name:
+            QMessageBox.information(self, tr("messages.info.amazon_search_title"), tr("messages.info.amazon_no_info"))
+            return
+        
+        # Construct and open Amazon URL
+        amazon_url = self._construct_amazon_search_url(album_title, series_name, self._source)
+        
+        # Open URL in default browser
+        import webbrowser
+        webbrowser.open(amazon_url)

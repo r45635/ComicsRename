@@ -35,13 +35,15 @@
     },
     "placeholders": {
       "search": "Enter search term..."
-    },    "menus": {
+    },
+    "menus": {
       "open_file": "Open File",
       "reveal_in_finder": "Reveal in Finder",
       "show_in_explorer": "Show in Explorer",
       "show_in_file_manager": "Show in File Manager",
       "refresh_folder_files": "Refresh Folder Files",
-      "quick_view": "Quick View"
+      "quick_view": "Quick View",
+      "search_on_amazon": "Search on Amazon"
     }
   },
   "dialogs": {
@@ -112,7 +114,9 @@
       "albums_found": "{count} albums found",
       "no_result": "No Result",
       "language_change_title": "Language Change",
-      "language_change_message": "Language will be applied after restarting the application."
+      "language_change_message": "Language will be applied after restarting the application.",
+      "amazon_search_title": "Amazon Search",
+      "amazon_no_info": "No album or series name available for search."
     },
     "success": {
       "rename_complete": "Rename completed successfully"
