@@ -55,24 +55,44 @@ def _get_soup(text, debug=False):
             print("[WARN][BDGest] lxml parser not available, falling back to html.parser:", e)
         return BeautifulSoup(text, "html.parser")
 
+def get_bdgest_series(term, username, password, debug=True, verbose=False, log_path=None):
+    """Wrapper for login and fetch series."""
+    session = requests.Session()
+    if not login_bdgest(session, username, password, debug=debug, verbose=verbose, log_path=log_path):
+        raise Exception("BDGest login failed")
+    return fetch_series(session, term, debug=debug, verbose=verbose, log_path=log_path)
+
+def get_bdgest_albums_by_series_id(series_id, series_name, username, password, debug=True, verbose=False, log_path=None, fetch_details=True, max_workers=4):
+    """Wrapper for login and fetch albums by series ID."""
+    session = requests.Session()
+    if not login_bdgest(session, username, password, debug=debug, verbose=verbose, log_path=log_path):
+        raise Exception("BDGest login failed")
+    return fetch_albums_by_series_id(session, series_id, series_name, debug=debug, verbose=verbose, log_path=log_path, fetch_details=fetch_details, max_workers=max_workers)
+
+# ---------- Main Scraping Functions ----------
+
 def get_csrf_token(session, debug=False, verbose=False, log_path=None, max_retries=2):
     for attempt in range(max_retries):
-        r = session.get(LOGIN_URL, timeout=10)
-        _log(f"GET {LOGIN_URL} status={r.status_code}", log_path)
-        if debug:
-            print(f"[DEBUG][BDGest] GET {LOGIN_URL} status={r.status_code}")
-            if verbose:
-                print(f"[DEBUG][BDGest] Response content:\n{r.text}\n")
-            _log(r.text if verbose else r.text[:1000] + "...", log_path)
-        soup = _get_soup(r.text, debug=debug)
-        token = soup.find("input", {"name": "csrf_token_bdg"})
-        if token:
+        try:
+            r = session.get(LOGIN_URL, timeout=10)
+            _log(f"GET {LOGIN_URL} status={r.status_code}", log_path)
             if debug:
-                print("[DEBUG][BDGest] CSRF token found")
-            return token["value"]
-        else:
+                print(f"[DEBUG][BDGest] GET {LOGIN_URL} status={r.status_code}")
+                if verbose:
+                    print(f"[DEBUG][BDGest] Response content:\n{r.text}\n")
+                _log(r.text if verbose else r.text[:1000] + "...", log_path)
+            soup = _get_soup(r.text, debug=debug)
+            token = soup.find("input", {"name": "csrf_token_bdg"})
+            if token:
+                if debug:
+                    print("[DEBUG][BDGest] CSRF token found")
+                return token["value"]
+            else:
+                if debug:
+                    print(f"[WARN][BDGest] No CSRF token found on attempt {attempt+1}/{max_retries}")
+        except requests.exceptions.RequestException as e:
             if debug:
-                print(f"[WARN][BDGest] No CSRF token found on attempt {attempt+1}/{max_retries}")
+                print(f"[ERROR][BDGest] Network error getting CSRF token on attempt {attempt+1}: {e}")
     raise Exception("No CSRF token found after retries!")
 
 def login_bdgest(session, username, password, debug=False, verbose=False, log_path=None):
@@ -245,174 +265,35 @@ def fetch_albums(session, term, debug=True, verbose=False, log_path=None, fetch_
         albums.append(album)
 
     if fetch_details and albums:
+        # Helper to fetch details for one album, now with cancellation check
         def fetch_one(album):
+            # This is where a cancellation check could be added if needed
+            # For now, we assume fetching details is quick enough per album
             details = fetch_album_details(album["album_url"], session, debug=debug, verbose=verbose, log_path=log_path)
             album["details"] = details
             return album
 
+        # Use a thread pool to fetch details in parallel
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            albums = list(executor.map(fetch_one, albums))
-    else:
-        for album in albums:
-            album["details"] = {}
-
-    if debug:
-        print(f"[DEBUG][BDGest] {len(albums)} albums found.")
+            # Map each album to the fetch_one function
+            future_to_album = {executor.submit(fetch_one, album): album for album in albums}
+            
+            results = []
+            for future in concurrent.futures.as_completed(future_to_album):
+                try:
+                    # Collect results as they complete
+                    results.append(future.result())
+                except Exception as exc:
+                    album = future_to_album[future]
+                    if debug:
+                        print(f'[ERROR][BDGest] Album {album.get("album_name")} generated an exception: {exc}')
+            
+            # Return albums with details, preserving original order if possible
+            # This simple return is fine as order is not critical here
+            return results
+            
     return albums
 
-def fetch_albums_by_series_id(session, series_id, series_name=None, debug=True, verbose=False, log_path=None, fetch_details=True, max_workers=4):
-    """
-    Récupère la liste des albums d'une série spécifique par ID.
-    
-    Args:
-        session (requests.Session): Session authentifiée
-        series_id (str): ID de la série
-        series_name (str): Nom de la série (optionnel, pour vérification)
-        debug (bool): Mode debug
-        verbose (bool): Mode verbose
-        log_path (str): Chemin du fichier de log
-        fetch_details (bool): Si True, récupère les détails de chaque album
-        max_workers (int): Nombre de threads pour récupérer les détails en parallèle
-    
-    Returns:
-        list: Liste des albums de la série avec leurs métadonnées
-    """
-    if debug:
-        print(f"[DEBUG][BDGest] Called fetch_albums_by_series_id(series_id={series_id}, series_name={series_name})")
-    
-    if not series_id:
-        if debug:
-            print("[WARN][BDGest] series_id is empty or None.")
-        return []
-    
-    # URL de l'endpoint pour récupérer les albums par ID de série
-    # Use the series ID in the 'ids' parameter and series name in the 's' parameter
-    encoded_series_name = requests.utils.quote(series_name) if series_name else ""
-    url = f"https://online.bdgest.com/albums/import?ids={series_id}&s={encoded_series_name}&t=&e=&c=&y=&ida=&a=&p=&f=&o=&lang=&dld=&cmin=&isbn=&dlf=&cmax="
-    
-    _log(f"GET {url}", log_path)
-    
-    if debug:
-        print(f"[DEBUG][BDGest] Fetching albums by series ID URL: {url}")
-    
-    try:
-        resp = session.get(url, timeout=10)
-        _log(f"GET {url} status={resp.status_code}", log_path)
-        
-        if debug:
-            print(f"[DEBUG][BDGest] HTTP status: {resp.status_code}")
-            print(f"[DEBUG][BDGest] Response length: {len(resp.text)}")
-        
-        if verbose:
-            print(f"[DEBUG][BDGest] Response content:\n{resp.text}\n")
-        
-        _log(resp.text if verbose else resp.text[:1000] + "...", log_path)
-        
-        if resp.status_code != 200:
-            if debug:
-                print(f"[ERROR][BDGest] HTTP error {resp.status_code}")
-            return []
-        
-        soup = _get_soup(resp.text, debug=debug)
-        albums = []
-        table = soup.find("table", class_="table-albums-mid")
-        if not table:
-            if debug:
-                print("[WARN][BDGest] No album table found.")
-            return albums
-
-        for tr in table.find_all("tr", class_="clic"):
-            album_id = tr.get("id", "").replace("ID", "")
-            tds = tr.find_all("td")
-            if len(tds) < 4:
-                continue
-
-            cover_img = tds[1].find("img")["src"] if tds[1].find("img") else ""
-            serie_tag = tds[2].find("span", class_="serie")
-            serie_name_extracted = _decode_html_entities(serie_tag.get_text(strip=True)) if serie_tag else ""
-            titre_tag = tds[2].find("span", class_="titre")
-            titre_raw = titre_tag.get_text(" ", strip=True) if titre_tag else ""
-            
-            # Improved parsing to handle special cases like album 13
-            album_number = ""
-            album_name = ""
-            
-            if titre_raw:
-                # Nettoyer les retours à la ligne et espaces multiples
-                titre_clean = re.sub(r'\s+', ' ', titre_raw.strip())
-                
-                # Patterns à tester dans l'ordre de priorité
-                patterns = [
-                    # Pattern normal: "-1 - Titre"
-                    r"^-(\d+)\s*-\s*(.+)$",
-                    # Pattern avec caractères spéciaux: "-13 ' - Titre" (cas album 13)
-                    r"^-(\d+)\s*['\s]*-\s*(.+)$",
-                    # Pattern simple: "1 - Titre"
-                    r"^(\d+)\s*-\s*(.+)$",
-                    # Pattern général: trouve le premier nombre puis le titre après un tiret
-                    r".*?(\d+).*?-\s*(.+)$",
-                ]
-                
-                for pattern in patterns:
-                    m = re.search(pattern, titre_clean, re.DOTALL)
-                    if m:
-                        album_number = m.group(1)
-                        album_name = _decode_html_entities(m.group(2).strip())
-                        break
-                
-                # Si aucun pattern ne marche, garder le titre tel quel
-                if not album_number and not album_name:
-                    album_name = _decode_html_entities(titre_raw)
-            
-            if debug and album_number == "13":
-                print(f"[DEBUG][BDGest] Album 13 parsing - Raw: {repr(titre_raw)}")
-                print(f"[DEBUG][BDGest] Album 13 parsing - Number: '{album_number}', Name: '{album_name}'")
-
-            editor = tds[3].contents[0].strip() if tds[3].contents else ""
-            date = tds[3].find("span", class_="dl").get_text(strip=True) if tds[3].find("span", class_="dl") else ""
-            pages = tds[3].find("span", class_="auteurs").get_text(strip=True) if tds[3].find("span", class_="auteurs") else ""
-            collection = tds[3].find("span", class_="collection").get_text(strip=True) if tds[3].find("span", class_="collection") else ""
-            isbn = tds[3].find("span", class_="isbn").get_text(strip=True) if tds[3].find("span", class_="isbn") else ""
-            album_url = f"https://online.bdgest.com/import/edit?IdAlbum={album_id}" if album_id else ""
-
-            # Infos principales d'abord
-            album = {
-                "serie_name": serie_name_extracted or series_name,  # Use extracted name or fallback to provided name
-                "album_id": album_id,
-                "album_number": album_number,
-                "album_name": album_name,
-                "editor": editor,
-                "collection": collection,
-                "date": date,
-                "pages": pages,
-                "isbn": isbn,
-                "cover_url": cover_img,
-                "album_url": album_url,
-            }
-            albums.append(album)
-
-        # Récupération des détails des albums si demandé
-        if fetch_details and albums:
-            def fetch_one(album):
-                details = fetch_album_details(album["album_url"], session, debug=debug, verbose=verbose, log_path=log_path)
-                album["details"] = details
-                return album
-
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                albums = list(executor.map(fetch_one, albums))
-        else:
-            for album in albums:
-                album["details"] = {}
-
-        if debug:
-            print(f"[DEBUG][BDGest] {len(albums)} albums found for series ID {series_id}.")
-        return albums
-    
-    except Exception as e:
-        if debug:
-            print(f"[ERROR][BDGest] Exception in fetch_albums_by_series_id: {e}")
-        _log(f"Exception in fetch_albums_by_series_id: {e}", log_path)
-        return []
 
 def get_bdgest_albums(term, username, password, debug=True, verbose=False, log_path=None):
     if debug:
@@ -642,15 +523,14 @@ def fetch_series(session, term, debug=True, verbose=False, log_path=None):
         _log(f"Exception in fetch_series: {e}", log_path)
         return []
 
-def get_bdgest_albums_by_series_id(series_id, series_name, username, password, debug=True, verbose=False, log_path=None, fetch_details=True, max_workers=4):
+def fetch_albums_by_series_id(session, series_id, series_name=None, debug=True, verbose=False, log_path=None, fetch_details=True, max_workers=4):
     """
-    Wrapper pour authentification et récupération des albums d'une série par ID.
+    Récupère la liste des albums d'une série spécifique par ID.
     
     Args:
+        session (requests.Session): Session authentifiée
         series_id (str): ID de la série
-        series_name (str): Nom de la série
-        username (str): Nom d'utilisateur BDGest
-        password (str): Mot de passe BDGest
+        series_name (str): Nom de la série (pour débogage et journalisation)
         debug (bool): Mode debug
         verbose (bool): Mode verbose
         log_path (str): Chemin du fichier de log
@@ -660,30 +540,96 @@ def get_bdgest_albums_by_series_id(series_id, series_name, username, password, d
     Returns:
         list: Liste des albums de la série avec leurs métadonnées
     """
+    if debug:
+        print(f"[DEBUG][BDGest] Called fetch_albums_by_series_id(series_id={series_id}, series_name={series_name})")
+    
     if not series_id:
         if debug:
             print("[ERROR][BDGest] series_id is required.")
         return []
     
-    session = requests.Session()
-    try:
-        # Récupération du token CSRF
-        if not get_csrf_token(session, debug=debug, verbose=verbose, log_path=log_path):
-            if debug:
-                print("[ERROR][BDGest] CSRF token not found in get_bdgest_albums_by_series_id.")
-            return []
-        
-        # Authentification
-        if not login_bdgest(session, username, password, debug=debug, verbose=verbose, log_path=log_path):
-            if debug:
-                print("[ERROR][BDGest] Login failed in get_bdgest_albums_by_series_id.")
-            return []
-        
-        # Recherche des albums par ID de série
-        return fetch_albums_by_series_id(session, series_id, series_name, debug=debug, verbose=verbose, log_path=log_path, fetch_details=fetch_details, max_workers=max_workers)
-        
-    except Exception as e:
+    url = ALBUMS_URL.format(requests.utils.quote(series_id))
+    _log(f"GET {url}", log_path)
+    if debug:
+        print(f"[DEBUG][BDGest] Fetching albums by series ID URL: {url}")
+    resp = session.get(url, timeout=10)
+    _log(f"GET {url} status={resp.status_code}", log_path)
+    if verbose:
+        print(f"[DEBUG][BDGest] Response content:\n{resp.text}\n")
+    _log(resp.text if verbose else resp.text[:1000] + "...", log_path)
+
+    soup = _get_soup(resp.text, debug=debug)
+    albums = []
+    table = soup.find("table", class_="table-albums-mid")
+    if not table:
         if debug:
-            print(f"[ERROR][BDGest] Exception in get_bdgest_albums_by_series_id: {e}")
-        _log(f"Exception: {e}", log_path)
-        return []
+            print("[WARN][BDGest] No album table found.")
+        return albums
+
+    for tr in table.find_all("tr", class_="clic"):
+        album_id = tr.get("id", "").replace("ID", "")
+        tds = tr.find_all("td")
+        if len(tds) < 4:
+            continue
+
+        cover_img = tds[1].find("img")["src"] if tds[1].find("img") else ""
+        serie_tag = tds[2].find("span", class_="serie")
+        serie_name = _decode_html_entities(serie_tag.get_text(strip=True)) if serie_tag else ""
+        titre_tag = tds[2].find("span", class_="titre")
+        titre_raw = titre_tag.get_text(" ", strip=True) if titre_tag else ""
+        m = re.match(r"-?\s*([A-Z0-9\-]+)\s*-\s*(.+)", titre_raw)
+        album_number = m.group(1) if m else ""
+        album_name = _decode_html_entities(m.group(2)) if m else _decode_html_entities(titre_raw)
+
+        editor = tds[3].contents[0].strip() if tds[3].contents else ""
+        date = tds[3].find("span", class_="dl").get_text(strip=True) if tds[3].find("span", class_="dl") else ""
+        pages = tds[3].find("span", class_="auteurs").get_text(strip=True) if tds[3].find("span", class_="auteurs") else ""
+        collection = tds[3].find("span", class_="collection").get_text(strip=True) if tds[3].find("span", class_="collection") else ""
+        isbn = tds[3].find("span", class_="isbn").get_text(strip=True) if tds[3].find("span", class_="isbn") else ""
+        album_url = f"https://online.bdgest.com/import/edit?IdAlbum={album_id}" if album_id else ""
+
+        # Infos principales d'abord
+        album = {
+            "serie_name": serie_name,
+            "album_id": album_id,
+            "album_number": album_number,
+            "album_name": album_name,
+            "editor": editor,
+            "collection": collection,
+            "date": date,
+            "pages": pages,
+            "isbn": isbn,
+            "cover_url": cover_img,
+            "album_url": album_url,
+        }
+        albums.append(album)
+
+    if fetch_details and albums:
+        # Helper to fetch details for one album, now with cancellation check
+        def fetch_one(album):
+            # This is where a cancellation check could be added if needed
+            # For now, we assume fetching details is quick enough per album
+            details = fetch_album_details(album["album_url"], session, debug=debug, verbose=verbose, log_path=log_path)
+            album["details"] = details
+            return album
+
+        # Use a thread pool to fetch details in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Map each album to the fetch_one function
+            future_to_album = {executor.submit(fetch_one, album): album for album in albums}
+            
+            results = []
+            for future in concurrent.futures.as_completed(future_to_album):
+                try:
+                    # Collect results as they complete
+                    results.append(future.result())
+                except Exception as exc:
+                    album = future_to_album[future]
+                    if debug:
+                        print(f'[ERROR][BDGest] Album {album.get("album_name")} generated an exception: {exc}')
+            
+            # Return albums with details, preserving original order if possible
+            # This simple return is fine as order is not critical here
+            return results
+            
+    return albums

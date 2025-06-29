@@ -13,7 +13,6 @@ block_cipher = None
 datas = [
     (str(spec_dir / 'translations'), 'translations'),
     (str(spec_dir / 'icons'), 'icons'),
-    (str(spec_dir / 'qt.conf'), '.'),
 ]
 
 # Include only existing data files

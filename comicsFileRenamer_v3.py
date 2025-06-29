@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
     QLabel, QFileDialog, QMessageBox, QComboBox, QTextEdit, QTextBrowser, QCheckBox,
     QAbstractItemView, QHeaderView, QMenu, QDialog, QFormLayout, QDialogButtonBox, QMenuBar
 )
-from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings
+from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings, QThread, Signal as pyqtSignal
 from PySide6.QtGui import QPixmap, QDrag, QAction, QIcon
 
 from utils import scan_comic_files, load_bdgest_credentials, extract_year, open_file_cross_platform, reveal_file_cross_platform, get_system_info
@@ -53,6 +53,498 @@ def get_app_icon():
     return QIcon()  # Return empty icon if none found
 
 # ---------- Providers (API abstraction layer) ----------
+class MetadataProvider:
+    def search_series(self, query):
+        raise NotImplementedError
+
+    def search_albums(self, series_id_or_name):
+        raise NotImplementedError
+
+class BDGestProvider(MetadataProvider):
+    def __init__(self):
+        self._session = None
+        self._authenticated = False
+        self._last_credentials = None
+    
+    def _get_credentials(self):
+        """Get current credentials from settings"""
+        settings = QSettings("ComicsRename", "App")
+        user = settings.value('bdgest_user', '')
+        pwd = settings.value('bdgest_pass', '')
+        return user, pwd
+    
+    def _ensure_authenticated_session(self, debug=False, verbose=False):
+        """Ensure we have an authenticated session, create/authenticate if needed"""
+        from bdgest_scraper_api import login_bdgest, get_csrf_token
+        import requests
+        
+        user, pwd = self._get_credentials()
+        current_credentials = (user, pwd)
+        
+        # Check if we need to create a new session or re-authenticate
+        need_new_session = (
+            self._session is None or 
+            not self._authenticated or
+            self._last_credentials != current_credentials
+        )
+        
+        if need_new_session:
+            if debug:
+                print("[DEBUG][BDGest] Creating new session or re-authenticating")
+            
+            # Create new session
+            self._session = requests.Session()
+            self._authenticated = False
+            
+            # Get CSRF token
+            if not get_csrf_token(self._session, debug=debug, verbose=verbose):
+                if debug:
+                    print("[ERROR][BDGest] Failed to get CSRF token")
+                return False
+            
+            # Authenticate
+            if not login_bdgest(self._session, user, pwd, debug=debug, verbose=verbose):
+                if debug:
+                    print("[ERROR][BDGest] Authentication failed")
+                self._authenticated = False
+                return False
+            
+            self._authenticated = True
+            self._last_credentials = current_credentials
+            if debug:
+                print("[DEBUG][BDGest] Session authenticated successfully")
+        else:
+            if debug:
+                print("[DEBUG][BDGest] Using existing authenticated session")
+        
+        return True
+    
+    def _invalidate_session(self):
+        """Invalidate the current session (called when authentication fails)"""
+        self._session = None
+        self._authenticated = False
+        self._last_credentials = None
+
+    def search_series(self, query, debug=False, verbose=False):
+        from bdgest_scraper_api import fetch_albums
+        
+        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
+            return []
+        
+        try:
+            return fetch_albums(self._session, query, debug=debug, verbose=verbose)
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][BDGest] Error in search_series: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
+
+    def search_series_only(self, query, debug=False, verbose=False):
+        """Search only in series names using the new fetch_series function"""
+        from bdgest_scraper_api import fetch_series
+        
+        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
+            return []
+        
+        try:
+            return fetch_series(self._session, query, debug=debug, verbose=verbose)
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][BDGest] Error in search_series_only: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
+
+    def search_albums(self, serie_name):
+        from bdgest_scraper_api import fetch_albums
+        
+        if not self._ensure_authenticated_session():
+            return []
+        
+        try:
+            return fetch_albums(self._session, serie_name)
+        except Exception as e:
+            print(f"[ERROR][BDGest] Error in search_albums: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
+
+    def search_albums_by_series_id(self, series_id, series_name, debug=False, verbose=False, fetch_details=True):
+        """Search albums for a specific series using series ID"""
+        from bdgest_scraper_api import fetch_albums_by_series_id
+        
+        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
+            return []
+        
+        try:
+            return fetch_albums_by_series_id(self._session, series_id, series_name, debug=debug, verbose=verbose, fetch_details=fetch_details)
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][BDGest] Error in search_albums_by_series_id: {e}")
+            # Invalidate session on error (might be authentication issue)
+            self._invalidate_session()
+            return []
+
+class ComicVineProvider(MetadataProvider):
+    def search_series(self, query):
+        from comicVine_scraper_api import search_comicvine_series
+        # Pass API key from settings if available
+        settings = QSettings("ComicsRename", "App")
+        api_key = settings.value('comicvine_api', '')
+        if api_key:
+            return search_comicvine_series(query, api_key=api_key)
+        else:
+            return search_comicvine_series(query)
+
+    def search_albums(self, volume_id, debug=False):
+        from comicVine_scraper_api import get_comicvine_volume_issues, get_comicvine_issue_details, get_comicvine_volume_details
+        settings = QSettings("ComicsRename", "App")
+        api_key = settings.value('comicvine_api', '')
+        
+        # First, get volume details to extract concepts (genres/styles)
+        volume_details = get_comicvine_volume_details(volume_id, api_key=api_key, debug=debug) if api_key else get_comicvine_volume_details(volume_id, debug=debug)
+        volume_concepts = []
+        volume_style = ""
+        
+        if volume_details and volume_details.get('concepts'):
+            concepts = volume_details.get('concepts', [])
+            volume_concepts = [concept.get('name') for concept in concepts if concept.get('name')]
+            # Use the first concept as the main style, or join multiple concepts
+            if volume_concepts:
+                volume_style = volume_concepts[0] if len(volume_concepts) == 1 else ', '.join(volume_concepts[:3])
+                if debug:
+                    print(f"[DEBUG] Volume style from concepts: {volume_style}")
+        
+        # Get basic volume and issues data
+        issues_list = get_comicvine_volume_issues(volume_id, api_key=api_key, debug=debug) if api_key else get_comicvine_volume_issues(volume_id, debug=debug)
+        
+        if not issues_list:
+            return []
+        
+        # Use the data we already have without additional API calls for speed
+        enriched_issues = []
+        for issue in issues_list:  # Process all issues, not just first 20
+            issue_id = issue.get('id')
+            if issue_id:
+                # Use the data we already have from the volume issues call
+                # This is much faster than making individual API calls
+                # Determine publication date with fallback logic
+                publication_date = issue.get('cover_date')
+                if not publication_date or publication_date == 'Date inconnue':
+                    # Use volume start year as fallback
+                    if volume_details and volume_details.get('start_year'):
+                        publication_date = str(volume_details.get('start_year'))
+                    else:
+                        publication_date = 'Date inconnue'
+                
+                enriched_issue = {
+                    'id': issue.get('id'),
+                    'issue_number': issue.get('issue_number', 'N/A'),
+                    'name': issue.get('name', 'Sans titre'),
+                    'cover_date': publication_date,
+                    'store_date': issue.get('store_date', ''),
+                    'description': issue.get('description', ''),
+                    'image': volume_details.get('image', {}) if volume_details else issue.get('image', {}),  # Use volume image if available
+                    'volume': volume_details,  # Use volume details we already fetched
+                    'api_detail_url': issue.get('api_detail_url', ''),
+                    # Add computed fields for consistency with BDGest
+                    'title': issue.get('name', 'Sans titre'),
+                    # Use volume image since individual issues don't have detailed image data
+                    'cover_url': volume_details.get('image', {}).get('original_url', '') if volume_details and volume_details.get('image') else '',
+                    'album_url': f"https://comicvine.gamespot.com/issue/4000-{issue_id}/",
+                }
+                
+                # Create details section like BDGest with automatic structure detection
+                details_dict = {}
+                
+                # Helper function to format any complex data structure
+                def format_complex_data(key, value, label):
+                    """Format complex data (arrays, objects) into structured display format"""
+                    if isinstance(value, list) and value:
+                        if isinstance(value[0], dict):
+                            # Array of objects - extract meaningful info
+                            if key == 'character_credits':
+                                items = [char.get('name', 'Unknown') for char in value[:10]]
+                            elif key == 'person_credits':
+                                items = [f"{person.get('name', 'Unknown')} ({person.get('role', 'N/A')})" for person in value]
+                            elif key == 'location_credits':
+                                items = [loc.get('name', 'Unknown') for loc in value]
+                            else:
+                                # Generic handling for any array of objects
+                                items = []
+                                for item in value[:10]:  # Limit to 10 items
+                                    if isinstance(item, dict):
+                                        # Try to find a meaningful display value
+                                        display_value = (item.get('name') or 
+                                                       item.get('title') or 
+                                                       item.get('id') or 
+                                                       str(item)[:50] + '...' if len(str(item)) > 50 else str(item))
+                                        items.append(str(display_value))
+                                    else:
+                                        items.append(str(item))
+                            
+                            if items:
+                                details_dict[label] = {'type': 'list', 'items': items}
+                        else:
+                            # Array of simple values
+                            details_dict[label] = {'type': 'list', 'items': [str(item) for item in value[:10]]}
+                    
+                    elif isinstance(value, dict) and value:
+                        # Single object - show key-value pairs
+                        items = []
+                        for k, v in value.items():
+                            if isinstance(v, (str, int, float)) and v:
+                                # Format key names nicely
+                                display_key = k.replace('_', ' ').title()
+                                items.append(f"{display_key}: {v}")
+                        
+                        if items:
+                            details_dict[label] = {'type': 'list', 'items': items[:10]}  # Limit to 10 items
+                
+                # Add basic fields with date fallback logic
+                publication_date = None
+                if enriched_issue.get('cover_date'):
+                    publication_date = enriched_issue.get('cover_date')
+                    details_dict['Date de publication'] = publication_date
+                elif volume_details and volume_details.get('start_year'):
+                    # Use volume start year as fallback when cover_date is not available
+                    publication_date = str(volume_details.get('start_year'))
+                    details_dict['Date de publication'] = f"{publication_date} (Année du volume)"
+                else:
+                    details_dict['Date de publication'] = "Date inconnue"
+                
+                # Store the resolved date for use in issue data
+                if publication_date:
+                    enriched_issue['cover_date'] = publication_date if enriched_issue.get('cover_date') else publication_date
+                
+                if enriched_issue.get('store_date'):
+                    details_dict['Date en magasin'] = enriched_issue.get('store_date')
+                if enriched_issue.get('description'):
+                    # Clean HTML from description
+                    import re
+                    clean_desc = re.sub('<[^<]+?>', '', enriched_issue.get('description', ''))
+                    details_dict['Description'] = clean_desc[:500] + ('...' if len(clean_desc) > 500 else '')
+                
+                # Add volume style/genre information
+                if volume_style:
+                    details_dict['Style/Genre'] = volume_style
+                
+                # For now, skip the complex field processing since we don't have detailed issue data
+                # This makes the loading much faster while still providing essential information
+                
+                # Add volume information if available
+                if volume_details:
+                    vol_info = []
+                    if volume_details.get('name'):
+                        vol_info.append(f"Nom: {volume_details.get('name')}")
+                    if volume_details.get('start_year'):
+                        vol_info.append(f"Année: {volume_details.get('start_year')}")
+                    if volume_details.get('publisher', {}).get('name'):
+                        vol_info.append(f"Éditeur: {volume_details.get('publisher', {}).get('name')}")
+                    if vol_info:
+                        details_dict['Volume'] = {'type': 'list', 'items': vol_info}
+                
+                enriched_issue['details'] = details_dict
+                
+                # Add volume style/genre information for folder renaming
+                if volume_style:
+                    enriched_issue['style'] = volume_style
+                    # Also add to details for consistency with BDGest
+                    enriched_issue['details']['Style'] = volume_style
+                
+                enriched_issues.append(enriched_issue)
+            else:
+                # Fallback for issues without ID
+                fallback_issue = issue.copy()
+                if volume_style:
+                    fallback_issue['style'] = volume_style
+                enriched_issues.append(fallback_issue)
+        
+        if debug:
+            print(f"[DEBUG] Enriched {len(enriched_issues)} issues with detailed information")
+        return enriched_issues
+
+    def search_series_only(self, query, debug=False, verbose=False):
+        """Search only for series names without fetching detailed album data"""
+        from comicVine_scraper_api import search_comicvine_series
+        # Pass API key from settings if available
+        settings = QSettings("ComicsRename", "App")
+        api_key = settings.value('comicvine_api', '')
+        
+        try:
+            if api_key:
+                results = search_comicvine_series(query, api_key=api_key, debug=debug)
+            else:
+                results = search_comicvine_series(query, debug=debug)
+            
+            # Transform results to match expected format
+            series_list = []
+            for volume in results:
+                series_data = {
+                    'serie_name': volume.get('name', 'Unknown'),
+                    'volume_id': str(volume.get('id', '')),
+                    'start_year': volume.get('start_year'),
+                    'publisher': volume.get('publisher', {}).get('name', 'Unknown') if volume.get('publisher') else 'Unknown',
+                    'image': volume.get('image'),
+                    'api_detail_url': volume.get('api_detail_url'),
+                    'raw_data': volume  # Store original data for later use
+                }
+                series_list.append(series_data)
+            
+            if debug:
+                print(f"[DEBUG][ComicVine] search_series_only returned {len(series_list)} series")
+            
+            return series_list
+        except Exception as e:
+            if debug:
+                print(f"[ERROR][ComicVine] Error in search_series_only: {e}")
+            return []
+
+PROVIDERS = {
+    'ComicVine': ComicVineProvider(),
+    'BDGest': BDGestProvider(),
+}
+
+# ---------- Worker Thread for Search Operations ----------
+class SearchWorker(QThread):
+    # Signals for communication with the main thread
+    progress_update = pyqtSignal(str)  # Progress message
+    search_completed = pyqtSignal(dict)  # Search results
+    search_error = pyqtSignal(str)  # Error message
+    
+    def __init__(self, source, query, provider, debug=False, verbose=False, series_name_mode=False):
+        super().__init__()
+        self.source = source
+        self.query = query
+        self.provider = provider
+        self.debug = debug
+        self.verbose = verbose
+        self.series_name_mode = series_name_mode
+        self._cancelled = False
+        
+    def cancel(self):
+        """Cancel the search operation"""
+        self._cancelled = True
+        
+    def run(self):
+        """Run the search operation in the background"""
+        try:
+            if self._cancelled:
+                return
+                
+            if self.source == 'ComicVine':
+                self._search_comicvine()
+            elif self.source == 'BDGest':
+                self._search_bdgest()
+                
+        except Exception as e:
+            if not self._cancelled:
+                self.search_error.emit(f"Search error: {str(e)}")
+                
+    def _search_comicvine(self):
+        """Search ComicVine in background thread"""
+        from comicVine_scraper_api import search_comicvine_series, search_comicvine_issues
+        
+        self.progress_update.emit("Searching ComicVine series...")
+        
+        if self._cancelled:
+            return
+            
+        volumes = search_comicvine_series(self.query, debug=self.debug)
+        if not volumes:
+            if self.debug:
+                print(f"[DEBUG][Worker] No ComicVine volumes found for '{self.query}', trying issues search")
+            issues = search_comicvine_issues(self.query)
+            issues_by_series = {}
+            for it in issues:
+                s = (it.get('volume') or {}).get('name', 'Sans série')
+                issues_by_series.setdefault(s, []).append(it)
+            
+            if not self._cancelled:
+                self.search_completed.emit({
+                    'type': 'comicvine_issues',
+                    'issues_by_series': issues_by_series
+                })
+            return
+            
+        if self._cancelled:
+            return
+            
+        self.progress_update.emit(f"Loading albums from {len(volumes)} series...")
+        
+        issues_by_series = {}
+        total_volumes = len(volumes)
+        
+        for vol_idx, series in enumerate(volumes, 1):
+            if self._cancelled:
+                return
+                
+            series_name = series.get('name', 'Unknown')
+            volume_id = str(series.get('id', ''))
+            
+            self.progress_update.emit(f"Loading albums from series {vol_idx}/{total_volumes}: {series_name}")
+            
+            # Fetch issues for this series
+            issues = self.provider.search_albums(volume_id, debug=self.debug)
+            for issue in issues:
+                issue['volume'] = {'name': series_name}
+                issues_by_series.setdefault(series_name, []).append(issue)
+                
+        if not self._cancelled:
+            self.search_completed.emit({
+                'type': 'comicvine_series',
+                'issues_by_series': issues_by_series
+            })
+            
+    def _search_bdgest(self):
+        """Search BDGest in background thread"""
+        if self.series_name_mode:
+            self.progress_update.emit("Searching BDGest series...")
+            
+            if self._cancelled:
+                return
+                
+            series_results = self.provider.search_series_only(self.query, debug=self.debug, verbose=self.verbose) \
+                if hasattr(self.provider, 'search_series_only') \
+                else []
+                
+            if not self._cancelled:
+                self.search_completed.emit({
+                    'type': 'bdgest_series',
+                    'series_results': series_results
+                })
+        else:
+            self.progress_update.emit("Searching BDGest albums...")
+            
+            if self._cancelled:
+                return
+                
+            # Use regular album search
+            series_list = self.provider.search_series(self.query, debug=self.debug, verbose=self.verbose) \
+                if hasattr(self.provider, 'search_series') and self.provider.search_series.__code__.co_argcount > 2 \
+                else self.provider.search_series(self.query)
+                
+            if self._cancelled:
+                return
+                
+            self.progress_update.emit("Processing album results...")
+            
+            albums = []
+            for album in series_list:
+                if self._cancelled:
+                    return
+                s = album.get('serie_name', '')
+                if s:
+                    albums.append(album)
+                    
+            if not self._cancelled:
+                self.search_completed.emit({
+                    'type': 'bdgest_albums',
+                    'albums': albums
+                })
+
+# ---------- Metadata Providers ----------
 class MetadataProvider:
     def search_series(self, query):
         raise NotImplementedError
@@ -783,32 +1275,62 @@ class FileTable(QTableWidget):
             view.setDocument(pdf_doc)
             view.setPageMode(QPdfView.PageMode.SinglePage)
             
+            # Flag to prevent multiple simultaneous fit operations
+            fitting_in_progress = False
+            
             # Function to fit page to window
             def fit_to_window():
+                nonlocal fitting_in_progress
+                if fitting_in_progress:
+                    return  # Prevent recursive/multiple calls
+                
                 if pdf_doc.pageCount() > 0:
-                    # Get the current page size and available view size
-                    current_page = view.pageNavigator().currentPage()
-                    page_size = pdf_doc.pagePointSize(current_page)
-                    view_size = view.viewport().size()
+                    try:
+                        fitting_in_progress = True
+                        
+                        # Get the current page size and available view size
+                        current_page = view.pageNavigator().currentPage()
+                        page_size = pdf_doc.pagePointSize(current_page)
+                        view_size = view.viewport().size()
+                        
+                        # Check if view has valid size
+                        if view_size.width() <= 0 or view_size.height() <= 0:
+                            return
+                        
+                        # Calculate zoom to fit with some padding
+                        padding = 20
+                        scale_x = (view_size.width() - padding) / page_size.width()
+                        scale_y = (view_size.height() - padding) / page_size.height()
+                        
+                        # Use the smaller scale to ensure the page fits completely
+                        zoom_factor = min(scale_x, scale_y, 2.0)  # Cap at 2x zoom
+                        
+                        # Only update if zoom factor is reasonable
+                        if zoom_factor > 0.1:  # Minimum zoom threshold
+                            view.setZoomFactor(zoom_factor)
                     
-                    # Calculate zoom to fit with some padding
-                    padding = 20
-                    scale_x = (view_size.width() - padding) / page_size.width()
-                    scale_y = (view_size.height() - padding) / page_size.height()
-                    
-                    # Use the smaller scale to ensure the page fits completely
-                    zoom_factor = min(scale_x, scale_y)
-                    
-                    # Set the zoom level
-                    view.setZoomFactor(zoom_factor)
+                    finally:
+                        fitting_in_progress = False
             
             # Custom resize event for the dialog to trigger fit-to-window
+            resize_timer = None
             original_resize_event = dialog.resizeEvent
+            
             def custom_resize_event(event):
+                nonlocal resize_timer
                 original_resize_event(event)
-                # Delay the fit to ensure layout is updated
+                
+                # Cancel previous timer if it exists
+                if resize_timer is not None:
+                    resize_timer.stop()
+                
+                # Create new timer for delayed fit
                 from PySide6.QtCore import QTimer
-                QTimer.singleShot(10, fit_to_window)
+                resize_timer = QTimer()
+                resize_timer.setSingleShot(True)
+                resize_timer.timeout.connect(fit_to_window)
+                resize_timer.start(100)  # Longer delay to avoid excessive calls
+            
             dialog.resizeEvent = custom_resize_event
             
             # Create navigation controls
@@ -833,9 +1355,22 @@ class FileTable(QTableWidget):
                 page_label.setText(f"Page {current + 1} of {total}")
                 prev_btn.setEnabled(current > 0)
                 next_btn.setEnabled(current < total - 1)
-                # Fit to window when page changes
+            
+            # Page change timer to avoid excessive fit calls
+            page_change_timer = None
+            
+            def schedule_fit_after_page_change():
+                nonlocal page_change_timer
+                # Cancel previous timer if it exists
+                if page_change_timer is not None:
+                    page_change_timer.stop()
+                
+                # Create new timer for delayed fit
                 from PySide6.QtCore import QTimer
-                QTimer.singleShot(50, fit_to_window)
+                page_change_timer = QTimer()
+                page_change_timer.setSingleShot(True)
+                page_change_timer.timeout.connect(fit_to_window)
+                page_change_timer.start(150)  # Delay to ensure page is loaded
             
             def go_prev():
                 navigator = view.pageNavigator()
@@ -843,6 +1378,7 @@ class FileTable(QTableWidget):
                     from PySide6.QtCore import QPointF
                     navigator.jump(navigator.currentPage() - 1, QPointF(0, 0))
                     update_page_label()
+                    schedule_fit_after_page_change()
             
             def go_next():
                 navigator = view.pageNavigator()
@@ -850,6 +1386,7 @@ class FileTable(QTableWidget):
                     from PySide6.QtCore import QPointF
                     navigator.jump(navigator.currentPage() + 1, QPointF(0, 0))
                     update_page_label()
+                    schedule_fit_after_page_change()
             
             prev_btn.clicked.connect(go_prev)
             next_btn.clicked.connect(go_next)
@@ -871,19 +1408,40 @@ class FileTable(QTableWidget):
             layout.addWidget(view, 1)  # stretch factor 1 = takes available space
             layout.addLayout(nav_layout, 0)  # stretch factor 0 = fixed size
             
-            # Update initial button states and fit to window
+            # Update initial button states
             update_page_label()
             
-            # Initial fit to window after dialog is shown
-            from PySide6.QtCore import QTimer
-            QTimer.singleShot(100, fit_to_window)
+            # Initial fit to window after dialog is shown - use controlled approach
+            initial_fit_timer = None
+            def schedule_initial_fit():
+                nonlocal initial_fit_timer
+                if initial_fit_timer is not None:
+                    initial_fit_timer.stop()
+                
+                from PySide6.QtCore import QTimer
+                initial_fit_timer = QTimer()
+                initial_fit_timer.setSingleShot(True)
+                initial_fit_timer.timeout.connect(fit_to_window)
+                initial_fit_timer.start(200)  # Give dialog time to be fully rendered
             
-            # Save window geometry when dialog is closed
-            def save_geometry():
+            # Schedule initial fit
+            schedule_initial_fit()
+            
+            # Save window geometry when dialog is closed and clean up timers
+            def save_geometry_and_cleanup():
+                # Stop any running timers to prevent access to destroyed objects
+                if resize_timer is not None:
+                    resize_timer.stop()
+                if page_change_timer is not None:
+                    page_change_timer.stop()
+                if initial_fit_timer is not None:
+                    initial_fit_timer.stop()
+                
+                # Save geometry
                 settings.setValue('quick_view_geometry', dialog.saveGeometry())
             
-            # Connect to dialog finished signal to save geometry
-            dialog.finished.connect(save_geometry)
+            # Connect to dialog finished signal to save geometry and cleanup
+            dialog.finished.connect(save_geometry_and_cleanup)
             
             dialog.show()
             return
@@ -1106,6 +1664,19 @@ class ComicRenamer(QWidget):
                 best_folder = self._get_fallback_folder_path(last_folder)
                 self._load_files(best_folder)
 
+    def keyPressEvent(self, event):
+        """Handle key press events - Escape cancels search"""
+        from PySide6.QtCore import Qt
+        if event.key() == Qt.Key_Escape and self._search_in_progress:
+            # Cancel search with Escape key
+            self._search_cancelled = True
+            self._restore_search_ui()
+            self.detail_text.setHtml("<i>Search cancelled by user (Escape key)</i>")
+            print("[INFO] Search operation cancelled by user (Escape key)")
+        else:
+            # Pass other events to parent
+            super().keyPressEvent(event)
+
     def _build_ui(self):
         layout = QVBoxLayout(self)
         ctrl = QHBoxLayout()
@@ -1122,6 +1693,12 @@ class ComicRenamer(QWidget):
         self.settings_btn.setFixedWidth(30)
         self.settings_btn.setToolTip(tr("ui.tooltips.settings"))
         self.rename_btn = QPushButton(tr("ui.buttons.rename"))
+        self.rename_btn.setEnabled(False)  # Disabled by default until both file and album are selected
+        
+        # Add search cancellation support
+        self._search_cancelled = False
+        self._search_in_progress = False
+        
         for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):
             ctrl.addWidget(w)
         layout.addLayout(ctrl)
@@ -1163,8 +1740,12 @@ class ComicRenamer(QWidget):
         alb_layout.addWidget(self.album_table)
         splitter_right.addWidget(alb_widget)
 
-        det_widget = QWidget()
-        det_layout = QHBoxLayout(det_widget)
+        # Albums Management Area (regrouped album details + cover)
+        albums_mgmt_widget = QWidget()
+        albums_mgmt_widget.setWindowTitle("Albums Management")  # For potential future groupbox styling
+        albums_mgmt_layout = QHBoxLayout(albums_mgmt_widget)
+        
+        # Album Details Section
         self.detail_text = QTextBrowser()  # Use QTextBrowser instead of QTextEdit for better link support
         
         # Configure QTextBrowser for better link handling and styling
@@ -1174,6 +1755,7 @@ class ComicRenamer(QWidget):
         # QTextBrowser has built-in support for opening external links
         self.detail_text.setOpenExternalLinks(True)
         
+        # Album Cover Section
         self.detail_image = QLabel()
         # Configure image label to be responsive and centered
         self.detail_image.setScaledContents(False)  # Don't force scaling to fill
@@ -1185,9 +1767,13 @@ class ComicRenamer(QWidget):
         # Make cover image clickable for Amazon search
         self.detail_image.setCursor(Qt.PointingHandCursor)
         self.detail_image.mousePressEvent = self._on_cover_image_clicked
-        det_layout.addWidget(self.detail_text,2)
-        det_layout.addWidget(self.detail_image,1)
-        splitter_right.addWidget(det_widget)
+        
+        # Add both sections to the albums management area
+        albums_mgmt_layout.addWidget(self.detail_text, 2)  # Album details take 2/3 of space
+        albums_mgmt_layout.addWidget(self.detail_image, 1)  # Album cover takes 1/3 of space
+        
+        # Add the albums management area to the right splitter
+        splitter_right.addWidget(albums_mgmt_widget)
 
         splitter_main.addWidget(splitter_right)
         layout.addWidget(splitter_main)
@@ -1198,7 +1784,7 @@ class ComicRenamer(QWidget):
 
         self.source_combo.currentTextChanged.connect(self._change_source)
         self.dir_btn.clicked.connect(self._choose_folder)
-        self.search_btn.clicked.connect(self._search)
+        self.search_btn.clicked.connect(self._search_or_cancel)
         self.search_bar.returnPressed.connect(self._search)
         self.series_combo.currentTextChanged.connect(self._on_series_selection_changed)
         self.album_table.cellClicked.connect(self._show_details)
@@ -1364,10 +1950,30 @@ class ComicRenamer(QWidget):
         # Adjust columns after loading files
         self._adjust_table_columns()
 
+    def _search_or_cancel(self):
+        """Handle search button click - either start search or cancel current search"""
+        if self._search_in_progress:
+            # Cancel current search
+            self._search_cancelled = True
+            self._restore_search_ui()
+            self.detail_text.setHtml("<i>Search cancelled by user</i>")
+            print("[INFO] Search operation cancelled by user")
+        else:
+            # Start new search
+            self._search()
+
     def _search(self):
         q = self.search_bar.text().strip()
         if not q:
             return
+            
+        # Set search in progress and update button
+        self._search_cancelled = False
+        self._search_in_progress = True
+        self.search_btn.setText("⏹️ Cancel Search")
+        self.search_btn.setToolTip("Cancel current search operation")
+        
+        # Clear previous results
         self.series_combo.clear()
         self.album_table.clearContents()
         self.album_table.setRowCount(0)
@@ -1409,11 +2015,21 @@ class ComicRenamer(QWidget):
                 QApplication.processEvents()  # Single UI update at start
                 
                 for vol_idx, series in enumerate(volumes, 1):
+                    # Check for cancellation
+                    if self._search_cancelled:
+                        if debug:
+                            print("[DEBUG][UI] Search cancelled during ComicVine album fetching")
+                        return
+                    
                     series_name = series.get('name', 'Unknown')
                     volume_id = str(series.get('id', ''))
                     
                     if debug:
                         print(f"[DEBUG][UI] Fetching albums for volume {vol_idx}/{total_volumes}: {series_name}")
+                    
+                    # Update progress in UI
+                    self.detail_text.setHtml(f"<i>Loading albums from {total_volumes} series... ({vol_idx}/{total_volumes})</i>")
+                    QApplication.processEvents()  # Allow UI updates and cancellation
                     
                     # Fetch issues for this series without UI updates in the loop for maximum speed
                     issues = provider.search_albums(volume_id, debug=debug)
@@ -1459,6 +2075,10 @@ class ComicRenamer(QWidget):
                 if not issues_by_series:
                     QMessageBox.warning(self, 'Résultat', 'Aucun album trouvé pour cette recherche.')
         else:  # BDGest
+            # Check for cancellation before starting BDGest operations
+            if self._search_cancelled:
+                return
+                
             # Check if SeriesName checkbox is checked
             if self.series_name_cb.isChecked():
                 # Use series-only search
@@ -1471,12 +2091,21 @@ class ComicRenamer(QWidget):
                 
                 # Populate series dropdown with series results
                 for series in series_results:
+                    # Check for cancellation during series population
+                    if self._search_cancelled:
+                        if debug:
+                            print("[DEBUG][UI] Search cancelled during BDGest series population")
+                        return
+                        
                     series_name = series.get('serie_name', 'Unknown Series')
                     if series_name and series_name != 'Unknown Series':
                         self.series_combo.addItem(series_name)
                         idx = self.series_combo.count() - 1
                         # Store the full series data for later use
                         self.series_combo.setItemData(idx, series, Qt.UserRole)
+                        
+                    # Process UI events to allow cancellation
+                    QApplication.processEvents()
                 
                 # Inform user if no series results
                 if not series_results:
@@ -1504,6 +2133,12 @@ class ComicRenamer(QWidget):
                 
                 series_seen = set()
                 for album in albums:
+                    # Check for cancellation during album processing
+                    if self._search_cancelled:
+                        if debug:
+                            print("[DEBUG][UI] Search cancelled during BDGest album processing")
+                        return
+                        
                     s = album.get('serie_name', '')
                     serie_id = album.get('series_id', '')
                     if s and s not in series_seen:
@@ -1511,9 +2146,22 @@ class ComicRenamer(QWidget):
                         idx = self.series_combo.count() - 1
                         self.series_combo.setItemData(idx, serie_id, Qt.UserRole)
                         series_seen.add(s)
+                        
+                    # Process UI events periodically
+                    if len(series_seen) % 5 == 0:  # Every 5 items
+                        QApplication.processEvents()
                 # Inform user if no BDGest results
                 if not albums:
                     QMessageBox.information(self, "Aucun résultat", "Aucun album trouvé pour cette recherche sur BDGest.")
+        
+        # Restore UI state after search completion
+        self._restore_search_ui()
+
+    def _restore_search_ui(self):
+        """Restore UI elements after search completion or cancellation"""
+        self._search_in_progress = False
+        self.search_btn.setText(tr("ui.buttons.search"))
+        self.search_btn.setToolTip("")  # Clear tooltip or set default
 
     def _enable_folder_rename_btn(self, *args):
         self.folder_rename_btn.setEnabled(True)
@@ -1522,6 +2170,31 @@ class ComicRenamer(QWidget):
         # Enable if any row is selected, else disable
         selected_rows = self.album_table.selectionModel().selectedRows()
         self.folder_rename_btn.setEnabled(bool(selected_rows))
+        
+        # Update rename button state based on both file and album selections
+        self._update_rename_button_state()
+
+    def _update_rename_button_state(self):
+        """Update rename button state - enabled only when both file and album are selected"""
+        # Check if file is selected
+        file_selected = bool(self.file_table.selectionModel().selectedRows())
+        
+        # Check if album is selected
+        album_selected = bool(self.album_table.selectionModel().selectedRows())
+        
+        # Enable rename button only when both are selected
+        both_selected = file_selected and album_selected
+        self.rename_btn.setEnabled(both_selected)
+        
+        # Optional: Update button tooltip to provide user feedback
+        if not file_selected and not album_selected:
+            self.rename_btn.setToolTip("Select both a file and an album to enable renaming")
+        elif not file_selected:
+            self.rename_btn.setToolTip("Select a file to rename")
+        elif not album_selected:
+            self.rename_btn.setToolTip("Select an album for renaming")
+        else:
+            self.rename_btn.setToolTip("Rename selected file using album metadata")
 
     def _on_series_selection_changed(self, txt):
         """Handle series selection change - close dropdown and populate albums"""
@@ -1540,6 +2213,11 @@ class ComicRenamer(QWidget):
     def _populate_albums(self, txt):
         if not txt:
             return
+            
+        # Check for cancellation at the start
+        if hasattr(self, '_search_cancelled') and self._search_cancelled:
+            return
+            
         self.album_table.clearContents()
         self.album_table.setRowCount(0)
         self.series_cover_url = ''
@@ -1613,14 +2291,31 @@ class ComicRenamer(QWidget):
                             
                             # Fetch albums for this series
                             try:
+                                # Check for cancellation
+
+                                if self._search_cancelled:
+                                    return
+                                
+                                # Show progress message
+                                self.detail_text.setHtml(html.replace("<i>Récupération des albums...</i>", "<i>Récupération des albums en cours...</i>"))
+                                QApplication.processEvents()  # Allow UI update and cancellation
+                                
                                 debug = self.debug_cb.isChecked() if hasattr(self, 'debug_cb') else False
                                 verbose = self.verbose_cb.isChecked() if hasattr(self, 'verbose_cb') else False
                                 albums = provider.search_albums_by_series_id(series_id, series_name, debug=debug, verbose=verbose)
+                                
+                                # Check for cancellation after fetching
+                                if self._search_cancelled:
+                                    return
                                 
                                 if albums:
                                     # Populate album table with series albums
                                     self.album_table.setRowCount(len(albums))
                                     for r, alb in enumerate(albums):
+                                        # Check for cancellation during album table population
+                                        if self._search_cancelled:
+                                            return
+                                            
                                         s = alb.get('serie_name', series_name)
                                         t = alb.get('album_name', alb.get('nomAlbum', ''))
                                         n = alb.get('album_number', alb.get('numeroAlbum', ''))
@@ -1632,6 +2327,10 @@ class ComicRenamer(QWidget):
                                         self.album_table.setItem(r, 0, itm)
                                         if r == 0 and alb.get('cover_url'):
                                             self.series_cover_url = alb.get('cover_url')
+                                            
+                                        # Process UI events every 10 albums for responsiveness
+                                        if r % 10 == 0:
+                                            QApplication.processEvents()
                                     
                                     # Update the detail text with album count
                                     html = "<b>Série sélectionnée :</b><br><ul>"
@@ -2143,6 +2842,9 @@ class ComicRenamer(QWidget):
         else:
             # If nothing selected, show root folder name
             self.folder_display.setText(os.path.basename(self.settings.value('last_folder', '').rstrip('/\\')))
+        
+        # Update rename button state based on both file and album selections
+        self._update_rename_button_state()
 
     def _rename_folder_to_serie(self):
         # Get current folder path

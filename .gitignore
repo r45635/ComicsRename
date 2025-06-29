@@ -60,6 +60,7 @@ ENV/
 env.bak/
 venv.bak/
 .venv/
+.venv-stable/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -209,3 +210,36 @@ yarn-error.log*
 
 # Python wheels
 *.whl
+
+# Editor files
+*~
+*.swp
+*.swo
+.vscode/settings.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Development files
+*.log
+*.out
+*.err
+temp/
+tmp/
+
+# Icon development files
+icons/concept_*.svg
+icons/preview.html
+
+# Empty launcher scripts
+launch.sh
+system_launch.sh
+
+# Development configs
+qt.conf

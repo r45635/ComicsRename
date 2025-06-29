@@ -39,15 +39,15 @@ def main():
         
         # Initialize i18n system
         from i18n import get_current_language
-        # Only show language info in debug mode
-        # print(f"[INFO] Starting ComicsRename with language: {get_current_language()}")
-          # Create the QApplication
+        
+        # Create the QApplication
         app = QApplication(sys.argv)
         app.setApplicationName("ComicsRename")
         app.setApplicationVersion("3.2.2")
         app.setOrganizationName("ComicsRename")
         app.setOrganizationDomain("github.com")
-          # Set application icon
+        
+        # Set application icon
         try:
             from comicsFileRenamer_v3 import get_app_icon
             app_icon = get_app_icon()
