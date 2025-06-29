@@ -5,6 +5,42 @@ All notable changes to the ComicsRename project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2025-06-29
+
+### 🧹 Major Project Cleanup and Reorganization
+
+#### **Project Structure**
+- **Reorganized repository structure** following Python best practices
+- **Moved all test files** from root to `tests/` directory for better organization
+- **Created automated cleanup tools** for ongoing project maintenance
+- **Added comprehensive documentation** with detailed README at project root
+
+#### **Cleanup and Optimization**
+- **Removed build artifacts** and cache files (`__pycache__`, `build/`, `dist/`)
+- **Eliminated virtual environment** from repository (`.venv-stable/`)
+- **Deleted empty configuration files** (`launch.sh`, `system_launch.sh`, `qt.conf`)
+- **Cleaned icon development files** (concept SVGs, preview HTML)
+- **Removed redundant development tools** (complex icon creator with dependencies)
+
+#### **Configuration Improvements**
+- **Enhanced .gitignore** with comprehensive exclusion patterns
+- **Updated PyInstaller spec** to remove invalid file references
+- **Cleaned main.py formatting** and removed debug comments
+- **Added proper version management** across all configuration files
+
+#### **Development Tools**
+- **Added `cleanup_project.py`** for automated project maintenance
+- **Simplified icon creation tools** (removed dependency-heavy version)
+- **Maintained validation and setup scripts** for easy development setup
+- **Created detailed cleanup documentation** with `CLEANUP_SUMMARY.md`
+
+#### **Benefits**
+- **Reduced repository size** by removing unnecessary files
+- **Improved maintainability** with clear project structure
+- **Professional organization** following Python community standards
+- **Automated maintenance** capabilities for ongoing cleanliness
+- **Better development workflow** with organized file structure
+
 ## [3.2.2] - 2025-06-28
 
 ### 🐛 Bug Fixes
