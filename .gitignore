@@ -249,3 +249,15 @@ screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
 !screenshots/README.md
+
+
+# macOS specific files to prevent personal information leakage
+*.dmg
+*.app/
+*.pkg
+
+# Additional security for builds
+*.exe
+*.msi
+*.deb
+*.rpm
