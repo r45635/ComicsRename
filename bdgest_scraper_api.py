@@ -46,6 +46,38 @@ def _decode_html_entities(text):
         return text
     return html.unescape(str(text))
 
+def _check_too_many_results(soup, debug=False):
+    """
+    Check if BDGest returned a 'too many results' error message.
+    Returns (is_error, error_message)
+    """
+    # Look for the specific error message
+    error_spans = soup.find_all("span", class_="semi-bold")
+    for span in error_spans:
+        if span and "Erreur" in span.get_text():
+            # Look for the error message in the next siblings or parent
+            parent = span.parent
+            if parent:
+                full_text = parent.get_text()
+                if "plus de 1000 albums" in full_text and "veuillez affiner" in full_text:
+                    error_msg = full_text.strip()
+                    if debug:
+                        print(f"[WARN][BDGest] Too many results error detected: {error_msg}")
+                    return True, error_msg
+    
+    # Also check for any div containing the error message
+    error_divs = soup.find_all("div")
+    for div in error_divs:
+        if div:
+            div_text = div.get_text()
+            if "plus de 1000 albums" in div_text and "veuillez affiner" in div_text:
+                error_msg = div_text.strip()
+                if debug:
+                    print(f"[WARN][BDGest] Too many results error detected in div: {error_msg}")
+                return True, error_msg
+    
+    return False, None
+
 def _get_soup(text, debug=False):
     try:
         from bs4 import BeautifulSoup
@@ -200,6 +232,15 @@ def fetch_albums(session, term, debug=True, verbose=False, log_path=None, fetch_
 
     soup = _get_soup(resp.text, debug=debug)
     albums = []
+    
+    # Check for "too many results" error first
+    is_error, error_msg = _check_too_many_results(soup, debug=debug)
+    if is_error:
+        if debug:
+            print(f"[ERROR][BDGest] Search returned too many results: {error_msg}")
+        # Return a special error indicator
+        return [{"error": "too_many_results", "message": error_msg}]
+    
     table = soup.find("table", class_="table-albums-mid")
     if not table:
         if debug:
@@ -315,6 +356,15 @@ def fetch_albums_by_series_id(session, series_id, series_name=None, debug=True, 
         
         soup = _get_soup(resp.text, debug=debug)
         albums = []
+        
+        # Check for "too many results" error first
+        is_error, error_msg = _check_too_many_results(soup, debug=debug)
+        if is_error:
+            if debug:
+                print(f"[ERROR][BDGest] Search returned too many results: {error_msg}")
+            # Return a special error indicator
+            return [{"error": "too_many_results", "message": error_msg}]
+        
         table = soup.find("table", class_="table-albums-mid")
         if not table:
             if debug:

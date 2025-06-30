@@ -2128,6 +2128,16 @@ class ComicRenamer(QWidget):
                     s = album.get('serie_name', '')
                     if s:
                         albums.append(album)
+                
+                # Check for "too many results" error
+                if albums and len(albums) == 1 and albums[0].get('error') == 'too_many_results':
+                    error_msg = albums[0].get('message', 'Votre recherche retourne trop de résultats.')
+                    QMessageBox.warning(self, "Trop de résultats", 
+                                      f"BDGest : {error_msg}\n\n"
+                                      "Veuillez affiner votre recherche avec des termes plus spécifiques.")
+                    # Don't populate any results
+                    albums = []
+                
                 self._bdgest_album_results = albums
                 self._bdgest_series_results = []  # Clear series results when searching albums
                 
