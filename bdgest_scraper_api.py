@@ -51,32 +51,76 @@ def _check_too_many_results(soup, debug=False):
     Check if BDGest returned a 'too many results' error message.
     Returns (is_error, error_message)
     """
-    # Look for the specific error message
+    # Get full page text for comprehensive search
+    full_text = soup.get_text().lower()
+    
+    # Multiple patterns to detect "too many results" error
+    error_patterns = [
+        ("plus de 1000 albums", "veuillez affiner"),
+        ("plus de 1000 albums", "affiner votre recherche"),
+        ("trop de résultats", "affiner"),
+        ("recherche trop large", "1000"),
+        ("limite de 1000", "résultats"),
+        ("maximum de 1000", "albums"),
+    ]
+    
+    # Check if any pattern combination is found
+    for pattern1, pattern2 in error_patterns:
+        if pattern1 in full_text and pattern2 in full_text:
+            if debug:
+                print(f"[WARN][BDGest] Too many results pattern detected: '{pattern1}' + '{pattern2}'")
+            
+            # Try to extract a more specific error message
+            error_message = _extract_error_message(soup, pattern1, pattern2, debug)
+            return True, error_message
+    
+    # Legacy detection method (original)
     error_spans = soup.find_all("span", class_="semi-bold")
     for span in error_spans:
-        if span and "Erreur" in span.get_text():
-            # Look for the error message in the next siblings or parent
+        if span and "erreur" in span.get_text().lower():
             parent = span.parent
             if parent:
                 full_text = parent.get_text()
-                if "plus de 1000 albums" in full_text and "veuillez affiner" in full_text:
+                if "plus de 1000 albums" in full_text.lower() and "veuillez affiner" in full_text.lower():
                     error_msg = full_text.strip()
                     if debug:
-                        print(f"[WARN][BDGest] Too many results error detected: {error_msg}")
+                        print(f"[WARN][BDGest] Too many results error detected (legacy): {error_msg}")
                     return True, error_msg
     
-    # Also check for any div containing the error message
-    error_divs = soup.find_all("div")
-    for div in error_divs:
-        if div:
-            div_text = div.get_text()
-            if "plus de 1000 albums" in div_text and "veuillez affiner" in div_text:
-                error_msg = div_text.strip()
-                if debug:
-                    print(f"[WARN][BDGest] Too many results error detected in div: {error_msg}")
-                return True, error_msg
+    # Check common error containers
+    error_containers = soup.find_all(["div", "p", "span"], class_=lambda x: x and any(
+        keyword in x.lower() for keyword in ["error", "warning", "alert", "notice", "message"]
+    ))
+    
+    for container in error_containers:
+        container_text = container.get_text().lower()
+        if ("plus de 1000" in container_text or "trop de résultats" in container_text) and "affiner" in container_text:
+            error_msg = container.get_text().strip()
+            if debug:
+                print(f"[WARN][BDGest] Too many results error detected in container: {error_msg}")
+            return True, error_msg
     
     return False, None
+
+def _extract_error_message(soup, pattern1, pattern2, debug=False):
+    """Extract a user-friendly error message from the soup"""
+    # Try to find the actual error text in various containers
+    all_elements = soup.find_all(["div", "p", "span", "td", "li"])
+    
+    for element in all_elements:
+        element_text = element.get_text()
+        element_text_lower = element_text.lower()
+        
+        if pattern1 in element_text_lower and pattern2 in element_text_lower:
+            # Clean up the message
+            clean_message = element_text.strip()
+            if len(clean_message) < 300:  # Avoid too long messages
+                if debug:
+                    print(f"[DEBUG][BDGest] Extracted error message: {clean_message}")
+                return clean_message
+    
+    # Fallback generic message
+    return f"Cette recherche retourne plus de 1000 albums, veuillez affiner votre recherche."
 
 def _get_soup(text, debug=False):
     try:
@@ -226,6 +270,19 @@ def fetch_albums(session, term, debug=True, verbose=False, log_path=None, fetch_
         print(f"[DEBUG][BDGest] Fetching albums URL: {url}")
     resp = session.get(url, timeout=10)
     _log(f"GET {url} status={resp.status_code}", log_path)
+    
+    # Check for redirections (could indicate auth issues or other problems)
+    if resp.url != url:
+        if debug:
+            print(f"[WARN][BDGest] Redirected from {url} to {resp.url}")
+        # If redirected to homepage or login, might be auth issue
+        if "login" in resp.url.lower() or resp.url.endswith("bdgest.com/") or resp.url.endswith("bdgest.com"):
+            if debug:
+                print("[WARN][BDGest] Redirected to homepage/login - authentication may be required")
+            # This could be a rate limit or auth issue, not necessarily "too many results"
+            # Return empty results for now
+            return []
+    
     if verbose:
         print(f"[DEBUG][BDGest] Response content:\n{resp.text}\n")
     _log(resp.text if verbose else resp.text[:1000] + "...", log_path)

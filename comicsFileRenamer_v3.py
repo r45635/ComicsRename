@@ -1992,6 +1992,19 @@ class ComicRenamer(QWidget):
             series_list = provider.search_series(q, debug=debug, verbose=verbose) \
                 if hasattr(provider, 'search_series') and provider.search_series.__code__.co_argcount > 2 \
                 else provider.search_series(q)
+            
+            # Check for "too many results" error early (BDGest specific)
+            if self._source == 'BDGest' and series_list and len(series_list) == 1 and series_list[0].get('error') == 'too_many_results':
+                # Use internationalized error messages
+                title = tr("messages.errors.too_many_results_title")
+                message = tr("messages.errors.too_many_results_message")
+                hint = tr("messages.errors.too_many_results_hint")
+                full_message = f"{message}\n\n{hint}"
+                
+                QMessageBox.warning(self, title, full_message)
+                # Restore UI and exit early
+                self._restore_search_ui()
+                return
         else:
             # For BDGest in SeriesName mode, we'll call search_series_only later
             series_list = []
@@ -2086,6 +2099,20 @@ class ComicRenamer(QWidget):
                     if hasattr(provider, 'search_series_only') \
                     else []
                 
+                # Check for "too many results" error in series search
+                series_error_handled = False  # Track if we handled an error for series
+                if series_results and len(series_results) == 1 and series_results[0].get('error') == 'too_many_results':
+                    # Use internationalized error messages
+                    title = tr("messages.errors.too_many_results_title")
+                    message = tr("messages.errors.too_many_results_message")
+                    hint = tr("messages.errors.too_many_results_hint")
+                    full_message = f"{message}\n\n{hint}"
+                    
+                    QMessageBox.warning(self, title, full_message)
+                    # Don't populate any results
+                    series_results = []
+                    series_error_handled = True
+                
                 self._bdgest_series_results = series_results
                 self._bdgest_album_results = []  # Clear album results when searching series
                 
@@ -2107,9 +2134,11 @@ class ComicRenamer(QWidget):
                     # Process UI events to allow cancellation
                     QApplication.processEvents()
                 
-                # Inform user if no series results
-                if not series_results:
-                    QMessageBox.information(self, "Aucun résultat", "Aucune série trouvée pour cette recherche sur BDGest.")
+                # Inform user if no series results (but only if we didn't handle an error)
+                if not series_results and not series_error_handled:
+                    title = tr("messages.info.no_result")
+                    message = tr("messages.errors.no_series_found")
+                    QMessageBox.information(self, title, message)
                 else:
                     # Clear album table since we're in series mode
                     self.album_table.clearContents()
@@ -2124,6 +2153,7 @@ class ComicRenamer(QWidget):
             else:
                 # Use default album search
                 albums = []
+                error_handled = False  # Track if we handled an error
                 for album in series_list:
                     s = album.get('serie_name', '')
                     if s:
@@ -2131,12 +2161,16 @@ class ComicRenamer(QWidget):
                 
                 # Check for "too many results" error
                 if albums and len(albums) == 1 and albums[0].get('error') == 'too_many_results':
-                    error_msg = albums[0].get('message', 'Votre recherche retourne trop de résultats.')
-                    QMessageBox.warning(self, "Trop de résultats", 
-                                      f"BDGest : {error_msg}\n\n"
-                                      "Veuillez affiner votre recherche avec des termes plus spécifiques.")
+                    # Use internationalized error messages
+                    title = tr("messages.errors.too_many_results_title")
+                    message = tr("messages.errors.too_many_results_message")
+                    hint = tr("messages.errors.too_many_results_hint")
+                    full_message = f"{message}\n\n{hint}"
+                    
+                    QMessageBox.warning(self, title, full_message)
                     # Don't populate any results
                     albums = []
+                    error_handled = True
                 
                 self._bdgest_album_results = albums
                 self._bdgest_series_results = []  # Clear series results when searching albums
@@ -2160,9 +2194,11 @@ class ComicRenamer(QWidget):
                     # Process UI events periodically
                     if len(series_seen) % 5 == 0:  # Every 5 items
                         QApplication.processEvents()
-                # Inform user if no BDGest results
-                if not albums:
-                    QMessageBox.information(self, "Aucun résultat", "Aucun album trouvé pour cette recherche sur BDGest.")
+                # Inform user if no BDGest results (but only if we didn't handle an error)
+                if not albums and not error_handled:
+                    title = tr("messages.info.no_result")
+                    message = tr("messages.errors.no_albums_found")
+                    QMessageBox.information(self, title, message)
         
         # Restore UI state after search completion
         self._restore_search_ui()
