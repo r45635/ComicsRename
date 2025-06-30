@@ -529,7 +529,7 @@ def get_bdgest_albums(term, username, password, debug=True, verbose=False, log_p
             if not login_bdgest(session, username, password, debug=debug, verbose=verbose, log_path=log_path):
                 if debug:
                     print("[ERROR][BDGest] Login failed in get_bdgest_albums.")
-                return []
+                return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
             return fetch_albums(session, term, debug=debug, verbose=verbose, log_path=log_path)
     except Exception as e:
         if debug:
@@ -561,7 +561,7 @@ def get_bdgest_series(term, username, password, debug=True, verbose=False, log_p
             if not login_bdgest(session, username, password, debug=debug, verbose=verbose, log_path=log_path):
                 if debug:
                     print("[ERROR][BDGest] Login failed in get_bdgest_series.")
-                return []
+                return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
             
             # Recherche des séries via l'endpoint AJAX
             return fetch_series(session, term, debug=debug, verbose=verbose, log_path=log_path)
@@ -784,7 +784,7 @@ def get_bdgest_albums_by_series_id(series_id, series_name, username, password, d
         if not login_bdgest(session, username, password, debug=debug, verbose=verbose, log_path=log_path):
             if debug:
                 print("[ERROR][BDGest] Login failed in get_bdgest_albums_by_series_id.")
-            return []
+            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
         
         # Recherche des albums par ID de série
         return fetch_albums_by_series_id(session, series_id, series_name, debug=debug, verbose=verbose, log_path=log_path, fetch_details=fetch_details, max_workers=max_workers)

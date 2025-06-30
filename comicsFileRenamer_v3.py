@@ -2005,6 +2005,19 @@ class ComicRenamer(QWidget):
                 # Restore UI and exit early
                 self._restore_search_ui()
                 return
+            
+            # Check for "authentication failed" error early (BDGest specific)
+            if self._source == 'BDGest' and series_list and len(series_list) == 1 and series_list[0].get('error') == 'authentication_failed':
+                # Use internationalized error messages
+                title = tr("messages.errors.authentication_failed_title")
+                message = tr("messages.errors.authentication_failed_message")
+                hint = tr("messages.errors.authentication_failed_hint")
+                full_message = f"{message}\n\n{hint}"
+                
+                QMessageBox.critical(self, title, full_message)
+                # Restore UI and exit early
+                self._restore_search_ui()
+                return
         else:
             # For BDGest in SeriesName mode, we'll call search_series_only later
             series_list = []
@@ -2113,6 +2126,21 @@ class ComicRenamer(QWidget):
                     series_results = []
                     series_error_handled = True
                 
+                # Check for "authentication failed" error in series search
+                if series_results and len(series_results) == 1 and series_results[0].get('error') == 'authentication_failed':
+                    # Use internationalized error messages
+                    title = tr("messages.errors.authentication_failed_title")
+                    message = tr("messages.errors.authentication_failed_message")
+                    hint = tr("messages.errors.authentication_failed_hint")
+                    full_message = f"{message}\n\n{hint}"
+                    
+                    QMessageBox.critical(self, title, full_message)
+                    # Don't populate any results and restore UI
+                    series_results = []
+                    series_error_handled = True
+                    self._restore_search_ui()
+                    return
+                
                 self._bdgest_series_results = series_results
                 self._bdgest_album_results = []  # Clear album results when searching series
                 
@@ -2171,6 +2199,21 @@ class ComicRenamer(QWidget):
                     # Don't populate any results
                     albums = []
                     error_handled = True
+                
+                # Check for "authentication failed" error
+                if albums and len(albums) == 1 and albums[0].get('error') == 'authentication_failed':
+                    # Use internationalized error messages
+                    title = tr("messages.errors.authentication_failed_title")
+                    message = tr("messages.errors.authentication_failed_message")
+                    hint = tr("messages.errors.authentication_failed_hint")
+                    full_message = f"{message}\n\n{hint}"
+                    
+                    QMessageBox.critical(self, title, full_message)
+                    # Don't populate any results and restore UI
+                    albums = []
+                    error_handled = True
+                    self._restore_search_ui()
+                    return
                 
                 self._bdgest_album_results = albums
                 self._bdgest_series_results = []  # Clear series results when searching albums
@@ -2352,6 +2395,25 @@ class ComicRenamer(QWidget):
                                 
                                 # Check for cancellation after fetching
                                 if self._search_cancelled:
+                                    return
+                                
+                                # Check for authentication failed error
+                                if albums and len(albums) == 1 and albums[0].get('error') == 'authentication_failed':
+                                    # Use internationalized error messages
+                                    title = tr("messages.errors.authentication_failed_title")
+                                    message = tr("messages.errors.authentication_failed_message")
+                                    hint = tr("messages.errors.authentication_failed_hint")
+                                    full_message = f"{message}\n\n{hint}"
+                                    
+                                    QMessageBox.critical(self, title, full_message)
+                                    # Clear album table and show error in details
+                                    self.album_table.setRowCount(0)
+                                    html = "<b>Série sélectionnée :</b><br><ul>"
+                                    for k, v in series_data.items():
+                                        if v and str(v).strip():
+                                            html += f"<li><b>{k}</b> : {v}</li>"
+                                    html += "</ul><br><i>Erreur d'authentification BDGest. Vérifiez vos identifiants.</i>"
+                                    self.detail_text.setHtml(html)
                                     return
                                 
                                 if albums:
