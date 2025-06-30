@@ -261,3 +261,8 @@ screenshots/*.jpeg
 *.msi
 *.deb
 *.rpm
+
+# Private marketing and strategy files
+private-marketing/
+marketing-strategy/
+internal-docs/
