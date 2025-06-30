@@ -2182,12 +2182,41 @@ class ComicRenamer(QWidget):
                 # Use default album search
                 albums = []
                 error_handled = False  # Track if we handled an error
+                
+                # First check for errors in series_list before filtering
+                if series_list and len(series_list) == 1:
+                    error_item = series_list[0]
+                    if error_item.get('error') == 'authentication_failed':
+                        # Use internationalized error messages
+                        title = tr("messages.errors.authentication_failed_title")
+                        message = tr("messages.errors.authentication_failed_message")
+                        hint = tr("messages.errors.authentication_failed_hint")
+                        full_message = f"{message}\n\n{hint}"
+                        
+                        QMessageBox.critical(self, title, full_message)
+                        # Don't populate any results and restore UI
+                        error_handled = True
+                        self._restore_search_ui()
+                        return
+                    elif error_item.get('error') == 'too_many_results':
+                        # Use internationalized error messages
+                        title = tr("messages.errors.too_many_results_title")
+                        message = tr("messages.errors.too_many_results_message")
+                        hint = tr("messages.errors.too_many_results_hint")
+                        full_message = f"{message}\n\n{hint}"
+                        
+                        QMessageBox.warning(self, title, full_message)
+                        # Don't populate any results
+                        error_handled = True
+                        self._restore_search_ui()
+                        return
+                
                 for album in series_list:
                     s = album.get('serie_name', '')
                     if s:
                         albums.append(album)
                 
-                # Check for "too many results" error
+                # Check for "too many results" error (legacy fallback)
                 if albums and len(albums) == 1 and albums[0].get('error') == 'too_many_results':
                     # Use internationalized error messages
                     title = tr("messages.errors.too_many_results_title")
@@ -2199,21 +2228,6 @@ class ComicRenamer(QWidget):
                     # Don't populate any results
                     albums = []
                     error_handled = True
-                
-                # Check for "authentication failed" error
-                if albums and len(albums) == 1 and albums[0].get('error') == 'authentication_failed':
-                    # Use internationalized error messages
-                    title = tr("messages.errors.authentication_failed_title")
-                    message = tr("messages.errors.authentication_failed_message")
-                    hint = tr("messages.errors.authentication_failed_hint")
-                    full_message = f"{message}\n\n{hint}"
-                    
-                    QMessageBox.critical(self, title, full_message)
-                    # Don't populate any results and restore UI
-                    albums = []
-                    error_handled = True
-                    self._restore_search_ui()
-                    return
                 
                 self._bdgest_album_results = albums
                 self._bdgest_series_results = []  # Clear series results when searching albums
