@@ -1,61 +1,120 @@
 # ComicsRename 📚
 
+<div align="center">
+  <img src="icons/comicsrename_256x256.png" alt="ComicsRename Logo" width="128" height="128">
+  
+  **A powerful Python GUI application for organizing and renaming comic book files**
+  
+  ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+  ![PySide6](https://img.shields.io/badge/PySide6-6.4+-green.svg)
+  ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+  ![Version](https://img.shields.io/badge/version-3.3.0-brightgreen.svg)
+</div>
+
+---
+
 ## 💭 Why ComicsRename?
 
 Are you **too lazy** to rename manually all your comic files in your storage? **Too lazy** to search manually for the correct series name, the proper title, and all those details? That's exactly why I created and use **ComicsRename**! 
 
 I was tired of spending hours organizing my comic collection, hunting down metadata, and fixing inconsistent file names. So I built this tool to automate the entire process. Now I'm happy to share it with you - and I'd love to hear from you if it helps you too! 🎉
 
-**ComicsRename** is a powerful Python GUI application that transforms the tedious task of organizing comic book files into a breeze, using metadata from **BDGest** and **ComicVine** databases.
+**ComicsRename** transforms the tedious task of organizing comic book files into a breeze, using metadata from **BDGest** and **ComicVine** databases.
 
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![PySide6](https://img.shields.io/badge/PySide6-6.4+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+## 📸 Screenshots
+
+<div align="center">
+  
+### Main Interface
+*The clean, intuitive interface showing file management and metadata search*
+
+<img src="https://via.placeholder.com/800x500/2D3748/FFFFFF?text=ComicsRename+Main+Interface+Screenshot+Coming+Soon" alt="ComicsRename Main Interface" width="600">
+
+### Metadata Search & Display
+*Rich metadata display with cover images and detailed information*
+
+<img src="https://via.placeholder.com/800x500/2D3748/FFFFFF?text=Metadata+Search+%26+Display+Screenshot+Coming+Soon" alt="Metadata Search Interface" width="600">
+
+### File Organization
+*Drag & drop file management with smart organization features*
+
+<img src="https://via.placeholder.com/800x500/2D3748/FFFFFF?text=File+Organization+Screenshot+Coming+Soon" alt="File Organization Interface" width="600">
+
+</div>
 
 ## 🌟 Features
 
+<div align="center">
+  <img src="icons/comicsrename_48x48.png" alt="Features" width="32" height="32">
+</div>
+
+<table>
+<tr>
+<td width="50%">
+
 ### 🔍 **Dual Metadata Sources**
-- **BDGest Integration**: Search and fetch detailed metadata from the French BDGest database
-- **ComicVine Integration**: Access the comprehensive ComicVine database for international comics
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **BDGest Integration**: French comic database
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **ComicVine Integration**: International comics database
 
 ### 📖 **Smart Search Modes**
-- **Series Name Mode**: Search by series name, browse albums within each series
-- **Album Search**: Direct album/issue search across both databases
-- **Auto-population**: Automatically load albums when series are found
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Series Name Mode**: Browse albums within series
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Album Search**: Direct album/issue search
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Auto-population**: Automatically load albums
 
 ### 🎨 **Rich Metadata Display**
-- **Cover Images**: High-quality cover art with responsive scaling
-- **Detailed Information**: Publication dates, descriptions, creative teams, characters
-- **Album Details**: Complete metadata including ISBN, publisher, page count
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Cover Images**: High-quality cover art
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Detailed Information**: Dates, descriptions, teams
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Album Details**: ISBN, publisher, page count
+
+</td>
+<td width="50%">
 
 ### 🗂️ **File Management**
-- **Drag & Drop**: Intuitive file organization
-- **Folder Renaming**: Edit folder names with validation and confirmation
-- **Bulk Operations**: Handle multiple files and folders efficiently
-- **Smart Scanning**: Detect comic files in various formats (CBZ, CBR, PDF, etc.)
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Drag & Drop**: Intuitive file organization
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Folder Renaming**: With validation and confirmation
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Bulk Operations**: Handle multiple files efficiently
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Smart Scanning**: CBZ, CBR, PDF, etc.
 
 ### 🔒 **Security & Credentials**
-- **Secure Storage**: Encrypted credential storage using QSettings
-- **Environment Variables**: Support for .env files
-- **No Hardcoded Keys**: All API keys and passwords stored securely
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Secure Storage**: Encrypted credential storage
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Environment Variables**: Support for .env files
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **No Hardcoded Keys**: All API keys stored securely
 
 ### ⚡ **Performance Optimizations**
-- **Session Management**: Persistent authentication sessions
-- **Parallel Processing**: Multi-threaded metadata fetching
-- **Caching**: Efficient data caching and reuse
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Session Management**: Persistent authentication
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Parallel Processing**: Multi-threaded fetching
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Caching**: Efficient data caching and reuse
+
+</td>
+</tr>
+</table>
 
 ## 🚀 Getting Started
+
+<div align="center">
+  <img src="icons/comicsrename_64x64.png" alt="Installation" width="48" height="48">
+</div>
 
 ### Prerequisites
 
 - **Python 3.8+** (recommended: Python 3.9 or higher)
 - **Operating System**: Windows, macOS, or Linux
 
-### Installation
+### 📦 Installation Options
 
+#### Option 1: Package Installation (Recommended)
+```bash
+# Install from the latest release package
+pip install comicsrename-3.3.0-py3-none-any.whl
+
+# Or from source distribution
+pip install comicsrename-3.3.0.tar.gz
+```
+
+#### Option 2: Development Installation
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/ComicsRename.git
+   git clone https://github.com/r45635/ComicsRename.git
    cd ComicsRename
    ```
 
@@ -78,144 +137,102 @@ I was tired of spending hours organizing my comic collection, hunting down metad
 ### Running the Application
 
 ```bash
+### 🚀 Running the Application
+
+<div align="center">
+  <img src="icons/comicsrename_32x32.png" alt="Run App" width="24" height="24">
+</div>
+
+```bash
 python main.py
 ```
 
 ## 📖 Usage Guide
 
-### Initial Setup
+<div align="center">
+  <img src="icons/comicsrename_64x64.png" alt="Usage Guide" width="48" height="48">
+</div>
 
-1. **Launch the application** using `python main.py`
-2. **Configure credentials** (if using BDGest):
-   - Go to Settings → Configure BDGest credentials
-   - Enter your BDGest username and password
-3. **Set ComicVine API key** (if using ComicVine):
-   - Create a `.env` file or use environment variables
-   - Add your ComicVine API key
+### 🎯 Quick Start Workflow
 
-### Basic Workflow
+<table>
+<tr>
+<td width="50%">
 
-1. **Select a folder** containing comic files
-2. **Choose your metadata source** (BDGest or ComicVine)
-3. **Search for series or albums**:
-   - Use **Series Name mode** to browse by series
-   - Use **Album search** for direct lookup
-4. **Review metadata** and cover images
-5. **Organize files** using drag & drop
-6. **Rename folders** by double-clicking folder names
+#### 1. **Initial Setup** <img src="icons/comicsrename_16x16.png" width="16" height="16">
+- Launch the application using `python main.py`
+- Configure credentials (if using BDGest)
+- Set ComicVine API key (if using ComicVine)
 
-### Advanced Features
+#### 2. **Basic Workflow** <img src="icons/comicsrename_16x16.png" width="16" height="16">
+- **Select a folder** containing comic files
+- **Choose metadata source** (BDGest or ComicVine)
+- **Search for series or albums**
+- **Review metadata** and cover images
 
-- **Batch Processing**: Handle multiple folders and files
-- **Metadata Comparison**: Compare information from different sources
-- **Custom Renaming**: Manual folder name editing with validation
-- **Session Persistence**: Automatic authentication management
+</td>
+<td width="50%">
 
-## 🛠️ Development
+#### 3. **File Organization** <img src="icons/comicsrename_16x16.png" width="16" height="16">
+- **Organize files** using drag & drop
+- **Rename folders** by double-clicking folder names
+- **Validate changes** with built-in confirmation
 
-### Project Structure
+#### 4. **Advanced Features** <img src="icons/comicsrename_16x16.png" width="16" height="16">
+- **Batch Processing**: Handle multiple folders
+- **Metadata Comparison**: Compare sources
+- **Session Persistence**: Auto authentication
 
-```
-ComicsRename/
-├── main.py                     # Application entry point
-├── comicsFileRenamer_v3.py     # Main GUI application
-├── bdgest_scraper_api.py       # BDGest API integration
-├── comicVine_scraper_api.py    # ComicVine API integration
-├── utils.py                    # Utility functions
-├── setup_credentials.py       # Credential setup script
-├── requirements.txt            # Python dependencies
-├── .env.example               # Environment variables template
-├── .gitignore                 # Git ignore rules
-├── SECURITY.md                # Security guidelines
-├── IMPLEMENTATION_SUMMARY.md   # Technical documentation
-└── test_*.py                  # Test scripts
-```
+</td>
+</tr>
+</table>
 
-### Running Tests
+### 🔧 Configuration Options
 
-```bash
-# Test BDGest series functionality
-python test_bdgest_series.py
+| Feature | Description | Icon |
+|---------|-------------|------|
+| **BDGest Setup** | Configure French comic database access | <img src="icons/comicsrename_16x16.png" width="16" height="16"> |
+| **ComicVine API** | Set up international database access | <img src="icons/comicsrename_16x16.png" width="16" height="16"> |
+| **Environment Variables** | Use `.env` file for secure configuration | <img src="icons/comicsrename_16x16.png" width="16" height="16"> |
 
-# Test session management
-python test_session_management.py
+## 🎨 Visual Identity
 
-# Test folder renaming
-python test_folder_rename.py
+<div align="center">
+  
+### Application Icon
+  
+<img src="icons/comicsrename_128x128.png" alt="ComicsRename Icon" width="128" height="128">
 
-# Test album details
-python test_album_details.py
-```
+**ComicsRename** features a custom-designed icon representing comic book organization and file management. The icon is available in multiple formats:
 
-### Contributing
+| Format | Size | Usage |
+|--------|------|-------|
+| <img src="icons/comicsrename_16x16.png" width="16" height="16"> | 16x16 | System tray, small icons |
+| <img src="icons/comicsrename_32x32.png" width="32" height="32"> | 32x32 | Interface elements |
+| <img src="icons/comicsrename_64x64.png" width="64" height="64"> | 64x64 | Application windows |
+| <img src="icons/comicsrename_128x128.png" width="64" height="64"> | 128x128 | High-resolution displays |
+| <img src="icons/comicsrename_256x256.png" width="64" height="64"> | 256x256 | Documentation, README |
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit your changes: `git commit -am 'Add feature'`
-4. Push to the branch: `git push origin feature-name`
-5. Submit a pull request
+The icon design incorporates:
+- 📚 **Comic book elements** representing the core functionality
+- 🗂️ **File organization symbols** showing the management aspect
+- 🎨 **Modern design** with clean lines and vibrant colors
 
-## 🔧 Configuration
+</div>
 
-### Environment Variables
+## 🤝 Contributing
 
-Create a `.env` file in the project root:
+<div align="center">
+  <img src="icons/comicsrename_48x48.png" alt="Contributing" width="32" height="32">
+</div>
 
-```env
-COMICVINE_API_KEY=your_comicvine_api_key_here
-BDGEST_USERNAME=your_bdgest_username
-BDGEST_PASSWORD=your_bdgest_password
-```
+We welcome contributions! Here's how you can help:
 
-### Application Settings
-
-The application stores settings using QSettings:
-- **Credentials**: Securely stored BDGest credentials
-- **Window State**: Size, position, and layout preferences
-- **Search History**: Recent searches and preferences
-
-## 🔒 Security
-
-- **No Hardcoded Credentials**: All sensitive information uses environment variables
-- **Encrypted Storage**: Local credentials are encrypted using QSettings
-- **Secure Transmission**: HTTPS for all API communications
-- **Input Validation**: Comprehensive validation for all user inputs
-
-See [SECURITY.md](SECURITY.md) for detailed security information.
-
-## 📝 Dependencies
-
-- **PySide6**: Modern Qt-based GUI framework
-- **requests**: HTTP library for API communications
-- **beautifulsoup4**: HTML parsing for web scraping
-- **lxml**: XML/HTML parser
-- **python-dotenv**: Environment variable management
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Import Error**: Missing dependencies
-```bash
-pip install -r requirements.txt
-```
-
-**Authentication Failed**: Incorrect BDGest credentials
-```bash
-python setup_credentials.py
-```
-
-**ComicVine API Error**: Invalid or missing API key
-- Check your `.env` file
-- Verify API key validity on ComicVine
-
-### Debug Mode
-
-Enable debug output by setting environment variable:
-```bash
-export DEBUG=1
-python main.py
-```
+- 🐛 **Report bugs** and issues
+- 💡 **Suggest new features** 
+- 🔧 **Submit pull requests**
+- 📖 **Improve documentation**
+- 🌍 **Add translations**
 
 ## 📄 License
 
@@ -223,17 +240,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **BDGest**: French comic book database
-- **ComicVine**: Comprehensive comic book database  
-- **Qt/PySide6**: Cross-platform GUI framework
-- **Python Community**: Excellent libraries and tools
+<div align="center">
+  <img src="icons/comicsrename_32x32.png" alt="Thanks" width="24" height="24">
+</div>
 
-## 🔗 Links
-
-- [BDGest Website](https://www.bdgest.com/)
-- [ComicVine API](https://comicvine.gamespot.com/api/)
-- [PySide6 Documentation](https://doc.qt.io/qtforpython/)
+- **BDGest**: For providing comprehensive French comic book metadata
+- **ComicVine**: For the extensive international comics database
+- **PySide6 Team**: For the excellent Qt-based GUI framework
+- **Python Community**: For the amazing tools and libraries
 
 ---
 
+<div align="center">
+  
+<img src="icons/comicsrename_64x64.png" alt="ComicsRename" width="48" height="48">
+
 **Made with ❤️ for comic book enthusiasts**
+
+**ComicsRename v3.3.0** | [Repository](https://github.com/r45635/ComicsRename) | [Issues](https://github.com/r45635/ComicsRename/issues) | [Releases](https://github.com/r45635/ComicsRename/releases)
+
+*Transform your comic collection organization from tedious to effortless!*
+
+</div>
