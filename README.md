@@ -28,7 +28,7 @@ I was tired of spending hours organizing my comic collection, hunting down metad
 ### Main Interface
 *The clean, intuitive interface showing file management and metadata search*
 
-<img src="https://via.placeholder.com/800x500/2D3748/FFFFFF?text=ComicsRename+Main+Interface+Screenshot+Coming+Soon" alt="ComicsRename Main Interface" width="600">
+<img src="screenshots/Screenshot1.png" alt="ComicsRename Main Interface" width="600">
 
 ### Metadata Search & Display
 *Rich metadata display with cover images and detailed information*

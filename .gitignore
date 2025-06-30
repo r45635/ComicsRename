@@ -243,3 +243,9 @@ system_launch.sh
 
 # Development configs
 qt.conf
+
+# Screenshots for documentation
+screenshots/*.png
+screenshots/*.jpg
+screenshots/*.jpeg
+!screenshots/README.md
