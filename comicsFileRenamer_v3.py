@@ -621,7 +621,9 @@ class BDGestProvider(MetadataProvider):
         from bdgest_scraper_api import fetch_albums
         
         if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
-            return []
+            if debug:
+                print("[ERROR][BDGest] Authentication failed in search method")
+            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
         
         try:
             return fetch_albums(self._session, query, debug=debug, verbose=verbose)
@@ -637,7 +639,9 @@ class BDGestProvider(MetadataProvider):
         from bdgest_scraper_api import fetch_series
         
         if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
-            return []
+            if debug:
+                print("[ERROR][BDGest] Authentication failed in search method")
+            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
         
         try:
             return fetch_series(self._session, query, debug=debug, verbose=verbose)
@@ -652,7 +656,7 @@ class BDGestProvider(MetadataProvider):
         from bdgest_scraper_api import fetch_albums
         
         if not self._ensure_authenticated_session():
-            return []
+            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
         
         try:
             return fetch_albums(self._session, serie_name)
@@ -667,7 +671,9 @@ class BDGestProvider(MetadataProvider):
         from bdgest_scraper_api import fetch_albums_by_series_id
         
         if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
-            return []
+            if debug:
+                print("[ERROR][BDGest] Authentication failed in search method")
+            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
         
         try:
             return fetch_albums_by_series_id(self._session, series_id, series_name, debug=debug, verbose=verbose, fetch_details=fetch_details)
