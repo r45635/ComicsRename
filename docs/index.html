@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComicsRename - Free Comic File Renaming Tool</title>
+    <meta name="description" content="ComicsRename is a free, open-source tool for automatically renaming comic book files using BDGest and ComicVine databases. Supports CBZ, CBR, PDF files.">
+    <meta name="keywords" content="comic book, file renamer, BDGest, ComicVine, CBZ, CBR, PDF, comic collection, metadata, free software, open source">
+    <meta name="author" content="ComicsRename">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://r45635.github.io/ComicsRename/">
+    <meta property="og:title" content="ComicsRename - Free Comic File Renaming Tool">
+    <meta property="og:description" content="Automatically rename your comic book files with metadata from BDGest and ComicVine databases.">
+    <meta property="og:image" content="https://r45635.github.io/ComicsRename/icons/comicsrename_512x512.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://r45635.github.io/ComicsRename/">
+    <meta property="twitter:title" content="ComicsRename - Free Comic File Renaming Tool">
+    <meta property="twitter:description" content="Automatically rename your comic book files with metadata from BDGest and ComicVine databases.">
+    <meta property="twitter:image" content="https://r45635.github.io/ComicsRename/icons/comicsrename_512x512.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+        
+        .logo {
+            width: 128px;
+            height: 128px;
+            margin: 0 auto 20px;
+            display: block;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .feature h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .cta-buttons {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #28a745;
+        }
+        
+        .screenshot {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .screenshot img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 50px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <img src="icons/comicsrename_128x128.png" alt="ComicsRename Logo" class="logo">
+            <h1>ComicsRename</h1>
+            <p class="subtitle">The Ultimate Comic Book File Renaming Tool</p>
+        </header>
+
+        <main class="content">
+            <section>
+                <h2>🚀 Automatically Rename Your Comic Collection</h2>
+                <p>ComicsRename is a free, open-source application that automatically renames your comic book files using metadata from BDGest and ComicVine databases. Perfect for organizing large comic collections!</p>
+                
+                <div class="features">
+                    <div class="feature">
+                        <h3>📚 Multiple Databases</h3>
+                        <p>Search and retrieve metadata from BDGest (French) and ComicVine (English) databases for comprehensive coverage.</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <h3>📁 Multiple Formats</h3>
+                        <p>Supports CBZ, CBR, CB7, CBT, PDF, and many other comic book file formats.</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <h3>🌍 Bilingual Interface</h3>
+                        <p>Available in French and English with intelligent error handling and user guidance.</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <h3>🔧 Smart Renaming</h3>
+                        <p>Intelligent file renaming with series name, issue number, and publication details.</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <h3>🆓 Free & Open Source</h3>
+                        <p>Completely free to use, modify, and distribute under open source license.</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <h3>🖥️ Cross-Platform</h3>
+                        <p>Works on Windows, macOS, and Linux systems with Python 3.11+.</p>
+                    </div>
+                </div>
+                
+                <div class="cta-buttons">
+                    <a href="https://github.com/r45635/ComicsRename/releases/latest" class="btn btn-secondary">📥 Download Latest Release</a>
+                    <a href="https://github.com/r45635/ComicsRename" class="btn">🔗 View on GitHub</a>
+                </div>
+            </section>
+
+            <section class="screenshot">
+                <h2>💻 See It In Action</h2>
+                <img src="screenshots/Screenshot1.png" alt="ComicsRename Application Screenshot" loading="lazy">
+            </section>
+
+            <section>
+                <h2>🛠️ Quick Start</h2>
+                <ol>
+                    <li><strong>Download:</strong> Get the latest release from GitHub</li>
+                    <li><strong>Install:</strong> Run <code>pip install -r requirements.txt</code></li>
+                    <li><strong>Launch:</strong> Execute <code>python main.py</code></li>
+                    <li><strong>Select:</strong> Choose your comic files or folders</li>
+                    <li><strong>Search:</strong> Find metadata from BDGest or ComicVine</li>
+                    <li><strong>Rename:</strong> Apply the new naming scheme automatically</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>🎯 Perfect For</h2>
+                <ul>
+                    <li>Comic book collectors with large digital libraries</li>
+                    <li>Digital archive organizers</li>
+                    <li>Comic book store owners managing inventory</li>
+                    <li>Anyone wanting to organize their comic files professionally</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>🔗 Keywords</h2>
+                <p><em>comic book organizer, file renamer, BDGest, ComicVine, CBZ renamer, CBR organizer, comic metadata, digital comics, comic collection manager, free comic software, open source comics tool, Python comic app, comic file management, French comics, BD organizer</em></p>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 ComicsRename - Open Source Comic File Organizer</p>
+            <p>Made with ❤️ for comic book enthusiasts worldwide</p>
+        </footer>
+    </div>
+
+    <!-- Schema.org structured data for Google -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "ComicsRename",
+        "description": "Free, open-source tool for automatically renaming comic book files using BDGest and ComicVine databases",
+        "url": "https://r45635.github.io/ComicsRename/",
+        "downloadUrl": "https://github.com/r45635/ComicsRename/releases/latest",
+        "author": {
+            "@type": "Person",
+            "name": "ComicsRename Developer"
+        },
+        "operatingSystem": ["Windows", "macOS", "Linux"],
+        "applicationCategory": "UtilityApplication",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "screenshot": "https://r45635.github.io/ComicsRename/screenshots/Screenshot1.png",
+        "softwareVersion": "3.3.1",
+        "datePublished": "2025-06-29",
+        "license": "Open Source",
+        "keywords": "comic book, file renamer, BDGest, ComicVine, CBZ, CBR, comic collection, metadata"
+    }
+    </script>
+</body>
+</html>
