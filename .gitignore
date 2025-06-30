@@ -249,6 +249,7 @@ screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
 !screenshots/README.md
+!screenshots/Screenshot1.png
 
 
 # macOS specific files to prevent personal information leakage
