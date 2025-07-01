@@ -25,7 +25,8 @@ from PySide6.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QVBoxLayout,
     QTableWidget, QTableWidgetItem, QSplitter, QPushButton, QLineEdit,
     QLabel, QFileDialog, QMessageBox, QComboBox, QTextEdit, QTextBrowser, QCheckBox,
-    QAbstractItemView, QHeaderView, QMenu, QDialog, QFormLayout, QDialogButtonBox, QMenuBar
+    QAbstractItemView, QHeaderView, QMenu, QDialog, QFormLayout, QDialogButtonBox, QMenuBar,
+    QScrollArea
 )
 from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings, QThread, Signal as pyqtSignal
 from PySide6.QtGui import QPixmap, QDrag, QAction, QIcon
@@ -1270,16 +1271,27 @@ class FileTable(QTableWidget):
             layout = QVBoxLayout(dialog)
             layout.setContentsMargins(5, 5, 5, 5)  # Small margins
             
-            # Create PDF document and view
+            # Create PDF document and view with scroll area
             pdf_doc = QPdfDocument(dialog)
             load_err = pdf_doc.load(file_path)
             if load_err != QPdfDocument.Error.None_:
                 QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.pdf_load_error", file=file_path))
                 return
             
+            # Create scroll area for the PDF view
+            scroll_area = QScrollArea(dialog)
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setAlignment(Qt.AlignCenter)
+            
             view = QPdfView(dialog)
             view.setDocument(pdf_doc)
             view.setPageMode(QPdfView.PageMode.SinglePage)
+            
+            # Set the PDF view as the scroll area's widget
+            scroll_area.setWidget(view)
+            
+            # Enable mouse dragging for panning when zoomed
+            view.setDragMode(QPdfView.DragMode.ScrollHandDrag)
             
             # Flag to prevent multiple simultaneous fit operations
             fitting_in_progress = False
@@ -1342,16 +1354,33 @@ class FileTable(QTableWidget):
             # Create navigation controls
             nav_layout = QHBoxLayout()
             nav_layout.setContentsMargins(0, 5, 0, 0)  # Small top margin
+            
+            # Navigation buttons
+            first_btn = QPushButton("⏮ First")
             prev_btn = QPushButton("◀ Previous")
             next_btn = QPushButton("Next ▶")
+            last_btn = QPushButton("Last ⏭")
+            
+            # Zoom controls
+            zoom_out_btn = QPushButton("🔍- Zoom Out")
+            zoom_in_btn = QPushButton("🔍+ Zoom In")
             fit_btn = QPushButton("🔍 Fit")  # Manual fit button
+            
+            # Export button
+            export_btn = QPushButton("💾 Export PNG")
+            
             page_label = QLabel("Page 1 of " + str(pdf_doc.pageCount()))
             page_label.setAlignment(Qt.AlignCenter)
             
             # Set button sizes
+            first_btn.setMinimumWidth(60)
             prev_btn.setMinimumWidth(80)
             next_btn.setMinimumWidth(80)
+            last_btn.setMinimumWidth(60)
+            zoom_out_btn.setMinimumWidth(80)
+            zoom_in_btn.setMinimumWidth(80)
             fit_btn.setMinimumWidth(60)
+            export_btn.setMinimumWidth(90)
             page_label.setMinimumWidth(120)
             
             # Navigation button handlers
@@ -1378,6 +1407,23 @@ class FileTable(QTableWidget):
                 page_change_timer.timeout.connect(fit_to_window)
                 page_change_timer.start(150)  # Delay to ensure page is loaded
             
+            def go_first():
+                navigator = view.pageNavigator()
+                if navigator.currentPage() > 0:
+                    from PySide6.QtCore import QPointF
+                    navigator.jump(0, QPointF(0, 0))
+                    update_page_label()
+                    schedule_fit_after_page_change()
+            
+            def go_last():
+                navigator = view.pageNavigator()
+                last_page = pdf_doc.pageCount() - 1
+                if navigator.currentPage() < last_page:
+                    from PySide6.QtCore import QPointF
+                    navigator.jump(last_page, QPointF(0, 0))
+                    update_page_label()
+                    schedule_fit_after_page_change()
+            
             def go_prev():
                 navigator = view.pageNavigator()
                 if navigator.currentPage() > 0:
@@ -1394,24 +1440,97 @@ class FileTable(QTableWidget):
                     update_page_label()
                     schedule_fit_after_page_change()
             
+            def zoom_in():
+                current_zoom = view.zoomFactor()
+                new_zoom = min(current_zoom * 1.25, 10.0)  # Max 10x zoom
+                view.setZoomFactor(new_zoom)
+            
+            def zoom_out():
+                current_zoom = view.zoomFactor()
+                new_zoom = max(current_zoom * 0.8, 0.1)  # Min 0.1x zoom
+                view.setZoomFactor(new_zoom)
+            
+            def export_current_page():
+                try:
+                    # Get current page
+                    current_page = view.pageNavigator().currentPage()
+                    
+                    # Create suggested filename
+                    base_name = os.path.splitext(os.path.basename(file_path))[0]
+                    suggested_name = f"{base_name}_page_{current_page + 1}.png"
+                    
+                    # Get the directory of the original file
+                    file_dir = os.path.dirname(file_path)
+                    suggested_path = os.path.join(file_dir, suggested_name)
+                    
+                    # Show save dialog
+                    from PySide6.QtWidgets import QFileDialog
+                    save_path, _ = QFileDialog.getSaveFileName(
+                        dialog,
+                        "Export Page as PNG",
+                        suggested_path,
+                        "PNG Files (*.png);;All Files (*)"
+                    )
+                    
+                    if save_path:
+                        # Render the current page to an image
+                        from PySide6.QtGui import QPixmap, QPainter
+                        from PySide6.QtCore import QSizeF, QRectF
+                        
+                        # Get page size at high resolution
+                        page_size = pdf_doc.pagePointSize(current_page)
+                        dpi = 150  # High quality export
+                        scale = dpi / 72.0  # Convert from points to pixels
+                        
+                        # Create pixmap with scaled size
+                        pixmap_size = QSizeF(page_size.width() * scale, page_size.height() * scale)
+                        pixmap = QPixmap(int(pixmap_size.width()), int(pixmap_size.height()))
+                        pixmap.fill()  # Fill with white background
+                        
+                        # Render page to pixmap
+                        painter = QPainter(pixmap)
+                        render_rect = QRectF(0, 0, pixmap_size.width(), pixmap_size.height())
+                        pdf_doc.render(painter, render_rect, current_page)
+                        painter.end()
+                        
+                        # Save the pixmap
+                        if pixmap.save(save_path, "PNG"):
+                            QMessageBox.information(dialog, "Export Successful", f"Page exported to:\n{save_path}")
+                        else:
+                            QMessageBox.critical(dialog, "Export Failed", "Failed to save the image file.")
+                            
+                except Exception as e:
+                    QMessageBox.critical(dialog, "Export Error", f"An error occurred while exporting:\n{str(e)}")
+            
+            first_btn.clicked.connect(go_first)
+            last_btn.clicked.connect(go_last)
             prev_btn.clicked.connect(go_prev)
             next_btn.clicked.connect(go_next)
+            zoom_in_btn.clicked.connect(zoom_in)
+            zoom_out_btn.clicked.connect(zoom_out)
             fit_btn.clicked.connect(fit_to_window)
+            export_btn.clicked.connect(export_current_page)
             
             # Add navigation controls to layout
+            nav_layout.addWidget(first_btn)
             nav_layout.addWidget(prev_btn)
+            nav_layout.addWidget(next_btn)
+            nav_layout.addWidget(last_btn)
+            nav_layout.addSpacing(20)  # Add space between navigation and zoom controls
+            nav_layout.addWidget(zoom_out_btn)
             nav_layout.addWidget(fit_btn)
+            nav_layout.addWidget(zoom_in_btn)
             nav_layout.addStretch()
             nav_layout.addWidget(page_label)
             nav_layout.addStretch()
-            nav_layout.addWidget(next_btn)
+            nav_layout.addWidget(export_btn)
             
             # Navigate to first page using QPointF
             from PySide6.QtCore import QPointF
             view.pageNavigator().jump(0, QPointF(0, 0))
             
-            # Add widgets to main layout - PDF view gets most space
-            layout.addWidget(view, 1)  # stretch factor 1 = takes available space
+            # Add widgets to main layout - PDF view with scroll area gets most space
+            layout.addWidget(scroll_area, 1)  # stretch factor 1 = takes available space
             layout.addLayout(nav_layout, 0)  # stretch factor 0 = fixed size
             
             # Update initial button states
