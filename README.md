@@ -34,7 +34,7 @@ I was tired of spending hours organizing my comic collection, hunting down metad
 *Rich metadata display with cover images and detailed information*
 *Drag & drop file management with smart organization features*
 
-<img src="screenshots/Screenshot2.png" alt="ComicsRename Main Interface and Quick View" width="600">
+<img src="docs/screenshots/Screenshot2.png" alt="ComicsRename Main Interface and Quick View" width="600">
 
 </div>
 
