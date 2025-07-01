@@ -1290,9 +1290,6 @@ class FileTable(QTableWidget):
             # Set the PDF view as the scroll area's widget
             scroll_area.setWidget(view)
             
-            # Enable mouse dragging for panning when zoomed
-            view.setDragMode(QPdfView.DragMode.ScrollHandDrag)
-            
             # Flag to prevent multiple simultaneous fit operations
             fitting_in_progress = False
             
