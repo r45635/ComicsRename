@@ -30,15 +30,11 @@ I was tired of spending hours organizing my comic collection, hunting down metad
 
 <img src="screenshots/Screenshot1.png" alt="ComicsRename Main Interface" width="600">
 
-### Metadata Search & Display
+### Metadata Search & Display - File Organization
 *Rich metadata display with cover images and detailed information*
-
-<img src="https://via.placeholder.com/800x500/2D3748/FFFFFF?text=Metadata+Search+%26+Display+Screenshot+Coming+Soon" alt="Metadata Search Interface" width="600">
-
-### File Organization
 *Drag & drop file management with smart organization features*
 
-<img src="https://via.placeholder.com/800x500/2D3748/FFFFFF?text=File+Organization+Screenshot+Coming+Soon" alt="File Organization Interface" width="600">
+<img src="screenshots/Screenshot2.png" alt="ComicsRename Main Interface and Quick View" width="600">
 
 </div>
 
