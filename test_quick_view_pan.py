@@ -33,13 +33,31 @@ try:
             
             # Instructions
             instructions = """
-            Test Instructions:
+            Test Instructions for Enhanced Quick View:
+            
+            🎯 CORE FEATURES:
             1. Click 'Open PDF for Quick View'
             2. Select any PDF file
-            3. In the Quick View dialog:
-               - Use Ctrl + mouse wheel to zoom in
-               - Right-click and drag to pan around the document
-               - The pan should only work when the image is larger than the window
+            
+            📄 NAVIGATION:
+            - First/Previous/Next/Last buttons for page navigation
+            - Page counter shows "Page X of Y"
+            
+            🔍 ZOOM & PAN:
+            - Use Ctrl + mouse wheel to zoom in/out
+            - Zoom In/Out buttons for manual control
+            - Fit Width/Fit Page buttons for auto-sizing
+            - Right-click and drag to pan around (only when zoomed)
+            
+            💾 EXPORT:
+            - "Export PNG" button saves current page as high-quality PNG
+            - Suggested filename includes page number
+            - 300 DPI resolution for print quality
+            
+            ✨ PAN CONTROL:
+            - Pan only works when image is larger than window
+            - Visual cursor feedback during panning
+            - Cross-platform compatible (macOS/Windows)
             """
             
             from PySide6.QtWidgets import QTextEdit

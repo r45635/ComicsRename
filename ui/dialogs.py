@@ -5,10 +5,10 @@ Dialog windows for ComicsRename application.
 import os
 from PySide6.QtWidgets import (
     QDialog, QFormLayout, QComboBox, QCheckBox, QLineEdit, QDialogButtonBox, QMessageBox,
-    QVBoxLayout, QHBoxLayout, QScrollArea, QLabel, QPushButton, QSlider
+    QVBoxLayout, QHBoxLayout, QScrollArea, QLabel, QPushButton, QSlider, QFileDialog
 )
-from PySide6.QtCore import QSettings, Qt, QPoint
-from PySide6.QtGui import QPixmap, QWheelEvent, QMouseEvent, QIcon
+from PySide6.QtCore import QSettings, Qt, QPoint, QPointF, QSizeF
+from PySide6.QtGui import QPixmap, QWheelEvent, QMouseEvent, QIcon, QImage, QPainter
 
 # Import internationalization system  
 from i18n import tr, get_supported_languages, get_current_language, set_language
@@ -345,20 +345,57 @@ class QuickViewDialog(QDialog):
         self._create_toolbar()
     
     def _create_toolbar(self):
-        """Create the toolbar with zoom and navigation controls"""
+        """Create the toolbar with zoom, navigation, and export controls"""
         toolbar_layout = QHBoxLayout()
         
-        # Zoom controls
-        self.zoom_out_btn = QPushButton("Zoom Out")
-        self.zoom_in_btn = QPushButton("Zoom In")
-        self.fit_width_btn = QPushButton("Fit Width")
-        self.fit_page_btn = QPushButton("Fit Page")
+        # Navigation controls
+        self.first_btn = QPushButton("⏮ First")
+        self.prev_btn = QPushButton("◀ Previous")
+        self.next_btn = QPushButton("Next ▶")
+        self.last_btn = QPushButton("Last ⏭")
         
+        # Page info label
+        self.page_label = QLabel("Page 1 of 1")
+        self.page_label.setAlignment(Qt.AlignCenter)
+        self.page_label.setMinimumWidth(120)
+        
+        # Zoom controls
+        self.zoom_out_btn = QPushButton("🔍- Zoom Out")
+        self.zoom_in_btn = QPushButton("🔍+ Zoom In")
+        self.fit_width_btn = QPushButton("Fit Width")
+        self.fit_page_btn = QPushButton("🔍 Fit Page")
+        
+        # Export button
+        self.export_btn = QPushButton("💾 Export PNG")
+        
+        # Set minimum button widths for consistent appearance
+        self.first_btn.setMinimumWidth(60)
+        self.prev_btn.setMinimumWidth(80)
+        self.next_btn.setMinimumWidth(80)
+        self.last_btn.setMinimumWidth(60)
+        self.zoom_out_btn.setMinimumWidth(80)
+        self.zoom_in_btn.setMinimumWidth(80)
+        self.fit_width_btn.setMinimumWidth(80)
+        self.fit_page_btn.setMinimumWidth(80)
+        self.export_btn.setMinimumWidth(90)
+        
+        # Add navigation controls
+        toolbar_layout.addWidget(self.first_btn)
+        toolbar_layout.addWidget(self.prev_btn)
+        toolbar_layout.addWidget(self.page_label)
+        toolbar_layout.addWidget(self.next_btn)
+        toolbar_layout.addWidget(self.last_btn)
+        toolbar_layout.addStretch()
+        
+        # Add zoom controls
         toolbar_layout.addWidget(self.zoom_out_btn)
         toolbar_layout.addWidget(self.zoom_in_btn)
         toolbar_layout.addWidget(self.fit_width_btn)
         toolbar_layout.addWidget(self.fit_page_btn)
         toolbar_layout.addStretch()
+        
+        # Add export control
+        toolbar_layout.addWidget(self.export_btn)
         
         # Instructions label with simplified right-click pan control
         instructions = QLabel("Pan: Right-click + Drag (when zoomed) • Zoom: Ctrl + Mouse wheel")
@@ -374,21 +411,37 @@ class QuickViewDialog(QDialog):
             self.pdf_view_wrapper = PannablePdfView(self)
             
             # Create PDF document
-            pdf_doc = self.pdf_view_wrapper.QPdfDocument(self)
-            load_err = pdf_doc.load(self.file_path)
+            self.pdf_doc = self.pdf_view_wrapper.QPdfDocument(self)
+            load_err = self.pdf_doc.load(self.file_path)
             if load_err != self.pdf_view_wrapper.QPdfDocument.Error.None_:
                 QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.pdf_load_error").format(file=self.file_path))
                 return False
             
             # Configure the PDF view
-            self.pdf_view_wrapper.setDocument(pdf_doc)
+            self.pdf_view_wrapper.setDocument(self.pdf_doc)
             self.pdf_view_wrapper.setPageMode(self.pdf_view_wrapper.QPdfView.PageMode.SinglePage)
             
             # Connect zoom controls to the wrapped PDF view
-            self.zoom_out_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomFactor(self.pdf_view_wrapper.zoomFactor() * 0.8))
-            self.zoom_in_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomFactor(self.pdf_view_wrapper.zoomFactor() * 1.25))
+            self.zoom_out_btn.clicked.connect(self._zoom_out)
+            self.zoom_in_btn.clicked.connect(self._zoom_in)
             self.fit_width_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitToWidth))
             self.fit_page_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitInView))
+            
+            # Connect navigation controls
+            self.first_btn.clicked.connect(self._go_first_page)
+            self.prev_btn.clicked.connect(self._go_prev_page)
+            self.next_btn.clicked.connect(self._go_next_page)
+            self.last_btn.clicked.connect(self._go_last_page)
+            
+            # Connect export function
+            self.export_btn.clicked.connect(self._export_current_page)
+            
+            # Connect page change handler
+            navigator = self.pdf_view_wrapper.pageNavigator()
+            navigator.currentPageChanged.connect(self._update_page_label)
+            
+            # Initialize page label
+            self._update_page_label()
             
             # Add the actual PDF view widget to layout
             self.main_layout.addWidget(self.pdf_view_wrapper.pdf_view)
@@ -434,3 +487,104 @@ class QuickViewDialog(QDialog):
             dialog.show()
             return dialog
         return None
+    
+    def _zoom_in(self):
+        """Zoom in on the PDF"""
+        current_zoom = self.pdf_view_wrapper.zoomFactor()
+        new_zoom = min(current_zoom * 1.25, 10.0)  # Max 10x zoom
+        self.pdf_view_wrapper.setZoomFactor(new_zoom)
+    
+    def _zoom_out(self):
+        """Zoom out on the PDF"""
+        current_zoom = self.pdf_view_wrapper.zoomFactor()
+        new_zoom = max(current_zoom * 0.8, 0.1)  # Min 0.1x zoom
+        self.pdf_view_wrapper.setZoomFactor(new_zoom)
+    
+    def _go_first_page(self):
+        """Go to first page"""
+        navigator = self.pdf_view_wrapper.pageNavigator()
+        if navigator.currentPage() > 0:
+            navigator.jump(0, QPointF(0, 0))
+    
+    def _go_prev_page(self):
+        """Go to previous page"""
+        navigator = self.pdf_view_wrapper.pageNavigator()
+        if navigator.currentPage() > 0:
+            navigator.jump(navigator.currentPage() - 1, QPointF(0, 0))
+    
+    def _go_next_page(self):
+        """Go to next page"""
+        navigator = self.pdf_view_wrapper.pageNavigator()
+        current = navigator.currentPage()
+        if current < self.pdf_doc.pageCount() - 1:
+            navigator.jump(current + 1, QPointF(0, 0))
+    
+    def _go_last_page(self):
+        """Go to last page"""
+        navigator = self.pdf_view_wrapper.pageNavigator()
+        last_page = self.pdf_doc.pageCount() - 1
+        if navigator.currentPage() < last_page:
+            navigator.jump(last_page, QPointF(0, 0))
+    
+    def _update_page_label(self):
+        """Update the page label and navigation button states"""
+        try:
+            current = self.pdf_view_wrapper.pageNavigator().currentPage()
+            total = self.pdf_doc.pageCount()
+            self.page_label.setText(f"Page {current + 1} of {total}")
+            
+            # Update button states
+            self.first_btn.setEnabled(current > 0)
+            self.prev_btn.setEnabled(current > 0)
+            self.next_btn.setEnabled(current < total - 1)
+            self.last_btn.setEnabled(current < total - 1)
+        except Exception:
+            self.page_label.setText("Page 1 of 1")
+    
+    def _export_current_page(self):
+        """Export the current page as PNG"""
+        try:
+            # Get current page
+            current_page = self.pdf_view_wrapper.pageNavigator().currentPage()
+            
+            # Create suggested filename
+            base_name = os.path.splitext(os.path.basename(self.file_path))[0]
+            suggested_name = f"{base_name}_page_{current_page + 1}.png"
+            
+            # Get the directory of the original file
+            file_dir = os.path.dirname(self.file_path)
+            suggested_path = os.path.join(file_dir, suggested_name)
+            
+            # Show save dialog
+            save_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Export Page as PNG",
+                suggested_path,
+                "PNG Files (*.png);;All Files (*)"
+            )
+            
+            if save_path:
+                # Render the current page as image
+                # Get page size at high resolution
+                page_size = self.pdf_doc.pagePointSize(current_page)
+                # Scale factor for high quality export (300 DPI equivalent)
+                scale_factor = 300.0 / 72.0  # PDF points are 72 DPI
+                
+                # Create high resolution image
+                image_size = page_size * scale_factor
+                image = QImage(int(image_size.width()), int(image_size.height()), QImage.Format_ARGB32)
+                image.fill(0xFFFFFFFF)  # White background
+                
+                # Render PDF page to image
+                painter = QPainter(image)
+                self.pdf_doc.render(painter, current_page, image.rect())
+                painter.end()
+                
+                # Save the image
+                if image.save(save_path, "PNG"):
+                    QMessageBox.information(self, "Export Successful", f"Page exported to:\n{save_path}")
+                else:
+                    QMessageBox.warning(self, "Export Failed", "Failed to save the image file.")
+                    
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", f"Failed to export page:\n{str(e)}")

@@ -43,7 +43,8 @@
       "show_in_file_manager": "Show in File Manager",
       "refresh_folder_files": "Refresh Folder Files",
       "quick_view": "Quick View",
-      "search_on_amazon": "Search on Amazon"
+      "search_on_amazon": "Search on Amazon",
+      "delete_file": "Delete File"
     }
   },
   "dialogs": {
@@ -70,10 +71,10 @@
       "username": "Username:",
       "password": "Password:",
       "comicvine_settings": "ComicVine Settings",
-      "api_key": "API Key:",
-      "quick_view": {
-        "title": "Quick View - {title}"
-      }
+      "api_key": "API Key:"
+    },
+    "quick_view": {
+      "title": "Quick View - {title}"
     }
   },
   "messages": {
@@ -105,14 +106,19 @@
       "fetch_albums_error": "Error fetching albums: {error}",
       "folder_rename_error": "Error renaming folder:\n{error}",
       "no_active_folder": "No active folder for import.",
+      "could_not_delete_file": "Could not delete file '{file}':\n{error}",
       "unsupported_format": "Only PDF, EPUB, CBZ or CBR files are accepted.",
       "could_not_open_file": "Could not open file:\\n{error}",
       "could_not_reveal_file": "Could not reveal file:\\n{error}",
+      "pdf_load_error": "Could not load PDF file: {file}",
+      "could_not_load_pdf_viewer": "Could not load PDF viewer. Please ensure Qt PDF modules are installed.",
       "selection_required": "Please select one file and one album"
     },
     "warnings": {
       "file_overwrite": "A file named '{name}' already exists.\\nOverwrite?",
-      "unsupported_format": "Unsupported format"
+      "unsupported_format": "Unsupported format",
+      "invalid_file": "Invalid File",
+      "file_not_found": "File Not Found"
     },
     "info": {
       "folder_same_name": "Folder already has this name.",
@@ -125,7 +131,13 @@
       "amazon_no_info": "No album or series name available for search."
     },
     "success": {
-      "rename_complete": "Rename completed successfully"
+      "rename_complete": "Rename completed successfully",
+      "success": "Success",
+      "file_deleted": "File '{file}' has been successfully deleted"
+    },
+    "confirmations": {
+      "confirm_delete": "Confirm Deletion",
+      "delete_file": "Are you sure you want to delete the file '{file}'?\n\nThis action cannot be undone."
     }
   },
   "debug": {

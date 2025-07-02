@@ -8,7 +8,7 @@
   ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
   ![PySide6](https://img.shields.io/badge/PySide6-6.4+-green.svg)
   ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-  ![Version](https://img.shields.io/badge/version-3.3.0-brightgreen.svg)
+  ![Version](https://img.shields.io/badge/version-3.3.2-brightgreen.svg)
 </div>
 
 ---

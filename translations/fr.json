@@ -43,7 +43,8 @@
       "show_in_file_manager": "Afficher dans le gestionnaire de fichiers",
       "refresh_folder_files": "Rafraîchir les fichiers du dossier",
       "quick_view": "Aperçu rapide",
-      "search_on_amazon": "Rechercher sur Amazon"
+      "search_on_amazon": "Rechercher sur Amazon",
+      "delete_file": "Supprimer le fichier"
     }
   },
   "dialogs": {
@@ -70,10 +71,10 @@
       "username": "Nom d'utilisateur :",
       "password": "Mot de passe :",
       "comicvine_settings": "Paramètres ComicVine",
-      "api_key": "Clé API :",
-      "quick_view": {
-        "title": "Aperçu rapide - {title}"
-      }
+      "api_key": "Clé API :"
+    },
+    "quick_view": {
+      "title": "Aperçu rapide - {title}"
     }
   },
   "messages": {
@@ -106,13 +107,18 @@
       "folder_rename_error": "Erreur lors du renommage du dossier :\n{error}",
       "no_active_folder": "Aucun dossier actif pour l'import.",
       "unsupported_format": "Seuls les fichiers PDF, EPUB, CBZ ou CBR sont acceptés.",
+      "could_not_delete_file": "Impossible de supprimer le fichier '{file}' :\n{error}",
       "could_not_open_file": "Impossible d'ouvrir le fichier :\\n{error}",
       "could_not_reveal_file": "Impossible de révéler le fichier :\\n{error}",
+      "pdf_load_error": "Impossible de charger le fichier PDF : {file}",
+      "could_not_load_pdf_viewer": "Impossible de charger le visualiseur PDF. Veuillez vous assurer que les modules Qt PDF sont installés.",
       "selection_required": "Veuillez sélectionner un fichier et un album"
     },
     "warnings": {
       "file_overwrite": "Un fichier nommé '{name}' existe déjà.\\nÉcraser ?",
-      "unsupported_format": "Format non supporté"
+      "unsupported_format": "Format non supporté",
+      "invalid_file": "Fichier invalide",
+      "file_not_found": "Fichier introuvable"
     },
     "info": {
       "folder_same_name": "Le dossier porte déjà ce nom.",
@@ -125,7 +131,13 @@
       "amazon_no_info": "Aucun nom d'album ou de série disponible pour la recherche."
     },
     "success": {
-      "rename_complete": "Renommage terminé avec succès"
+      "rename_complete": "Renommage terminé avec succès",
+      "success": "Succès",
+      "file_deleted": "Le fichier '{file}' a été supprimé avec succès"
+    },
+    "confirmations": {
+      "confirm_delete": "Confirmer la suppression",
+      "delete_file": "Êtes-vous sûr de vouloir supprimer le fichier '{file}' ?\n\nCette action ne peut pas être annulée."
     }
   },
   "debug": {

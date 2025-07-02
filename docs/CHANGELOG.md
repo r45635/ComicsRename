@@ -5,6 +5,22 @@ All notable changes to the ComicsRename project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.2] - 2025-07-02
+
+### 🌐 Translation System Improvements
+
+#### **Bug Fixes**
+- **Fixed translation warnings** for "ui.dialogs.quick_view.title" key
+- **Repaired corrupted French translation file** structure
+- **Fixed inconsistent key paths** in translation files
+- **Improved error handling** for missing translation keys
+
+#### **Technical Improvements**
+- **Consistent translation key structure** for QuickView dialogs
+- **Enhanced error recovery** when translations are missing
+- **Improved test coverage** for translation system
+- **Updated unit tests** to use correct translation keys
+
 ## [3.3.0] - 2025-06-29
 
 ### 🧹 Major Project Cleanup and Reorganization
