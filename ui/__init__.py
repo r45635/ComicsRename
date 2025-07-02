@@ -6,7 +6,8 @@ ComicsRename application.
 """
 
 from .tables import FileTable, AlbumTable
-from .dialogs import SettingsDialog, QuickViewDialog
+from .dialogs import SettingsDialog
+from .quick_view import QuickViewDialog
 
 __all__ = [
     'DroppableLineEdit', 

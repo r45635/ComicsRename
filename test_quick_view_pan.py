@@ -47,14 +47,15 @@ try:
             - Use Ctrl + mouse wheel to zoom in/out
             - Zoom In/Out buttons for manual control
             - Fit Width/Fit Page buttons for auto-sizing
-            - Right-click and drag to pan around (only when zoomed)
+            - Left-click and drag to pan around (only when zoomed)
             
             💾 EXPORT:
             - "Export PNG" button saves current page as high-quality PNG
             - Suggested filename includes page number
             - 300 DPI resolution for print quality
             
-            ✨ PAN CONTROL:
+            ✨ PAN CONTROL (UPDATED):
+            - Left-click + drag panning (more standard)
             - Pan only works when image is larger than window
             - Visual cursor feedback during panning
             - Cross-platform compatible (macOS/Windows)

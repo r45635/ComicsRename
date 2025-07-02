@@ -239,57 +239,9 @@ class FileTable(QTableWidget):
                     best_folder = self.main._get_fallback_folder_path(folder)
                     self.main._load_files(best_folder)
         elif action == quick_view_action:
-            # Use the new independent QuickViewDialog
-            from .dialogs import QuickViewDialog
+            # Use the new independent QuickViewDialog from ui.quick_view
+            from .quick_view import QuickViewDialog
             QuickViewDialog.show_quick_view(file_path, self)
-
-    def _show_quick_view(self, file_path):
-        """Show quick view dialog for PDF files"""
-        # Only for PDF files
-        ext = os.path.splitext(file_path)[1].lower()
-        if ext != '.pdf':
-            QMessageBox.warning(self, tr("messages.warnings.unsupported_format"), tr("messages.errors.unsupported_format"))
-            return
-        
-        # Try to import Qt PDF modules
-        try:
-            from PySide6.QtPdf import QPdfDocument
-            from PySide6.QtPdfWidgets import QPdfView
-        except ImportError:
-            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.could_not_load_pdf_viewer"))
-            return
-        
-        # Create dialog to display first page
-        dialog = QDialog(self)
-        dialog.setWindowTitle(tr("dialogs.settings.quick_view.title", title=os.path.basename(file_path)))
-        dialog.setModal(False)  # Allow window to be resized and moved freely
-        
-        # Restore window geometry from settings
-        settings = QSettings("ComicsRename", "App")
-        saved_geometry = settings.value('quick_view_geometry')
-        if saved_geometry:
-            dialog.restoreGeometry(saved_geometry)
-        else:
-            dialog.resize(700, 900)  # Default size, slightly larger
-        
-        layout = QVBoxLayout(dialog)
-        layout.setContentsMargins(5, 5, 5, 5)  # Small margins
-        
-        # Create PDF document and view
-        pdf_doc = QPdfDocument(dialog)
-        load_err = pdf_doc.load(file_path)
-        if load_err != QPdfDocument.Error.None_:
-            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.pdf_load_error", file=file_path))
-            return
-        
-        view = QPdfView(dialog)
-        view.setDocument(pdf_doc)
-        view.setPageMode(QPdfView.PageMode.SinglePage)
-        
-        # Create custom pannbale PDF view (this would need the PannableQPdfView class)
-        # For now, using standard view
-        layout.addWidget(view)
-        dialog.show()
 
 
 class AlbumTable(QTableWidget):

@@ -116,3 +116,25 @@ def get_system_info():
         'version': platform.version(),
         'platform': platform.platform(),
     }
+
+def delete_file_cross_platform(file_path):
+    """
+    Delete a file with cross-platform support.
+    
+    Args:
+        file_path (str): The path to the file to delete
+        
+    Returns:
+        bool or tuple: True if successful, or a tuple (False, error_message) if failed
+    """
+    import os
+    import sys
+    
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        else:
+            return (False, f"File not found: {file_path}")
+    except Exception as e:
+        return (False, str(e))
