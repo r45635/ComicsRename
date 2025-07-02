@@ -5,7 +5,6 @@ This package contains custom widgets, tables, and dialogs used in the
 ComicsRename application.
 """
 
-from .widgets import DroppableLineEdit, EditableFolderLineEdit
 from .tables import FileTable, AlbumTable
 from .dialogs import SettingsDialog, QuickViewDialog
 

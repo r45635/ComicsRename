@@ -30,98 +30,169 @@ def get_app_icon():
     return QIcon()  # Return empty icon if none found
 
 
-class PannableLabel(QLabel):
-    """A QLabel that supports mouse panning and zooming"""
+
+
+
+class PannablePdfView:
+    """
+    Enhanced PDF viewer with panning functionality.
+    
+    This class wraps QPdfView and adds mouse panning capabilities
+    by intercepting mouse events and manipulating scroll bars.
+    Compatible with macOS and Windows.
+    """
     
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setAlignment(Qt.AlignCenter)
-        self.setMinimumSize(1, 1)
-        self.setScaledContents(False)
+        # Try to import Qt PDF modules
+        try:
+            from PySide6.QtPdf import QPdfDocument
+            from PySide6.QtPdfWidgets import QPdfView
+            self.QPdfView = QPdfView
+            self.QPdfDocument = QPdfDocument
+        except ImportError:
+            raise ImportError("Qt PDF modules not available")
         
-        # Panning variables
+        # Create the actual PDF view
+        self.pdf_view = QPdfView(parent)
+        
+        # Panning state
         self.panning = False
-        self.pan_start_pos = QPoint()
         self.last_pan_pos = QPoint()
         
-        # Zoom variables
-        self.zoom_factor = 1.0
-        self.original_pixmap = None
+        # Store original event handlers
+        self.original_mouse_press = self.pdf_view.mousePressEvent
+        self.original_mouse_move = self.pdf_view.mouseMoveEvent
+        self.original_mouse_release = self.pdf_view.mouseReleaseEvent
+        self.original_wheel_event = self.pdf_view.wheelEvent
         
-        # Enable mouse tracking
-        self.setMouseTracking(True)
+        # Install custom event handlers
+        self.pdf_view.mousePressEvent = self._mouse_press_event
+        self.pdf_view.mouseMoveEvent = self._mouse_move_event
+        self.pdf_view.mouseReleaseEvent = self._mouse_release_event
+        self.pdf_view.wheelEvent = self._wheel_event
+        
+        # Enable mouse tracking for smooth panning
+        self.pdf_view.setMouseTracking(True)
+        
+        # Platform-specific settings
+        import platform
+        self.is_macos = platform.system() == "Darwin"
     
-    def setPixmap(self, pixmap):
-        """Set the pixmap and store the original for zooming"""
-        self.original_pixmap = pixmap
-        self.updatePixmap()
+    def _mouse_press_event(self, event):
+        """Handle mouse press for panning - Simple right-click method"""
+        # Right click for panning (only when image is larger than viewport)
+        if event.button() == Qt.RightButton:
+            # Check if image is larger than viewport (pan needed)
+            if self._is_pan_needed():
+                self.panning = True
+                if hasattr(event, 'globalPosition'):
+                    self.last_pan_pos = event.globalPosition().toPoint()
+                else:
+                    self.last_pan_pos = event.position().toPoint()
+                self.pdf_view.setCursor(Qt.ClosedHandCursor)
+                event.accept()
+                return
+        
+        # Call original handler for all other interactions
+        self.original_mouse_press(event)
     
-    def updatePixmap(self):
-        """Update the displayed pixmap based on zoom factor"""
-        if self.original_pixmap:
-            if self.zoom_factor != 1.0:
-                scaled_pixmap = self.original_pixmap.scaled(
-                    int(self.original_pixmap.width() * self.zoom_factor),
-                    int(self.original_pixmap.height() * self.zoom_factor),
-                    Qt.KeepAspectRatio,
-                    Qt.SmoothTransformation
-                )
-                super().setPixmap(scaled_pixmap)
-            else:
-                super().setPixmap(self.original_pixmap)
+    def _is_pan_needed(self):
+        """Check if the image is larger than the viewport and panning is useful"""
+        try:
+            # Get viewport size
+            viewport = self.pdf_view.viewport()
+            if not viewport:
+                return True  # Default to allowing pan
+            
+            viewport_size = viewport.size()
+            
+            # Get document size at current zoom
+            zoom_factor = self.pdf_view.zoomFactor()
+            
+            # Simple heuristic: if zoom > 1.0, panning is likely needed
+            return zoom_factor > 1.0
+            
+        except Exception:
+            # If we can't determine, allow panning
+            return True
     
-    def mousePressEvent(self, event):
-        """Start panning when middle mouse button is pressed"""
-        if event.button() == Qt.MiddleButton or (event.button() == Qt.LeftButton and event.modifiers() & Qt.ControlModifier):
-            self.panning = True
-            self.pan_start_pos = event.position().toPoint()
-            self.last_pan_pos = event.position().toPoint()
-            self.setCursor(Qt.ClosedHandCursor)
-        super().mousePressEvent(event)
-    
-    def mouseMoveEvent(self, event):
-        """Handle panning during mouse movement"""
+    def _mouse_move_event(self, event):
+        """Handle mouse movement for panning - Simple right-click drag"""
         if self.panning:
-            # Calculate the delta movement
-            delta = event.position().toPoint() - self.last_pan_pos
+            # Calculate movement delta
+            if hasattr(event, 'globalPosition'):
+                current_pos = event.globalPosition().toPoint()
+            else:
+                current_pos = event.position().toPoint()
             
-            # Get the scroll area parent
-            scroll_area = self.parent()
-            while scroll_area and not isinstance(scroll_area, QScrollArea):
-                scroll_area = scroll_area.parent()
+            delta = current_pos - self.last_pan_pos
             
-            if scroll_area:
-                # Move the scroll bars
-                h_scroll = scroll_area.horizontalScrollBar()
-                v_scroll = scroll_area.verticalScrollBar()
+            # Get the scroll area from QPdfView
+            viewport = self.pdf_view.viewport()
+            if viewport:
+                # Try to get parent scroll area
+                scroll_area = viewport.parent()
+                while scroll_area and not hasattr(scroll_area, 'horizontalScrollBar'):
+                    scroll_area = scroll_area.parent()
                 
-                h_scroll.setValue(h_scroll.value() - delta.x())
-                v_scroll.setValue(v_scroll.value() - delta.y())
+                if scroll_area and hasattr(scroll_area, 'horizontalScrollBar'):
+                    # Pan by adjusting scroll bars
+                    h_scroll = scroll_area.horizontalScrollBar()
+                    v_scroll = scroll_area.verticalScrollBar()
+                    
+                    if h_scroll:
+                        new_h_value = h_scroll.value() - delta.x()
+                        h_scroll.setValue(max(h_scroll.minimum(), min(h_scroll.maximum(), new_h_value)))
+                    
+                    if v_scroll:
+                        new_v_value = v_scroll.value() - delta.y()
+                        v_scroll.setValue(max(v_scroll.minimum(), min(v_scroll.maximum(), new_v_value)))
             
-            self.last_pan_pos = event.position().toPoint()
-        super().mouseMoveEvent(event)
+            self.last_pan_pos = current_pos
+            event.accept()
+            return
+        
+        # Call original handler if not panning
+        self.original_mouse_move(event)
     
-    def mouseReleaseEvent(self, event):
-        """Stop panning when mouse button is released"""
-        if event.button() == Qt.MiddleButton or (event.button() == Qt.LeftButton and event.modifiers() & Qt.ControlModifier):
+    def _mouse_release_event(self, event):
+        """Handle mouse release to stop panning - Simple right-click release"""
+        if event.button() == Qt.RightButton and self.panning:
             self.panning = False
-            self.setCursor(Qt.ArrowCursor)
-        super().mouseReleaseEvent(event)
+            self.pdf_view.setCursor(Qt.ArrowCursor)
+            event.accept()
+            return
+        
+        # Call original handler for other buttons
+        self.original_mouse_release(event)
     
-    def wheelEvent(self, event):
-        """Handle zoom with mouse wheel"""
+    def _wheel_event(self, event):
+        """Handle wheel events for zooming - Cross-platform compatible"""
+        # Check for zoom modifier (Ctrl key)
         if event.modifiers() & Qt.ControlModifier:
-            # Zoom in/out
-            zoom_in = event.angleDelta().y() > 0
-            zoom_change = 1.1 if zoom_in else 1/1.1
+            # Zoom functionality
+            angle_delta = event.angleDelta().y()
+            if angle_delta != 0:
+                # Calculate zoom factor
+                zoom_factor = self.pdf_view.zoomFactor()
+                if angle_delta > 0:
+                    new_zoom = zoom_factor * 1.2  # Zoom in
+                else:
+                    new_zoom = zoom_factor / 1.2  # Zoom out
+                
+                # Limit zoom range
+                new_zoom = max(0.1, min(10.0, new_zoom))
+                self.pdf_view.setZoomFactor(new_zoom)
             
-            new_zoom = self.zoom_factor * zoom_change
-            # Limit zoom between 0.1x and 10x
-            if 0.1 <= new_zoom <= 10.0:
-                self.zoom_factor = new_zoom
-                self.updatePixmap()
-        else:
-            super().wheelEvent(event)
+            event.accept()
+            return
+        
+        # Call original handler for normal scrolling
+        self.original_wheel_event(event)
+    
+    def __getattr__(self, name):
+        """Delegate all other attributes and methods to the wrapped QPdfView"""
+        return getattr(self.pdf_view, name)
 
 
 class SettingsDialog(QDialog):
@@ -289,42 +360,43 @@ class QuickViewDialog(QDialog):
         toolbar_layout.addWidget(self.fit_page_btn)
         toolbar_layout.addStretch()
         
-        # Instructions label
-        instructions = QLabel("Drag to pan • Mouse wheel to zoom • Right-click for context menu")
+        # Instructions label with simplified right-click pan control
+        instructions = QLabel("Pan: Right-click + Drag (when zoomed) • Zoom: Ctrl + Mouse wheel")
         instructions.setStyleSheet("QLabel { color: gray; font-size: 10px; }")
         toolbar_layout.addWidget(instructions)
         
         self.main_layout.addLayout(toolbar_layout)
     
     def _setup_pdf_viewer(self):
-        """Setup the PDF viewer component"""
-        # Try to import Qt PDF modules
+        """Setup the PDF viewer component with panning functionality"""
         try:
-            from PySide6.QtPdf import QPdfDocument
-            from PySide6.QtPdfWidgets import QPdfView
+            # Create enhanced PDF viewer with panning
+            self.pdf_view_wrapper = PannablePdfView(self)
+            
+            # Create PDF document
+            pdf_doc = self.pdf_view_wrapper.QPdfDocument(self)
+            load_err = pdf_doc.load(self.file_path)
+            if load_err != self.pdf_view_wrapper.QPdfDocument.Error.None_:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.pdf_load_error").format(file=self.file_path))
+                return False
+            
+            # Configure the PDF view
+            self.pdf_view_wrapper.setDocument(pdf_doc)
+            self.pdf_view_wrapper.setPageMode(self.pdf_view_wrapper.QPdfView.PageMode.SinglePage)
+            
+            # Connect zoom controls to the wrapped PDF view
+            self.zoom_out_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomFactor(self.pdf_view_wrapper.zoomFactor() * 0.8))
+            self.zoom_in_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomFactor(self.pdf_view_wrapper.zoomFactor() * 1.25))
+            self.fit_width_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitToWidth))
+            self.fit_page_btn.clicked.connect(lambda: self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitInView))
+            
+            # Add the actual PDF view widget to layout
+            self.main_layout.addWidget(self.pdf_view_wrapper.pdf_view)
+            return True
+            
         except ImportError:
             QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.could_not_load_pdf_viewer"))
             return False
-        
-        # Create PDF document and view
-        self.pdf_doc = QPdfDocument(self)
-        load_err = self.pdf_doc.load(self.file_path)
-        if load_err != QPdfDocument.Error.None_:
-            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.pdf_load_error").format(file=self.file_path))
-            return False
-        
-        self.pdf_view = QPdfView(self)
-        self.pdf_view.setDocument(self.pdf_doc)
-        self.pdf_view.setPageMode(QPdfView.PageMode.SinglePage)
-        
-        # Connect zoom controls
-        self.zoom_out_btn.clicked.connect(lambda: self.pdf_view.setZoomFactor(self.pdf_view.zoomFactor() * 0.8))
-        self.zoom_in_btn.clicked.connect(lambda: self.pdf_view.setZoomFactor(self.pdf_view.zoomFactor() * 1.25))
-        self.fit_width_btn.clicked.connect(lambda: self.pdf_view.setZoomMode(QPdfView.ZoomMode.FitToWidth))
-        self.fit_page_btn.clicked.connect(lambda: self.pdf_view.setZoomMode(QPdfView.ZoomMode.FitInView))
-        
-        self.main_layout.addWidget(self.pdf_view)
-        return True
     
     def _restore_geometry(self):
         """Restore window geometry from settings"""
