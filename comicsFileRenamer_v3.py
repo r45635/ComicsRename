@@ -32,26 +32,11 @@ from PySide6.QtCore import Qt, QMimeData, QByteArray, QSettings, QThread, Signal
 from PySide6.QtGui import QPixmap, QDrag, QAction, QIcon
 
 from utils import scan_comic_files, load_bdgest_credentials, extract_year, open_file_cross_platform, reveal_file_cross_platform, get_system_info
+from utils.icons import get_app_icon
 from bdgest_scraper_api import get_bdgest_series
 
 # Import internationalization system
 from i18n import tr, set_language, get_current_language, get_supported_languages
-
-# ---------- Icon utility function ----------
-def get_app_icon():
-    """Get the application icon, with fallback options"""
-    icon_paths = [
-        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename.ico'),
-        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_64x64.png'),
-        os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_32x32.png'),
-        os.path.join(os.path.dirname(__file__), 'icons', 'icon.ico')
-    ]
-    
-    for icon_path in icon_paths:
-        if os.path.exists(icon_path):
-            return QIcon(icon_path)
-    
-    return QIcon()  # Return empty icon if none found
 
 # ---------- Providers (API abstraction layer) ----------
 class MetadataProvider:
@@ -77,7 +62,6 @@ class BDGestProvider(MetadataProvider):
     def _ensure_authenticated_session(self, debug=False, verbose=False):
         """Ensure we have an authenticated session, create/authenticate if needed"""
         from bdgest_scraper_api import login_bdgest, get_csrf_token
-        import requests
         
         user, pwd = self._get_credentials()
         current_credentials = (user, pwd)
@@ -188,15 +172,15 @@ class BDGestProvider(MetadataProvider):
             return []
 
 class ComicVineProvider(MetadataProvider):
-    def search_series(self, query):
+    def search_series(self, query, debug=False):
         from comicVine_scraper_api import search_comicvine_series
         # Pass API key from settings if available
         settings = QSettings("ComicsRename", "App")
         api_key = settings.value('comicvine_api', '')
         if api_key:
-            return search_comicvine_series(query, api_key=api_key)
+            return search_comicvine_series(query, api_key=api_key, debug=debug)
         else:
-            return search_comicvine_series(query)
+            return search_comicvine_series(query, debug=debug)
 
     def search_albums(self, volume_id, debug=False):
         from comicVine_scraper_api import get_comicvine_volume_issues, get_comicvine_issue_details, get_comicvine_volume_details
@@ -546,365 +530,6 @@ class SearchWorker(QThread):
                 })
 
 # ---------- Metadata Providers ----------
-class MetadataProvider:
-    def search_series(self, query):
-        raise NotImplementedError
-
-    def search_albums(self, series_id_or_name):
-        raise NotImplementedError
-
-class BDGestProvider(MetadataProvider):
-    def __init__(self):
-        self._session = None
-        self._authenticated = False
-        self._last_credentials = None
-    
-    def _get_credentials(self):
-        """Get current credentials from settings"""
-        settings = QSettings("ComicsRename", "App")
-        user = settings.value('bdgest_user', '')
-        pwd = settings.value('bdgest_pass', '')
-        return user, pwd
-    
-    def _ensure_authenticated_session(self, debug=False, verbose=False):
-        """Ensure we have an authenticated session, create/authenticate if needed"""
-        from bdgest_scraper_api import login_bdgest, get_csrf_token
-        import requests
-        
-        user, pwd = self._get_credentials()
-        current_credentials = (user, pwd)
-        
-        # Check if we need to create a new session or re-authenticate
-        need_new_session = (
-            self._session is None or 
-            not self._authenticated or
-            self._last_credentials != current_credentials
-        )
-        
-        if need_new_session:
-            if debug:
-                print("[DEBUG][BDGest] Creating new session or re-authenticating")
-            
-            # Create new session
-            self._session = requests.Session()
-            self._authenticated = False
-            
-            # Get CSRF token
-            if not get_csrf_token(self._session, debug=debug, verbose=verbose):
-                if debug:
-                    print("[ERROR][BDGest] Failed to get CSRF token")
-                return False
-            
-            # Authenticate
-            if not login_bdgest(self._session, user, pwd, debug=debug, verbose=verbose):
-                if debug:
-                    print("[ERROR][BDGest] Authentication failed")
-                self._authenticated = False
-                return False
-            
-            self._authenticated = True
-            self._last_credentials = current_credentials
-            if debug:
-                print("[DEBUG][BDGest] Session authenticated successfully")
-        else:
-            if debug:
-                print("[DEBUG][BDGest] Using existing authenticated session")
-        
-        return True
-    
-    def _invalidate_session(self):
-        """Invalidate the current session (called when authentication fails)"""
-        self._session = None
-        self._authenticated = False
-        self._last_credentials = None
-
-    def search_series(self, query, debug=False, verbose=False):
-        from bdgest_scraper_api import fetch_albums
-        
-        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
-            if debug:
-                print("[ERROR][BDGest] Authentication failed in search method")
-            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
-        
-        try:
-            return fetch_albums(self._session, query, debug=debug, verbose=verbose)
-        except Exception as e:
-            if debug:
-                print(f"[ERROR][BDGest] Error in search_series: {e}")
-            # Invalidate session on error (might be authentication issue)
-            self._invalidate_session()
-            return []
-
-    def search_series_only(self, query, debug=False, verbose=False):
-        """Search only in series names using the new fetch_series function"""
-        from bdgest_scraper_api import fetch_series
-        
-        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
-            if debug:
-                print("[ERROR][BDGest] Authentication failed in search method")
-            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
-        
-        try:
-            return fetch_series(self._session, query, debug=debug, verbose=verbose)
-        except Exception as e:
-            if debug:
-                print(f"[ERROR][BDGest] Error in search_series_only: {e}")
-            # Invalidate session on error (might be authentication issue)
-            self._invalidate_session()
-            return []
-
-    def search_albums(self, serie_name):
-        from bdgest_scraper_api import fetch_albums
-        
-        if not self._ensure_authenticated_session():
-            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
-        
-        try:
-            return fetch_albums(self._session, serie_name)
-        except Exception as e:
-            print(f"[ERROR][BDGest] Error in search_albums: {e}")
-            # Invalidate session on error (might be authentication issue)
-            self._invalidate_session()
-            return []
-
-    def search_albums_by_series_id(self, series_id, series_name, debug=False, verbose=False, fetch_details=True):
-        """Search albums for a specific series using series ID"""
-        from bdgest_scraper_api import fetch_albums_by_series_id
-        
-        if not self._ensure_authenticated_session(debug=debug, verbose=verbose):
-            if debug:
-                print("[ERROR][BDGest] Authentication failed in search method")
-            return [{"error": "authentication_failed", "message": "BDGest authentication failed. Please check your credentials."}]
-        
-        try:
-            return fetch_albums_by_series_id(self._session, series_id, series_name, debug=debug, verbose=verbose, fetch_details=fetch_details)
-        except Exception as e:
-            if debug:
-                print(f"[ERROR][BDGest] Error in search_albums_by_series_id: {e}")
-            # Invalidate session on error (might be authentication issue)
-            self._invalidate_session()
-            return []
-
-class ComicVineProvider(MetadataProvider):
-    def search_series(self, query):
-        from comicVine_scraper_api import search_comicvine_series
-        # Pass API key from settings if available
-        settings = QSettings("ComicsRename", "App")
-        api_key = settings.value('comicvine_api', '')
-        if api_key:
-            return search_comicvine_series(query, api_key=api_key)
-        else:
-            return search_comicvine_series(query)
-
-    def search_albums(self, volume_id, debug=False):
-        from comicVine_scraper_api import get_comicvine_volume_issues, get_comicvine_issue_details, get_comicvine_volume_details
-        settings = QSettings("ComicsRename", "App")
-        api_key = settings.value('comicvine_api', '')
-        
-        # First, get volume details to extract concepts (genres/styles)
-        volume_details = get_comicvine_volume_details(volume_id, api_key=api_key, debug=debug) if api_key else get_comicvine_volume_details(volume_id, debug=debug)
-        volume_concepts = []
-        volume_style = ""
-        
-        if volume_details and volume_details.get('concepts'):
-            concepts = volume_details.get('concepts', [])
-            volume_concepts = [concept.get('name') for concept in concepts if concept.get('name')]
-            # Use the first concept as the main style, or join multiple concepts
-            if volume_concepts:
-                volume_style = volume_concepts[0] if len(volume_concepts) == 1 else ', '.join(volume_concepts[:3])
-                if debug:
-                    print(f"[DEBUG] Volume style from concepts: {volume_style}")
-        
-        # Get basic volume and issues data
-        issues_list = get_comicvine_volume_issues(volume_id, api_key=api_key, debug=debug) if api_key else get_comicvine_volume_issues(volume_id, debug=debug)
-        
-        if not issues_list:
-            return []
-        
-        # Use the data we already have without additional API calls for speed
-        enriched_issues = []
-        for issue in issues_list:  # Process all issues, not just first 20
-            issue_id = issue.get('id')
-            if issue_id:
-                # Use the data we already have from the volume issues call
-                # This is much faster than making individual API calls
-                # Determine publication date with fallback logic
-                publication_date = issue.get('cover_date')
-                if not publication_date or publication_date == 'Date inconnue':
-                    # Use volume start year as fallback
-                    if volume_details and volume_details.get('start_year'):
-                        publication_date = str(volume_details.get('start_year'))
-                    else:
-                        publication_date = 'Date inconnue'
-                
-                enriched_issue = {
-                    'id': issue.get('id'),
-                    'issue_number': issue.get('issue_number', 'N/A'),
-                    'name': issue.get('name', 'Sans titre'),
-                    'cover_date': publication_date,
-                    'store_date': issue.get('store_date', ''),
-                    'description': issue.get('description', ''),
-                    'image': volume_details.get('image', {}) if volume_details else issue.get('image', {}),  # Use volume image if available
-                    'volume': volume_details,  # Use volume details we already fetched
-                    'api_detail_url': issue.get('api_detail_url', ''),
-                    # Add computed fields for consistency with BDGest
-                    'title': issue.get('name', 'Sans titre'),
-                    # Use volume image since individual issues don't have detailed image data
-                    'cover_url': volume_details.get('image', {}).get('original_url', '') if volume_details and volume_details.get('image') else '',
-                    'album_url': f"https://comicvine.gamespot.com/issue/4000-{issue_id}/",
-                }
-                
-                # Create details section like BDGest with automatic structure detection
-                details_dict = {}
-                
-                # Helper function to format any complex data structure
-                def format_complex_data(key, value, label):
-                    """Format complex data (arrays, objects) into structured display format"""
-                    if isinstance(value, list) and value:
-                        if isinstance(value[0], dict):
-                            # Array of objects - extract meaningful info
-                            if key == 'character_credits':
-                                items = [char.get('name', 'Unknown') for char in value[:10]]
-                            elif key == 'person_credits':
-                                items = [f"{person.get('name', 'Unknown')} ({person.get('role', 'N/A')})" for person in value]
-                            elif key == 'location_credits':
-                                items = [loc.get('name', 'Unknown') for loc in value]
-                            else:
-                                # Generic handling for any array of objects
-                                items = []
-                                for item in value[:10]:  # Limit to 10 items
-                                    if isinstance(item, dict):
-                                        # Try to find a meaningful display value
-                                        display_value = (item.get('name') or 
-                                                       item.get('title') or 
-                                                       item.get('id') or 
-                                                       str(item)[:50] + '...' if len(str(item)) > 50 else str(item))
-                                        items.append(str(display_value))
-                                    else:
-                                        items.append(str(item))
-                            
-                            if items:
-                                details_dict[label] = {'type': 'list', 'items': items}
-                        else:
-                            # Array of simple values
-                            details_dict[label] = {'type': 'list', 'items': [str(item) for item in value[:10]]}
-                    
-                    elif isinstance(value, dict) and value:
-                        # Single object - show key-value pairs
-                        items = []
-                        for k, v in value.items():
-                            if isinstance(v, (str, int, float)) and v:
-                                # Format key names nicely
-                                display_key = k.replace('_', ' ').title()
-                                items.append(f"{display_key}: {v}")
-                        
-                        if items:
-                            details_dict[label] = {'type': 'list', 'items': items[:10]}  # Limit to 10 items
-                
-                # Add basic fields with date fallback logic
-                publication_date = None
-                if enriched_issue.get('cover_date'):
-                    publication_date = enriched_issue.get('cover_date')
-                    details_dict['Date de publication'] = publication_date
-                elif volume_details and volume_details.get('start_year'):
-                    # Use volume start year as fallback when cover_date is not available
-                    publication_date = str(volume_details.get('start_year'))
-                    details_dict['Date de publication'] = f"{publication_date} (Année du volume)"
-                else:
-                    details_dict['Date de publication'] = "Date inconnue"
-                
-                # Store the resolved date for use in issue data
-                if publication_date:
-                    enriched_issue['cover_date'] = publication_date if enriched_issue.get('cover_date') else publication_date
-                
-                if enriched_issue.get('store_date'):
-                    details_dict['Date en magasin'] = enriched_issue.get('store_date')
-                if enriched_issue.get('description'):
-                    # Clean HTML from description
-                    import re
-                    clean_desc = re.sub('<[^<]+?>', '', enriched_issue.get('description', ''))
-                    details_dict['Description'] = clean_desc[:500] + ('...' if len(clean_desc) > 500 else '')
-                
-                # Add volume style/genre information
-                if volume_style:
-                    details_dict['Style/Genre'] = volume_style
-                
-                # For now, skip the complex field processing since we don't have detailed issue data
-                # This makes the loading much faster while still providing essential information
-                
-                # Add volume information if available
-                if volume_details:
-                    vol_info = []
-                    if volume_details.get('name'):
-                        vol_info.append(f"Nom: {volume_details.get('name')}")
-                    if volume_details.get('start_year'):
-                        vol_info.append(f"Année: {volume_details.get('start_year')}")
-                    if volume_details.get('publisher', {}).get('name'):
-                        vol_info.append(f"Éditeur: {volume_details.get('publisher', {}).get('name')}")
-                    if vol_info:
-                        details_dict['Volume'] = {'type': 'list', 'items': vol_info}
-                
-                enriched_issue['details'] = details_dict
-                
-                # Add volume style/genre information for folder renaming
-                if volume_style:
-                    enriched_issue['style'] = volume_style
-                    # Also add to details for consistency with BDGest
-                    enriched_issue['details']['Style'] = volume_style
-                
-                enriched_issues.append(enriched_issue)
-            else:
-                # Fallback for issues without ID
-                fallback_issue = issue.copy()
-                if volume_style:
-                    fallback_issue['style'] = volume_style
-                enriched_issues.append(fallback_issue)
-        
-        if debug:
-            print(f"[DEBUG] Enriched {len(enriched_issues)} issues with detailed information")
-        return enriched_issues
-
-    def search_series_only(self, query, debug=False, verbose=False):
-        """Search only for series names without fetching detailed album data"""
-        from comicVine_scraper_api import search_comicvine_series
-        # Pass API key from settings if available
-        settings = QSettings("ComicsRename", "App")
-        api_key = settings.value('comicvine_api', '')
-        
-        try:
-            if api_key:
-                results = search_comicvine_series(query, api_key=api_key, debug=debug)
-            else:
-                results = search_comicvine_series(query, debug=debug)
-            
-            # Transform results to match expected format
-            series_list = []
-            for volume in results:
-                series_data = {
-                    'serie_name': volume.get('name', 'Unknown'),
-                    'volume_id': str(volume.get('id', '')),
-                    'start_year': volume.get('start_year'),
-                    'publisher': volume.get('publisher', {}).get('name', 'Unknown') if volume.get('publisher') else 'Unknown',
-                    'image': volume.get('image'),
-                    'api_detail_url': volume.get('api_detail_url'),
-                    'raw_data': volume  # Store original data for later use
-                }
-                series_list.append(series_data)
-            
-            if debug:
-                print(f"[DEBUG][ComicVine] search_series_only returned {len(series_list)} series")
-            
-            return series_list
-        except Exception as e:
-            if debug:
-                print(f"[ERROR][ComicVine] Error in search_series_only: {e}")
-            return []
-
-PROVIDERS = {
-    'ComicVine': ComicVineProvider(),
-    'BDGest': BDGestProvider(),
-}
-
 # ---------- Custom UI Components ----------
 class DroppableLineEdit(QLineEdit):
     """A QLineEdit that accepts drag and drop of text/files"""
@@ -1405,6 +1030,11 @@ class SettingsDialog(QDialog):
         self.verbose_cb.setChecked(self.settings.value('verbose', 'false') == 'true')
         self.layout.addRow("Verbose mode", self.verbose_cb)
 
+        self.recursive_cb = QCheckBox()
+        self.recursive_cb.setChecked(self.settings.value('recursive', 'false') == 'true')
+        self.recursive_cb.setToolTip(tr("ui.tooltips.recursive_folder_scan"))
+        self.layout.addRow(tr("ui.labels.recursive_folder_scan"), self.recursive_cb)
+
         self.bdgest_user = QLineEdit(self.settings.value('bdgest_user', ''))
         self.layout.addRow(tr("dialogs.settings.username"), self.bdgest_user)
         self.bdgest_pass = QLineEdit(self.settings.value('bdgest_pass', ''))
@@ -1443,6 +1073,7 @@ class SettingsDialog(QDialog):
         self.settings.setValue("default_provider", self.provider_combo.currentText())
         self.settings.setValue("debug", 'true' if self.debug_cb.isChecked() else 'false')
         self.settings.setValue("verbose", 'true' if self.verbose_cb.isChecked() else 'false')
+        self.settings.setValue("recursive", 'true' if self.recursive_cb.isChecked() else 'false')
         self.settings.setValue("bdgest_user", self.bdgest_user.text())
         self.settings.setValue("bdgest_pass", self.bdgest_pass.text())
         self.settings.setValue("comicvine_api", self.comicvine_api.text())
@@ -1528,7 +1159,6 @@ class ComicRenamer(QWidget):
         self.search_bar = DroppableLineEdit()
         self.search_btn = QPushButton(tr("ui.buttons.search"))
         self.dir_btn = QPushButton(tr("ui.buttons.browse"))
-        self.recursive_cb = QCheckBox('Recursive')
         self.series_name_cb = QCheckBox(tr("ui.labels.series_name_mode"))  # New checkbox for BDGest series search
         self.series_name_cb.setToolTip(tr("ui.tooltips.series_name_mode"))
         self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest
@@ -1542,7 +1172,7 @@ class ComicRenamer(QWidget):
         self._search_cancelled = False
         self._search_in_progress = False
         
-        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.recursive_cb, self.series_name_cb, self.settings_btn):
+        for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.series_name_cb, self.settings_btn):
             ctrl.addWidget(w)
         layout.addLayout(ctrl)
 
@@ -1659,8 +1289,6 @@ class ComicRenamer(QWidget):
 
     def _restore_session(self):
         folder = self.settings.value('last_folder','')
-        rec = self.settings.value('recursive','false') == 'true'
-        self.recursive_cb.setChecked(rec)
         fc = self.settings.value('file_cols')
         if fc:
             for i,w in enumerate(map(int,fc.split(','))):
@@ -1680,7 +1308,6 @@ class ComicRenamer(QWidget):
 
     def closeEvent(self,ev):
         self.settings.setValue('last_folder', self.settings.value('last_folder'))
-        self.settings.setValue('recursive','true' if self.recursive_cb.isChecked() else 'false')
         widths=[self.file_table.columnWidth(i) for i in range(self.file_table.columnCount())]
         self.settings.setValue('file_cols',','.join(map(str,widths)))
         self.settings.setValue('album_cols',str(self.album_table.columnWidth(0)))
@@ -1774,10 +1401,23 @@ class ComicRenamer(QWidget):
                 self._load_files(d)
 
     def _load_files(self, folder):
+        """
+        Load comic files from the specified folder.
+        
+        The recursive setting controls whether to scan only the current folder
+        or to recursively scan all subfolders and their subdirectories.
+        
+        Args:
+            folder (str): Path to the folder to scan
+        """
         self._populating = True
         self.file_table.blockSignals(True)
         # Filter out files whose name starts with '.'
-        all_files = scan_comic_files(folder, self.recursive_cb.isChecked())
+        # Get recursive folder scan setting from user preferences
+        # When True: recursively scans all subfolders and their subdirectories
+        # When False: only scans files in the current folder
+        recursive = self.settings.value('recursive', 'false') == 'true'
+        all_files = scan_comic_files(folder, recursive)
         self.files = [f for f in all_files if not f['name'].startswith('.')]
         self.file_table.clearContents()
         self.file_table.setRowCount(len(self.files))
@@ -1832,9 +1472,12 @@ class ComicRenamer(QWidget):
         
         # Only call search_series for ComicVine or BDGest in non-SeriesName mode
         if self._source == 'ComicVine' or (self._source == 'BDGest' and not self.series_name_cb.isChecked()):
-            series_list = provider.search_series(q, debug=debug, verbose=verbose) \
-                if hasattr(provider, 'search_series') and provider.search_series.__code__.co_argcount > 2 \
-                else provider.search_series(q)
+            try:
+                # Try with debug parameter first
+                series_list = provider.search_series(q, debug=debug)
+            except TypeError:
+                # Fallback to old interface if debug parameter not supported
+                series_list = provider.search_series(q)
             
             # Check for "too many results" error early (BDGest specific)
             if self._source == 'BDGest' and series_list and len(series_list) == 1 and series_list[0].get('error') == 'too_many_results':
@@ -1869,9 +1512,9 @@ class ComicRenamer(QWidget):
         self._bdgest_album_results = []
 
         if self._source == 'ComicVine':
-            from comicVine_scraper_api import search_comicvine_series, search_comicvine_issues
-            # Load all album details immediately (original behavior)
-            volumes = search_comicvine_series(q, debug=debug)
+            from comicVine_scraper_api import search_comicvine_issues
+            # Use the series_list already fetched by provider.search_series()
+            volumes = series_list
             if volumes:
                 if debug:
                     print(f"[DEBUG][UI] {len(volumes)} volumes found for '{q}' - loading all albums immediately")

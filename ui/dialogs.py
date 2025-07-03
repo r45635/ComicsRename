@@ -12,25 +12,10 @@ from PySide6.QtGui import QPixmap, QWheelEvent, QMouseEvent, QIcon, QImage, QPai
 
 # Import internationalization system  
 from i18n import tr, get_supported_languages, get_current_language, set_language
+from utils.icons import get_app_icon
 
 # Import the extracted QuickView components
 from .quick_view import QuickViewDialog
-
-
-def get_app_icon():
-    """Get the application icon, with fallback options"""
-    icon_paths = [
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'comicsrename.ico'),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'comicsrename_64x64.png'),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'comicsrename_32x32.png'),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'icon.ico')
-    ]
-    
-    for icon_path in icon_paths:
-        if os.path.exists(icon_path):
-            return QIcon(icon_path)
-    
-    return QIcon()  # Return empty icon if none found
 
 
 
@@ -77,6 +62,11 @@ class SettingsDialog(QDialog):
         self.verbose_cb.setChecked(self.settings.value('verbose', 'false') == 'true')
         self.layout.addRow("Verbose mode", self.verbose_cb)
 
+        self.recursive_cb = QCheckBox()
+        self.recursive_cb.setChecked(self.settings.value('recursive', 'false') == 'true')
+        self.recursive_cb.setToolTip(tr("ui.tooltips.recursive_folder_scan"))
+        self.layout.addRow(tr("ui.labels.recursive_folder_scan"), self.recursive_cb)
+
         self.bdgest_user = QLineEdit(self.settings.value('bdgest_user', ''))
         self.layout.addRow(tr("dialogs.settings.username"), self.bdgest_user)
         self.bdgest_pass = QLineEdit(self.settings.value('bdgest_pass', ''))
@@ -115,6 +105,7 @@ class SettingsDialog(QDialog):
         self.settings.setValue("default_provider", self.provider_combo.currentText())
         self.settings.setValue("debug", 'true' if self.debug_cb.isChecked() else 'false')
         self.settings.setValue("verbose", 'true' if self.verbose_cb.isChecked() else 'false')
+        self.settings.setValue("recursive", 'true' if self.recursive_cb.isChecked() else 'false')
         self.settings.setValue("bdgest_user", self.bdgest_user.text())
         self.settings.setValue("bdgest_pass", self.bdgest_pass.text())
         self.settings.setValue("comicvine_api", self.comicvine_api.text())

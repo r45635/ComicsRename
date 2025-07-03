@@ -69,7 +69,8 @@ I was tired of spending hours organizing my comic collection, hunting down metad
 - <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Drag & Drop**: Intuitive file organization
 - <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Folder Renaming**: With validation and confirmation
 - <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Bulk Operations**: Handle multiple files efficiently
-- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Smart Scanning**: CBZ, CBR, PDF, etc.
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Smart Scanning**: CBZ, CBR, PDF, EPUB support
+- <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Recursive Folder Scan**: Option to scan subfolders recursively
 
 ### 🔒 **Security & Credentials**
 - <img src="icons/comicsrename_16x16.png" width="16" height="16"> **Secure Storage**: Encrypted credential storage
@@ -173,6 +174,7 @@ python main.py
 - **Organize files** using drag & drop
 - **Rename folders** by double-clicking folder names
 - **Validate changes** with built-in confirmation
+- **Recursive Scanning**: Configure in settings to scan subfolders
 
 #### 4. **Advanced Features** <img src="icons/comicsrename_16x16.png" width="16" height="16">
 - **Batch Processing**: Handle multiple folders

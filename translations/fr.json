@@ -21,6 +21,7 @@
       "folder": "Dossier",
       "search_term": "Terme de recherche",
       "series_name_mode": "Mode nom de série",
+      "recursive_folder_scan": "Parcours récursif des dossiers",
       "provider": "Fournisseur",
       "language": "Langue",
       "volume": "Volume",
@@ -30,6 +31,7 @@
     },
     "tooltips": {
       "series_name_mode": "Rechercher uniquement dans les noms de séries (BDGest uniquement)",
+      "recursive_folder_scan": "Lorsque activé, parcourt récursivement tous les sous-dossiers lors de l'ouverture d'un dossier. Lorsque désactivé, ne charge que les fichiers du dossier courant.",
       "settings": "Paramètres de l'application",
       "rename_folder": "Renommer le dossier avec le nom de la série sélectionnée"
     },

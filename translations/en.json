@@ -21,6 +21,7 @@
       "folder": "Folder",
       "search_term": "Search term",
       "series_name_mode": "Series Name Mode",
+      "recursive_folder_scan": "Recursive Folder Scan",
       "provider": "Provider",
       "language": "Language",
       "volume": "Volume",
@@ -30,6 +31,7 @@
     },
     "tooltips": {
       "series_name_mode": "Search only in series names (BDGest only)",
+      "recursive_folder_scan": "When enabled, scans all subfolders recursively when opening a folder. When disabled, only scans files in the current folder.",
       "settings": "Application Settings",
       "rename_folder": "Rename folder with selected series name"
     },

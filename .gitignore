@@ -30,9 +30,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
+# PyInstaller (keep ComicsRename.spec for builds)
 *.manifest
-*.spec
+# *.spec
 
 # Installer logs
 pip-log.txt

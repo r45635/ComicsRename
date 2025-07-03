@@ -11,9 +11,31 @@ def list_comic_files(folder, extensions=None):
     return [f for f in os.listdir(folder) if f.lower().endswith(extensions)]
 
 def scan_comic_files(folder, recursive=False):
-    """Scans a folder for comic files and returns their metadata."""
+    """
+    Scans a folder for comic files and returns their metadata.
+    
+    Args:
+        folder (str): Path to the folder to scan
+        recursive (bool): If True, recursively scans all subfolders and their 
+                         subdirectories. If False, only scans the current folder.
+    
+    Returns:
+        list: List of dictionaries containing file metadata:
+              - path: pathlib.Path object
+              - name: filename without extension
+              - ext: file extension (without dot)
+              - size: file size in MB as string
+              - folder: parent folder path as string
+    
+    Note:
+        This is NOT a search function but a folder scanning function.
+        When recursive=True, it will traverse the entire directory tree
+        starting from the given folder, finding all comic files in all
+        subdirectories at any depth.
+    """
     supported_ext = {'.pdf', '.epub', '.cbz', '.cbr'}
     files = []
+    # Use rglob for recursive scanning (all subdirectories) or glob for current folder only
     iterator = pathlib.Path(folder).rglob('*') if recursive else pathlib.Path(folder).glob('*')
     for p in sorted(iterator):
         if p.suffix.lower() in supported_ext:
@@ -34,10 +56,23 @@ def scan_comic_files(folder, recursive=False):
     return files
 
 def load_bdgest_credentials():
-    # TODO: Securely load credentials
-    BDGEST_USER = "r45635"
-    BDGEST_PASS = "G9BxNeZcoU"
-    return BDGEST_USER, BDGEST_PASS
+    """Load BDGest credentials from environment variables or settings"""
+    import os
+    from PySide6.QtCore import QSettings
+    
+    # Try environment variables first (for security)
+    user = os.environ.get('BDGEST_USER')
+    password = os.environ.get('BDGEST_PASS')
+    
+    if user and password:
+        return user, password
+    
+    # Fallback to QSettings (stored by user in UI)
+    settings = QSettings("ComicsRename", "App")
+    user = settings.value('bdgest_user', '')
+    password = settings.value('bdgest_pass', '')
+    
+    return user, password
 
 def extract_year(date_str):
     """Extracts the year from a date string like '08/2022' or '2022'."""

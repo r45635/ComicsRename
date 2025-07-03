@@ -49,12 +49,12 @@ def main():
         
         # Set application icon
         try:
-            from comicsFileRenamer_v3 import get_app_icon
+            from utils.icons import get_app_icon
             app_icon = get_app_icon()
             if not app_icon.isNull():
                 app.setWindowIcon(app_icon)
         except ImportError:
-            # Fallback if comicsFileRenamer_v3 is not available
+            # Fallback if utils.icons is not available
             icon_paths = [
                 os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename.ico'),
                 os.path.join(os.path.dirname(__file__), 'icons', 'comicsrename_64x64.png'),

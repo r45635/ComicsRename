@@ -18,22 +18,7 @@ from PySide6.QtGui import QIcon, QImage, QPainter
 
 # Import internationalization system  
 from i18n import tr
-
-
-def get_app_icon():
-    """Get the application icon, with fallback options"""
-    icon_paths = [
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'comicsrename.ico'),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'comicsrename_64x64.png'),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'comicsrename_32x32.png'),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'icon.ico')
-    ]
-    
-    for icon_path in icon_paths:
-        if os.path.exists(icon_path):
-            return QIcon(icon_path)
-    
-    return QIcon()  # Return empty icon if none found
+from utils.icons import get_app_icon
 
 
 class PannablePdfView:
@@ -178,10 +163,7 @@ class PannablePdfView:
             if angle_delta != 0:
                 # Calculate zoom factor with better granularity
                 try:
-                    if hasattr(self.pdf_view, 'zoomFactor'):
-                        zoom_factor = self.pdf_view.zoomFactor()
-                    else:
-                        zoom_factor = 1.0  # Default fallback
+                    zoom_factor = self.pdf_view.zoomFactor()
                         
                     if angle_delta > 0:
                         new_zoom = zoom_factor * 1.15  # Zoom in (smaller increment for smoother)
@@ -191,12 +173,9 @@ class PannablePdfView:
                     # Limit zoom range
                     new_zoom = max(0.1, min(10.0, new_zoom))
                     
-                    # Apply zoom
-                    if hasattr(self.pdf_view, 'setZoomFactor'):
-                        self.pdf_view.setZoomFactor(new_zoom)
-                    elif hasattr(self.pdf_view, 'setZoomMode'):
-                        # Fallback to custom zoom mode
-                        self.pdf_view.setZoomMode(self.QPdfView.ZoomMode.Custom)
+                    # Apply zoom - set to custom mode first, then set factor
+                    self.pdf_view.setZoomMode(self.QPdfView.ZoomMode.Custom)
+                    self.pdf_view.setZoomFactor(new_zoom)
                         
                 except Exception as e:
                     print(f"Wheel zoom error: {e}")
@@ -422,21 +401,13 @@ class QuickViewDialog(QDialog):
     def _zoom_in(self):
         """Zoom in on the PDF"""
         try:
-            # Try to get current zoom factor, with fallback
-            if hasattr(self.pdf_view_wrapper, 'zoomFactor'):
-                current_zoom = self.pdf_view_wrapper.zoomFactor()
-            else:
-                # Fallback: use a default zoom level
-                current_zoom = 1.0
-            
+            # Get current zoom factor
+            current_zoom = self.pdf_view_wrapper.pdf_view.zoomFactor()
             new_zoom = min(current_zoom * 1.25, 10.0)  # Max 10x zoom
             
             # Set zoom factor and switch to custom zoom mode
-            if hasattr(self.pdf_view_wrapper, 'setZoomFactor'):
-                self.pdf_view_wrapper.setZoomFactor(new_zoom)
-            elif hasattr(self.pdf_view_wrapper, 'setZoomMode'):
-                # If setZoomFactor doesn't work, try custom zoom mode
-                self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.Custom)
+            self.pdf_view_wrapper.pdf_view.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.Custom)
+            self.pdf_view_wrapper.pdf_view.setZoomFactor(new_zoom)
                 
         except Exception as e:
             print(f"Zoom in error: {e}")
@@ -444,21 +415,13 @@ class QuickViewDialog(QDialog):
     def _zoom_out(self):
         """Zoom out on the PDF"""
         try:
-            # Try to get current zoom factor, with fallback
-            if hasattr(self.pdf_view_wrapper, 'zoomFactor'):
-                current_zoom = self.pdf_view_wrapper.zoomFactor()
-            else:
-                # Fallback: use a default zoom level
-                current_zoom = 1.0
-            
+            # Get current zoom factor
+            current_zoom = self.pdf_view_wrapper.pdf_view.zoomFactor()
             new_zoom = max(current_zoom * 0.8, 0.1)  # Min 0.1x zoom
             
             # Set zoom factor and switch to custom zoom mode
-            if hasattr(self.pdf_view_wrapper, 'setZoomFactor'):
-                self.pdf_view_wrapper.setZoomFactor(new_zoom)
-            elif hasattr(self.pdf_view_wrapper, 'setZoomMode'):
-                # If setZoomFactor doesn't work, try custom zoom mode
-                self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.Custom)
+            self.pdf_view_wrapper.pdf_view.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.Custom)
+            self.pdf_view_wrapper.pdf_view.setZoomFactor(new_zoom)
                 
         except Exception as e:
             print(f"Zoom out error: {e}")
@@ -466,14 +429,14 @@ class QuickViewDialog(QDialog):
     def _set_zoom_mode_fit_width(self):
         """Set zoom mode to fit width"""
         try:
-            self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitToWidth)
+            self.pdf_view_wrapper.pdf_view.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitToWidth)
         except Exception as e:
             print(f"Fit width error: {e}")
             
     def _set_zoom_mode_fit_page(self):
         """Set zoom mode to fit page"""
         try:
-            self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitInView)
+            self.pdf_view_wrapper.pdf_view.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitInView)
         except Exception as e:
             print(f"Fit page error: {e}")
             
@@ -491,7 +454,7 @@ class QuickViewDialog(QDialog):
         """Apply initial fit to page"""
         try:
             # Ensure the PDF view is properly sized and fitted
-            self.pdf_view_wrapper.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitInView)
+            self.pdf_view_wrapper.pdf_view.setZoomMode(self.pdf_view_wrapper.QPdfView.ZoomMode.FitInView)
             # Force a repaint to ensure proper display
             self.pdf_view_wrapper.pdf_view.update()
         except Exception as e:
