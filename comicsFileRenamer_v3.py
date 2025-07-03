@@ -1122,7 +1122,7 @@ class ComicRenamer(QWidget):
         self._source = self.source_combo.currentText()
         
         # Show/hide SeriesName checkbox based on initial provider
-        if self._source == 'BDGest':
+        if self._source in ['BDGest', 'ComicVine']:
             self.series_name_cb.setVisible(True)
         else:
             self.series_name_cb.setVisible(False)
@@ -1159,9 +1159,9 @@ class ComicRenamer(QWidget):
         self.search_bar = DroppableLineEdit()
         self.search_btn = QPushButton(tr("ui.buttons.search"))
         self.dir_btn = QPushButton(tr("ui.buttons.browse"))
-        self.series_name_cb = QCheckBox(tr("ui.labels.series_name_mode"))  # New checkbox for BDGest series search
+        self.series_name_cb = QCheckBox(tr("ui.labels.series_name_mode"))  # New checkbox for BDGest and ComicVine series search
         self.series_name_cb.setToolTip(tr("ui.tooltips.series_name_mode"))
-        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest
+        self.series_name_cb.setVisible(False)  # Hidden by default, shown only for BDGest and ComicVine
         self.settings_btn = QPushButton("⚙️")
         self.settings_btn.setFixedWidth(30)
         self.settings_btn.setToolTip(tr("ui.tooltips.settings"))
@@ -1359,7 +1359,7 @@ class ComicRenamer(QWidget):
             self.folder_rename_btn.setEnabled(False)
         
         # Show/hide SeriesName checkbox based on provider
-        if src == 'BDGest':
+        if src in ['BDGest', 'ComicVine']:
             self.series_name_cb.setVisible(True)
         else:
             self.series_name_cb.setVisible(False)

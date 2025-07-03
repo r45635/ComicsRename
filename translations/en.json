@@ -30,7 +30,7 @@
       "issue": "Issue"
     },
     "tooltips": {
-      "series_name_mode": "Search only in series names (BDGest only)",
+      "series_name_mode": "Search only in series names (BDGest and ComicVine)",
       "recursive_folder_scan": "When enabled, scans all subfolders recursively when opening a folder. When disabled, only scans files in the current folder.",
       "settings": "Application Settings",
       "rename_folder": "Rename folder with selected series name"

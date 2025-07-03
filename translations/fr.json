@@ -30,7 +30,7 @@
       "issue": "Numéro"
     },
     "tooltips": {
-      "series_name_mode": "Rechercher uniquement dans les noms de séries (BDGest uniquement)",
+      "series_name_mode": "Rechercher uniquement dans les noms de séries (BDGest et ComicVine)",
       "recursive_folder_scan": "Lorsque activé, parcourt récursivement tous les sous-dossiers lors de l'ouverture d'un dossier. Lorsque désactivé, ne charge que les fichiers du dossier courant.",
       "settings": "Paramètres de l'application",
       "rename_folder": "Renommer le dossier avec le nom de la série sélectionnée"
