@@ -2343,25 +2343,56 @@ class ComicRenamer(QWidget):
                 'details'  # This will be handled specially
             ]
         else:
-            # ComicVine order (original)
+            # ComicVine order - optimized for better user experience
             field_order = [
-                'issue_number',
-                'name', 
-                'store_date',
-                'title',
-                'details',  # This will be handled specially
-                'volume',
-                'description',
-                'album_url',
-                'id',
-                'image',
-                'api_detail_url',
-                'cover_url',
-                'cover_date'
+                'name',           # Issue title (most important)
+                'issue_number',   # Issue number
+                'volume',         # Series/Volume info
+                'cover_date',     # Cover date (when published)
+                'store_date',     # Store date (when released)
+                'description',    # Issue description
+                'story_arc',      # Story arc information
+                'character_credits', # Characters
+                'person_credits', # Creators
+                'location_credits', # Locations
+                'concept_credits', # Concepts/themes
+                'team_credits',   # Teams
+                'id',             # ComicVine ID
+                'album_url',      # ComicVine page URL
+                'api_detail_url', # API detail URL
+                'cover_url',      # Cover image URL
+                'image'           # Image information
             ]
         
         # Display fields in the preferred order
         displayed_fields = set()
+        
+        # Helper function to get display name for ComicVine fields
+        def get_display_name(field_name):
+            """Get a user-friendly display name for ComicVine fields"""
+            if self._source == 'ComicVine':
+                display_names = {
+                    'name': 'Title',
+                    'issue_number': 'Issue #',
+                    'volume': 'Series',
+                    'cover_date': 'Cover Date',
+                    'store_date': 'Store Date',
+                    'description': 'Description',
+                    'story_arc': 'Story Arc',
+                    'character_credits': 'Characters',
+                    'person_credits': 'Creators',
+                    'location_credits': 'Locations',
+                    'concept_credits': 'Concepts',
+                    'team_credits': 'Teams',
+                    'id': 'ComicVine ID',
+                    'album_url': 'ComicVine Page',
+                    'api_detail_url': 'API Details',
+                    'cover_url': 'Cover Image',
+                    'image': 'Image Info'
+                }
+                return display_names.get(field_name, field_name.replace('_', ' ').title())
+            else:
+                return field_name.replace('_', ' ').title()
         
         for field in field_order:
             if field in meta:
@@ -2371,13 +2402,14 @@ class ComicRenamer(QWidget):
                     
                 v = meta[field]
                 formatted_value = format_display_value(v, field)
+                display_name = get_display_name(field)
                 if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                    html += f'<li class="sub-section"><b>{field} :</b><ul class="sub-list">'
+                    html += f'<li class="sub-section"><b>{display_name} :</b><ul class="sub-list">'
                     for item in formatted_value.get('items', []):
                         html += f"<li>{item}</li>"
                     html += "</ul></li>"
                 else:
-                    html += f"<li><b>{field}</b> : {make_links_clickable(formatted_value, field)}</li>"
+                    html += f"<li><b>{display_name}</b> : {make_links_clickable(formatted_value, field)}</li>"
                 displayed_fields.add(field)
         
         # Add the details section
@@ -2423,10 +2455,40 @@ class ComicRenamer(QWidget):
             
             html += "</ul></li>"
         else:
-            # For ComicVine, use the original logic
+            # For ComicVine, create a better structured display
+            html += "<li><b>Détails ComicVine :</b><ul>"
+            
+            # Add important links first
+            for url_field in ['album_url', 'api_detail_url', 'cover_url']:
+                if url_field in meta and meta[url_field]:
+                    formatted_value = format_display_value(meta[url_field], url_field)
+                    html += f"<li><b>{url_field.replace('_', ' ').title()}</b> : {make_links_clickable(formatted_value, url_field)}</li>"
+                    displayed_fields.add(url_field)
+            
+            # Add credits section if any credits are available
+            credit_fields = ['character_credits', 'person_credits', 'location_credits', 'concept_credits', 'team_credits']
+            available_credits = [field for field in credit_fields if field in meta and meta[field]]
+            
+            if available_credits:
+                html += "<li><b>Crédits :</b><ul>"
+                for credit_field in available_credits:
+                    if credit_field in meta and meta[credit_field]:
+                        formatted_value = format_display_value(meta[credit_field], credit_field)
+                        display_name = credit_field.replace('_credits', '').replace('_', ' ').title() + 's'
+                        if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
+                            html += f'<li class="sub-section"><b>{display_name} :</b><ul class="sub-list">'
+                            for item in formatted_value.get('items', []):
+                                html += f"<li>{item}</li>"
+                            html += "</ul></li>"
+                        else:
+                            html += f"<li><b>{display_name}</b> : {make_links_clickable(formatted_value, credit_field)}</li>"
+                        displayed_fields.add(credit_field)
+                html += "</ul></li>"
+            
+            # Process any details dict if present
             details = meta.get("details")
             if isinstance(details, dict):
-                html += "<li><b>Détails complets :</b><ul>"
+                html += "<li><b>Détails supplémentaires :</b><ul>"
                 for label, value in details.items():
                     formatted_value = format_display_value(value, label)
                     if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
@@ -2445,12 +2507,14 @@ class ComicRenamer(QWidget):
                 if k not in displayed_fields and k != "details":
                     formatted_value = format_display_value(v, k)
                     if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                        html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
+                        html += f'<li class="sub-section"><b>{k.replace("_", " ").title()} :</b><ul class="sub-list">'
                         for item in formatted_value.get('items', []):
                             html += f"<li>{item}</li>"
                         html += "</ul></li>"
                     else:
-                        html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value, k)}</li>"
+                        html += f"<li><b>{k.replace('_', ' ').title()}</b> : {make_links_clickable(formatted_value, k)}</li>"
+            
+            html += "</ul></li>"
         html += "</ul></div>"
         self.detail_text.setHtml(html)
         img_url = meta.get('cover_url') or meta.get('image', {}).get('original_url')
