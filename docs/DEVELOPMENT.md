@@ -1,220 +1,90 @@
-# Development Environment Setup for ComicsRename
+# ComicsRename - Development Guide
 
-This guide helps you set up a development environment for ComicsRename.
-
-## Prerequisites
-
-- Python 3.8 or higher
-- Git
-- Virtual environment tool (venv, conda, or similar)
-
-## Setup Instructions
-
-### 1. Clone and Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/ComicsRename.git
-cd ComicsRename
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-# venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install development dependencies (optional)
-pip install -e ".[dev]"
-```
-
-### 2. Environment Configuration
-
-```bash
-# Copy the environment template
-cp .env.example .env
-
-# Edit .env file with your credentials
-# Add your ComicVine API key and BDGest credentials
-```
-
-### 3. Test the Installation
-
-```bash
-# Run the application
-python main.py
-
-# Run tests
-python test_bdgest_series.py
-python test_session_management.py
-```
-
-## Development Workflow
-
-### Code Style
-
-The project uses Black for code formatting:
-
-```bash
-# Format code
-black .
-
-# Check formatting
-black --check .
-```
-
-### Type Checking
-
-The project supports mypy for type checking:
-
-```bash
-# Run type checker
-mypy .
-```
-
-### Testing
-
-Run individual test files:
-
-```bash
-python test_bdgest_series.py      # Test BDGest functionality
-python test_session_management.py # Test session management
-python test_folder_rename.py      # Test folder operations
-python test_album_details.py      # Test album metadata
-```
-
-### Project Structure for Development
+## 📁 Project Structure
 
 ```
 ComicsRename/
 ├── main.py                      # Application entry point
-├── comicsFileRenamer_v3.py      # Main GUI application
-├── bdgest_scraper_api.py        # BDGest API integration
-├── comicVine_scraper_api.py     # ComicVine API integration
-├── utils.py                     # Utility functions
-├── setup_credentials.py        # Credential setup
-├── requirements.txt             # Dependencies
-├── pyproject.toml              # Project configuration
-├── .env.example                # Environment template
-├── .gitignore                  # Git ignore rules
-├── LICENSE                     # MIT License
-├── README.md                   # Project documentation
-├── SECURITY.md                 # Security guidelines
-├── DEVELOPMENT.md              # This file
-├── IMPLEMENTATION_SUMMARY.md    # Technical details
-└── test_*.py                   # Test files
+├── comicsFileRenamer_v3.py     # Main GUI application class
+├── bdgest_scraper_api.py       # BDGest API scraper
+├── comicVine_scraper_api.py    # ComicVine API scraper  
+├── utils.py                    # Utility functions
+├── i18n.py                     # Internationalization system
+├── requirements.txt            # Python dependencies
+├── pyproject.toml             # Project configuration
+├── ComicsRename.spec          # PyInstaller build spec
+├── ui/                        # UI components
+│   ├── __init__.py
+│   ├── dialogs.py            # Dialog windows
+│   ├── quick_view.py         # PDF quick view component
+│   └── tables.py             # Custom table widgets
+├── translations/              # Internationalization files
+│   ├── en.json              # English translations
+│   └── fr.json              # French translations
+├── icons/                     # Application icons
+├── docs/                      # Documentation
+├── tests/                     # Test files
+├── dev-tools/                 # Development utilities
+├── screenshots/               # Application screenshots
+└── src/                      # Future code organization
 ```
 
-## Key Development Areas
+## 🚀 Getting Started
 
-### 1. GUI Development (comicsFileRenamer_v3.py)
-- PySide6-based Qt application
-- Responsive design with splitters and layouts
-- Drag & drop functionality
-- Custom widgets for editable labels
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 2. API Integration
-- **BDGest API** (bdgest_scraper_api.py): French comic database
-- **ComicVine API** (comicVine_scraper_api.py): International comic database
-- Session management and authentication
-- Parallel processing for performance
+2. **Run the application:**
+   ```bash
+   python main.py
+   ```
 
-### 3. Metadata Processing
-- Album/issue metadata parsing
-- Cover image handling and caching
-- Data enrichment and validation
+3. **Run tests:**
+   ```bash
+   python -m pytest tests/
+   ```
 
-### 4. File Management
-- Comic file detection and scanning
-- Folder organization and renaming
-- Drag & drop operations
+## 🛠️ Development
 
-## Contributing Guidelines
+### Core Files
+- `main.py` - Entry point, handles application initialization
+- `comicsFileRenamer_v3.py` - Main application logic and GUI
+- `*_scraper_api.py` - Web scraping modules for metadata
+- `utils.py` - Shared utility functions
+- `i18n.py` - Translation and localization system
 
-### Before Contributing
+### UI Components
+- `ui/tables.py` - Custom table widgets with drag & drop
+- `ui/dialogs.py` - Settings and configuration dialogs
+- `ui/quick_view.py` - PDF preview functionality
 
-1. Check existing issues and pull requests
-2. Create an issue for major changes
-3. Follow the existing code style
-4. Add tests for new functionality
-5. Update documentation as needed
-
-### Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes
-4. Test your changes thoroughly
-5. Commit with clear messages
-6. Push to your fork
-7. Create a pull request
-
-### Code Quality
-
-- Use meaningful variable and function names
-- Add docstrings for public functions
-- Handle errors gracefully
-- Follow PEP 8 style guidelines
-- Add type hints where appropriate
-
-## Debugging
-
-### Debug Mode
-
-Set environment variable to enable debug output:
-
+### Building
 ```bash
-export DEBUG=1
-python main.py
+# Build executable with PyInstaller
+pyinstaller ComicsRename.spec
 ```
 
-### Common Development Issues
+## 📝 Code Style
 
-**Import Errors**: Make sure virtual environment is activated and dependencies are installed
+- Follow PEP 8 Python style guide
+- Use descriptive variable and function names
+- Add docstrings for all public functions
+- Keep functions focused and small
+- Use type hints where helpful
 
-**Qt/PySide6 Issues**: Ensure Qt dependencies are properly installed for your platform
+## 🧪 Testing
 
-**API Connection Issues**: Check credentials and network connectivity
+Test files are organized in the `tests/` directory:
+- Unit tests for individual components
+- Integration tests for full workflows
+- UI tests for interface components
 
-**Performance Issues**: Enable debug mode to see timing information
+## 📚 Documentation
 
-## Architecture Notes
-
-### Provider Pattern
-The application uses a provider pattern for metadata sources:
-- `MetadataProvider`: Abstract base class
-- `BDGestProvider`: BDGest implementation
-- `ComicVineProvider`: ComicVine implementation
-
-### Session Management
-Persistent session management for better performance:
-- Automatic authentication
-- Session reuse
-- Error recovery
-
-### GUI Architecture
-- Main window with splitter layout
-- Separate panels for folders, albums, and details
-- Custom widgets for enhanced functionality
-- Responsive design with proper scaling
-
-## Performance Considerations
-
-- **Threading**: Long-running operations use background threads
-- **Caching**: Metadata and images are cached for reuse
-- **Parallel Processing**: Multiple API calls handled concurrently
-- **Session Persistence**: Avoid re-authentication overhead
-
-## Security Notes
-
-- No hardcoded credentials in source code
-- Environment variables for sensitive data
-- Secure credential storage using QSettings
-- Input validation and sanitization
-
-For more detailed security information, see [SECURITY.md](SECURITY.md).
+Documentation is in the `docs/` directory:
+- Technical implementation details
+- Feature specifications
+- Release notes and changelogs
+- Development guides
