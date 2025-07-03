@@ -532,29 +532,69 @@ class QuickViewDialog(QDialog):
             )
             
             if save_path:
+                print(f"[DEBUG] Exporting page {current_page + 1} to: {save_path}")
                 # Render the current page as image
                 # Get page size at high resolution
                 page_size = self.pdf_doc.pagePointSize(current_page)
+                print(f"[DEBUG] Page size: {page_size}")
                 # Scale factor for high quality export (300 DPI equivalent)
                 scale_factor = 300.0 / 72.0  # PDF points are 72 DPI
                 
                 # Create high resolution image
                 image_size = page_size * scale_factor
+                print(f"[DEBUG] Image size: {image_size}")
                 image = QImage(int(image_size.width()), int(image_size.height()), QImage.Format_ARGB32)
                 image.fill(0xFFFFFFFF)  # White background
                 
                 # Render PDF page to image
-                painter = QPainter(image)
-                self.pdf_doc.render(painter, current_page, image.rect())
-                painter.end()
+                # Use the correct signature: render(page, imageSize, options)
+                from PySide6.QtCore import QSize
+                try:
+                    from PySide6.QtPdf import QPdfDocumentRenderOptions
+                    render_options = QPdfDocumentRenderOptions()
+                except ImportError:
+                    render_options = None
+                
+                # Use the correct render method signature
+                image_size_qt = QSize(int(image_size.width()), int(image_size.height()))
+                
+                # Render the page
+                try:
+                    if render_options:
+                        rendered_image = self.pdf_doc.render(current_page, image_size_qt, render_options)
+                    else:
+                        rendered_image = self.pdf_doc.render(current_page, image_size_qt)
+                    
+                    # Use the rendered image
+                    if not rendered_image.isNull():
+                        image = rendered_image
+                    else:
+                        raise ValueError("Rendered image is null")
+                        
+                except Exception as render_error:
+                    # Fallback: create a white image with error message
+                    print(f"[DEBUG] Render error: {render_error}")
+                    image = QImage(int(image_size.width()), int(image_size.height()), QImage.Format_ARGB32)
+                    image.fill(0xFFFFFFFF)  # White background
+                    painter = QPainter(image)
+                    try:
+                        painter.drawText(image.rect(), Qt.AlignCenter, "Failed to render PDF page")
+                    finally:
+                        painter.end()  # Ensure painter is properly closed
                 
                 # Save the image
+                print(f"[DEBUG] Saving image to: {save_path}")
                 if image.save(save_path, "PNG"):
+                    print(f"[DEBUG] Export successful")
                     QMessageBox.information(self, "Export Successful", f"Page exported to:\n{save_path}")
                 else:
+                    print(f"[DEBUG] Export failed - could not save image")
                     QMessageBox.warning(self, "Export Failed", "Failed to save the image file.")
                     
         except Exception as e:
+            print(f"[DEBUG] Export error: {e}")
+            import traceback
+            traceback.print_exc()
             QMessageBox.critical(self, "Export Error", f"Failed to export page:\n{str(e)}")
     
     def _restore_geometry(self):
