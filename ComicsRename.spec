@@ -128,15 +128,32 @@ elif sys.platform == 'darwin':
         name='ComicsRename.app',
         icon=icon_path,
         bundle_identifier='com.comicsrename.app',
-        version='3.3.0',
+        version='3.4.1',
         info_plist={
             'CFBundleName': 'ComicsRename',
             'CFBundleDisplayName': 'ComicsRename',
             'CFBundleIdentifier': 'com.comicsrename.app',
-            'CFBundleVersion': '3.3.0',
-            'CFBundleShortVersionString': '3.3.0',
+            'CFBundleVersion': '3.4.1',
+            'CFBundleShortVersionString': '3.4.1',
+            'CFBundleExecutable': 'ComicsRename',
             'NSHighResolutionCapable': True,
             'NSRequiresAquaSystemAppearance': False,
+            'NSPrincipalClass': 'NSApplication',
+            'NSAppleEventsUsageDescription': 'ComicsRename needs access to system events for file operations.',
+            'NSDocumentsFolderUsageDescription': 'ComicsRename needs access to your documents to rename comic files.',
+            'NSDesktopFolderUsageDescription': 'ComicsRename needs access to your desktop to rename comic files.',
+            'NSDownloadsFolderUsageDescription': 'ComicsRename needs access to your downloads folder to rename comic files.',
+            'NSRemovableVolumesUsageDescription': 'ComicsRename needs access to removable volumes to rename comic files.',
+            'LSMinimumSystemVersion': '10.14',
+            'LSApplicationCategoryType': 'public.app-category.utilities',
+            'CFBundleDocumentTypes': [
+                {
+                    'CFBundleTypeExtensions': ['cbr', 'cbz', 'pdf'],
+                    'CFBundleTypeName': 'Comic Book Archive',
+                    'CFBundleTypeRole': 'Editor',
+                    'LSHandlerRank': 'Alternate',
+                }
+            ],
         },
     )
 

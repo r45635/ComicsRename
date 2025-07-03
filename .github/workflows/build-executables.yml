@@ -96,18 +96,49 @@ jobs:
         echo "All files in dist:"
         find dist/ -type f | head -10
         
-    - name: Create DMG (optional)
+    - name: Make app executable
       run: |
-        # Create a simple DMG for distribution
+        chmod +x dist/ComicsRename.app/Contents/MacOS/ComicsRename
+        
+    - name: Remove quarantine attribute (for unsigned apps)
+      run: |
+        xattr -cr dist/ComicsRename.app || true
+        
+    - name: Create DMG
+      run: |
+        # Install create-dmg tool
+        brew install create-dmg || true
+        
+        # Create DMG directory structure
         mkdir -p dist/dmg
         cp -r dist/ComicsRename.app dist/dmg/
-        # Note: Would need additional setup for signed DMG
+        
+        # Create a simple DMG
+        if command -v create-dmg &> /dev/null; then
+          create-dmg \
+            --volname "ComicsRename" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "ComicsRename.app" 175 190 \
+            --app-drop-link 425 190 \
+            --background icons/comicsrename_512x512.png \
+            "dist/ComicsRename-macOS.dmg" \
+            "dist/dmg/"
+        else
+          # Fallback: create simple DMG
+          hdiutil create -volname "ComicsRename" -srcfolder dist/dmg -ov -format UDZO dist/ComicsRename-macOS.dmg
+        fi
         
     - name: Upload macOS executable
       uses: actions/upload-artifact@v4
       with:
         name: ComicsRename-macOS
-        path: dist/ComicsRename.app/
+        path: |
+          dist/ComicsRename.app/
+          dist/ComicsRename-macOS.dmg
+          macos-helper.sh
+          README-macOS.md
         if-no-files-found: warn
         
   build-linux:
@@ -182,19 +213,41 @@ jobs:
           
           ### Downloads
           - **Windows**: ComicsRename.exe (standalone executable)
-          - **macOS**: ComicsRename.app (application bundle) 
+          - **macOS**: ComicsRename-macOS.dmg (disk image) or ComicsRename.app (application bundle)
           - **Linux**: ComicsRename (standalone executable)
           
           ### Installation
-          1. Download the appropriate file for your platform
+          
+          #### Windows
+          1. Download ComicsRename.exe
           2. Run directly - no installation required!
+          
+          #### macOS
+          1. Download ComicsRename-macOS.dmg
+          2. Open the DMG and drag ComicsRename.app to Applications
+          3. **Important**: First time you run it, you may see a security warning
+          4. Go to System Preferences → Security & Privacy → General
+          5. Click "Open Anyway" next to the ComicsRename message
+          6. Alternatively, right-click the app and select "Open" from the context menu
+          
+          #### Linux
+          1. Download ComicsRename
+          2. Make it executable: `chmod +x ComicsRename`
+          3. Run: `./ComicsRename`
           
           ### Requirements
           - **Windows**: Windows 10/11 (64-bit)
-          - **macOS**: macOS 10.14+ 
+          - **macOS**: macOS 10.14+ (Intel and Apple Silicon)
           - **Linux**: Modern Linux distribution with X11
           
           All executables are self-contained and include all dependencies.
+          
+          ### macOS Security Notice
+          This app is not signed with an Apple Developer certificate. macOS may show security warnings.
+          To run the app:
+          1. Try double-clicking normally first
+          2. If blocked, go to System Preferences → Security & Privacy → General
+          3. Click "Open Anyway" or right-click the app and select "Open"
           
           ### Release Notes
           See the full commit history for detailed changes in this release.
