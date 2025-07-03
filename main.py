@@ -43,7 +43,7 @@ def main():
         # Create the QApplication
         app = QApplication(sys.argv)
         app.setApplicationName("ComicsRename")
-        app.setApplicationVersion("3.4.0")
+        app.setApplicationVersion("3.4.1")
         app.setOrganizationName("ComicsRename")
         app.setOrganizationDomain("github.com")
         
