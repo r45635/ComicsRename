@@ -11,10 +11,10 @@ This module contains the complete QuickViewDialog implementation with:
 
 import os
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QFileDialog
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QFileDialog, QMenu
 )
 from PySide6.QtCore import QSettings, Qt, QPoint, QPointF
-from PySide6.QtGui import QIcon, QImage, QPainter
+from PySide6.QtGui import QIcon, QImage, QPainter, QAction
 
 # Import internationalization system  
 from i18n import tr
@@ -43,6 +43,9 @@ class PannablePdfView:
         # Create the actual PDF view
         self.pdf_view = QPdfView(parent)
         
+        # Store reference to parent dialog for context menu
+        self.parent_dialog = parent
+        
         # Panning state
         self.panning = False
         self.last_pan_pos = QPoint()
@@ -67,7 +70,12 @@ class PannablePdfView:
         self.is_macos = platform.system() == "Darwin"
     
     def _mouse_press_event(self, event):
-        """Handle mouse press for panning - Simple left-click method"""
+        """Handle mouse press for panning and context menu"""
+        # Right click for context menu
+        if event.button() == Qt.RightButton:
+            self._show_context_menu(event)
+            return
+        
         # Left click for panning (only when image is larger than viewport)
         if event.button() == Qt.LeftButton:
             # Check if image is larger than viewport (pan needed)
@@ -186,6 +194,23 @@ class PannablePdfView:
         # Call original handler for normal scrolling
         self.original_wheel_event(event)
     
+    def _show_context_menu(self, event):
+        """Show context menu with export option"""
+        if self.parent_dialog and hasattr(self.parent_dialog, '_export_current_page'):
+            # Create context menu
+            context_menu = QMenu(self.pdf_view)
+            
+            # Add export action
+            export_action = QAction("💾 Export Page as PNG", self.pdf_view)
+            export_action.triggered.connect(self.parent_dialog._export_current_page)
+            context_menu.addAction(export_action)
+            
+            # Show context menu at cursor position
+            if hasattr(event, 'globalPosition'):
+                context_menu.exec(event.globalPosition().toPoint())
+            else:
+                context_menu.exec(event.globalPos())
+    
     def __getattr__(self, name):
         """Delegate all other attributes and methods to the wrapped QPdfView"""
         return getattr(self.pdf_view, name)
@@ -297,9 +322,6 @@ class QuickViewDialog(QDialog):
         self.fit_width_btn = QPushButton("Fit Width")
         self.fit_page_btn = QPushButton("🔍 Fit Page")
         
-        # Export button
-        self.export_btn = QPushButton("💾 Export PNG")
-        
         # Set minimum button widths for consistent appearance
         self.first_btn.setMinimumWidth(60)
         self.prev_btn.setMinimumWidth(80)
@@ -309,7 +331,6 @@ class QuickViewDialog(QDialog):
         self.zoom_in_btn.setMinimumWidth(80)
         self.fit_width_btn.setMinimumWidth(80)
         self.fit_page_btn.setMinimumWidth(80)
-        self.export_btn.setMinimumWidth(90)
         
         # Add navigation controls
         toolbar_layout.addWidget(self.first_btn)
@@ -324,16 +345,6 @@ class QuickViewDialog(QDialog):
         toolbar_layout.addWidget(self.zoom_in_btn)
         toolbar_layout.addWidget(self.fit_width_btn)
         toolbar_layout.addWidget(self.fit_page_btn)
-        toolbar_layout.addStretch()
-        
-        # Add export control
-        toolbar_layout.addWidget(self.export_btn)
-        
-        # Instructions label with simplified left-click pan control
-        instructions = QLabel("🖱️ Pan: Left-click + Drag (when zoomed) • 🔍 Zoom: Ctrl + Mouse wheel • 📋 Export: Save current page as PNG")
-        instructions.setStyleSheet("QLabel { color: #666; font-size: 11px; font-style: italic; padding: 2px; }")
-        instructions.setWordWrap(True)
-        toolbar_layout.addWidget(instructions)
         
         self.main_layout.addLayout(toolbar_layout)
     
@@ -372,9 +383,6 @@ class QuickViewDialog(QDialog):
             self.prev_btn.clicked.connect(self._go_prev_page)
             self.next_btn.clicked.connect(self._go_next_page)
             self.last_btn.clicked.connect(self._go_last_page)
-            
-            # Connect export function
-            self.export_btn.clicked.connect(self._export_current_page)
             
             # Connect page change handler
             navigator = self.pdf_view_wrapper.pageNavigator()
