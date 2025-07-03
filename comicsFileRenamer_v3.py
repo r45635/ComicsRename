@@ -1470,8 +1470,8 @@ class ComicRenamer(QWidget):
         debug = self.settings.value('debug', 'false') == 'true'
         verbose = self.settings.value('verbose', 'false') == 'true'
         
-        # Only call search_series for ComicVine or BDGest in non-SeriesName mode
-        if self._source == 'ComicVine' or (self._source == 'BDGest' and not self.series_name_cb.isChecked()):
+        # Only call search_series for providers in non-SeriesName mode
+        if (self._source == 'ComicVine' and not self.series_name_cb.isChecked()) or (self._source == 'BDGest' and not self.series_name_cb.isChecked()):
             try:
                 # Try with debug parameter first
                 series_list = provider.search_series(q, debug=debug)
@@ -1505,7 +1505,7 @@ class ComicRenamer(QWidget):
                 self._restore_search_ui()
                 return
         else:
-            # For BDGest in SeriesName mode, we'll call search_series_only later
+            # For BDGest or ComicVine in SeriesName mode, we'll call search_series_only later
             series_list = []
 
         self.issues_by_series.clear()
@@ -1627,18 +1627,28 @@ class ComicRenamer(QWidget):
                     self._restore_search_ui()
                     return
                 
-                self._bdgest_series_results = series_results
-                self._bdgest_album_results = []  # Clear album results when searching series
+                # Store series results based on provider
+                if self._source == 'BDGest':
+                    self._bdgest_series_results = series_results
+                    self._bdgest_album_results = []  # Clear album results when searching series
+                else:  # ComicVine
+                    self._comicvine_series_results = series_results
+                    self.issues_by_series.clear()  # Clear ComicVine issues
                 
                 # Populate series dropdown with series results
                 for series in series_results:
                     # Check for cancellation during series population
                     if self._search_cancelled:
                         if debug:
-                            print("[DEBUG][UI] Search cancelled during BDGest series population")
+                            print(f"[DEBUG][UI] Search cancelled during {self._source} series population")
                         return
                         
-                    series_name = series.get('serie_name', 'Unknown Series')
+                    # Get series name based on provider
+                    if self._source == 'BDGest':
+                        series_name = series.get('serie_name', 'Unknown Series')
+                    else:  # ComicVine
+                        series_name = series.get('serie_name', 'Unknown Series')  # ComicVineProvider normalizes this field
+                        
                     if series_name and series_name != 'Unknown Series':
                         self.series_combo.addItem(series_name)
                         idx = self.series_combo.count() - 1
@@ -1658,12 +1668,18 @@ class ComicRenamer(QWidget):
                     self.album_table.clearContents()
                     self.album_table.setRowCount(0)
                     
-                    # Automatically populate albums for the first (default selected) series
+                    # Show user how many series were found and instruction to select one
                     if self.series_combo.count() > 0:
-                        # The first series is automatically selected by default
-                        # Trigger album population for the first series
-                        first_series_name = self.series_combo.itemText(0)
-                        self._populate_albums(first_series_name)
+                        series_count = self.series_combo.count()
+                        instruction_html = f"<b>🔍 Recherche terminée</b><br><br>"
+                        instruction_html += f"<b>{series_count} série(s) trouvée(s)</b><br><br>"
+                        instruction_html += f"<i>💡 Sélectionnez une série dans la liste déroulante ci-dessus pour voir ses albums.</i>"
+                        self.detail_text.setHtml(instruction_html)
+                        self.detail_image.clear()
+                    
+                    # DO NOT automatically populate albums for the first series
+                    # Let the user choose which series they want to see albums for
+                    # This prevents loading albums for all 72 series unnecessarily
             else:
                 # Use default album search
                 albums = []
@@ -1716,7 +1732,10 @@ class ComicRenamer(QWidget):
                     error_handled = True
                 
                 self._bdgest_album_results = albums
-                self._bdgest_series_results = []  # Clear series results when searching albums
+                if self._source == 'BDGest':
+                    self._bdgest_series_results = []  # Clear series results when searching albums
+                else:  # ComicVine
+                    self._comicvine_series_results = []  # Clear ComicVine series results when searching albums
                 
                 series_seen = set()
                 for album in albums:
@@ -1821,20 +1840,102 @@ class ComicRenamer(QWidget):
                 return str(n)
 
         if self._source == 'ComicVine':
-            # Extract series name from dropdown text (remove count)
-            series = txt.rsplit(' (', 1)[0]
-            if series in self.issues_by_series:
-                lst = sorted(self.issues_by_series[series], key=lambda x: ((x.get('cover_date') or ''), x.get('issue_number') or ''))
-                self.album_table.setRowCount(len(lst))
-                for r, it in enumerate(lst):
-                    t = it.get('name') or 'Untitled'
-                    n = it.get('issue_number') or '?'
-                    n_fmt = format_num(n)
-                    y = (it.get('cover_date') or '')[:4]
-                    val = f"{series} - {n_fmt} - {t} ({y})"
-                    itm = QTableWidgetItem(val)
-                    itm.setData(Qt.UserRole, it)
-                    self.album_table.setItem(r, 0, itm)
+            # Check if we're in series mode (SeriesName checkbox checked)
+            if self.series_name_cb.isChecked() and self._comicvine_series_results:
+                # In series mode - fetch and display albums for the selected series
+                current_index = self.series_combo.currentIndex()
+                if current_index >= 0:
+                    series_data = self.series_combo.itemData(current_index, Qt.UserRole)
+                    if series_data:
+                        volume_id = series_data.get('volume_id') or str(series_data.get('id', ''))
+                        series_name = series_data.get('serie_name', 'Unknown')
+                        
+                        if volume_id and series_name:
+                            # Show series details
+                            html = "<b>Volume sélectionné :</b><br><ul>"
+                            for k, v in series_data.items():
+                                if v and str(v).strip():
+                                    html += f"<li><b>{k}</b> : {v}</li>"
+                            html += "</ul><br><i>Récupération des issues...</i>"
+                            self.detail_text.setHtml(html)
+                            
+                            # Set cover image if available
+                            if series_data.get('image'):
+                                cover_url = series_data.get('image', {}).get('medium_url', '')
+                                if cover_url:
+                                    try:
+                                        data = requests.get(cover_url, timeout=10).content
+                                        pm = QPixmap()
+                                        pm.loadFromData(data)
+                                        # Store original for future rescaling
+                                        self._original_cover_pixmap = pm
+                                        # Scale to fit available space while maintaining aspect ratio
+                                        scaled_pm = self._scale_image_to_fit(pm)
+                                        self.detail_image.setPixmap(scaled_pm)
+                                    except Exception as e:
+                                        print("[ERROR] ComicVine image load failed:", e)
+                                        self.detail_image.clear()
+                                else:
+                                    self.detail_image.clear()
+                            
+                            # Fetch issues for this volume
+                            try:
+                                # Check for cancellation
+                                if self._search_cancelled:
+                                    return
+                                
+                                # Show progress message
+                                self.detail_text.setHtml(html.replace("<i>Récupération des issues...</i>", "<i>Récupération des issues en cours...</i>"))
+                                QApplication.processEvents()  # Allow UI update and cancellation
+                                
+                                debug = self.debug_cb.isChecked() if hasattr(self, 'debug_cb') else False
+                                verbose = self.verbose_cb.isChecked() if hasattr(self, 'verbose_cb') else False
+                                
+                                # Use ComicVine provider to get volume issues
+                                provider = PROVIDERS[self._source]
+                                issues = provider.search_albums(volume_id, debug=debug)
+                                
+                                # Check for cancellation after fetching
+                                if self._search_cancelled:
+                                    return
+                                    
+                                # Clear and populate album table
+                                self.album_table.clearContents()
+                                self.album_table.setRowCount(len(issues))
+                                
+                                for r, issue in enumerate(issues):
+                                    t = issue.get('name') or 'Untitled'
+                                    n = issue.get('issue_number') or '?'
+                                    n_fmt = format_num(n)
+                                    y = (issue.get('cover_date') or '')[:4]
+                                    val = f"{series_name} - {n_fmt} - {t} ({y})"
+                                    itm = QTableWidgetItem(val)
+                                    itm.setData(Qt.UserRole, issue)
+                                    self.album_table.setItem(r, 0, itm)
+                                
+                                # Update details with success message
+                                html = html.replace("<i>Récupération des issues en cours...</i>", f"<i>✅ {len(issues)} issue(s) trouvée(s)</i>")
+                                self.detail_text.setHtml(html)
+                                
+                            except Exception as e:
+                                print(f"[ERROR] Failed to fetch ComicVine issues: {e}")
+                                error_html = html.replace("<i>Récupération des issues en cours...</i>", f"<i>❌ Erreur lors du chargement des issues: {e}</i>")
+                                self.detail_text.setHtml(error_html)
+            else:
+                # Original ComicVine logic for non-series mode
+                series = txt.rsplit(' (', 1)[0]
+                if series in self.issues_by_series:
+                    lst = sorted(self.issues_by_series[series], key=lambda x: ((x.get('cover_date') or ''), x.get('issue_number') or ''))
+                    self.album_table.setRowCount(len(lst))
+                    for r, it in enumerate(lst):
+                        t = it.get('name') or 'Untitled'
+                        n = it.get('issue_number') or '?'
+                        n_fmt = format_num(n)
+                        y = (it.get('cover_date') or '')[:4]
+                        val = f"{series} - {n_fmt} - {t} ({y})"
+                        itm = QTableWidgetItem(val)
+                        itm.setData(Qt.UserRole, it)
+                        self.album_table.setItem(r, 0, itm)
         else:  # BDGest
             # Check if we're in series mode (SeriesName checkbox checked)
             if self.series_name_cb.isChecked() and self._bdgest_series_results:
