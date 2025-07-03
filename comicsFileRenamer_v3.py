@@ -1888,12 +1888,22 @@ class ComicRenamer(QWidget):
                         series_name = series_data.get('serie_name', 'Unknown')
                         
                         if volume_id and series_name:
-                            # Show series details
-                            html = "<b>Volume sélectionné :</b><br><ul>"
-                            for k, v in series_data.items():
-                                if v and str(v).strip():
-                                    html += f"<li><b>{k}</b> : {v}</li>"
-                            html += "</ul><br><i>Récupération des issues...</i>"
+                            # Show series details using the same formatting as albums
+                            html = "<b>Série sélectionnée :</b><br><br>"
+                            
+                            # Title and main info
+                            html += f"<b>Titre :</b> {series_data.get('serie_name', 'N/A')}<br>"
+                            html += f"<b>Année de début :</b> {series_data.get('start_year', 'N/A')}<br>"
+                            html += f"<b>Éditeur :</b> {series_data.get('publisher', 'N/A')}<br>"
+                            
+                            # ComicVine links
+                            if series_data.get('api_detail_url'):
+                                html += f"<b>Page ComicVine :</b> <a href='{series_data['api_detail_url']}'>Voir sur ComicVine</a><br>"
+                            
+                            # Volume ID
+                            html += f"<b>Volume ID :</b> {volume_id}<br>"
+                            
+                            html += "<br><i>Récupération des albums...</i>"
                             self.detail_text.setHtml(html)
                             
                             # Set cover image if available
@@ -1985,12 +1995,30 @@ class ComicRenamer(QWidget):
                         series_name = series_data.get('serie_name') or series_data.get('label') or series_data.get('value')
                         
                         if series_id and series_name:
-                            # Show series details
-                            html = "<b>Série sélectionnée :</b><br><ul>"
-                            for k, v in series_data.items():
-                                if v and str(v).strip():
-                                    html += f"<li><b>{k}</b> : {v}</li>"
-                            html += "</ul><br><i>Récupération des albums...</i>"
+                            # Show series details using clean formatting
+                            html = "<b>Série sélectionnée :</b><br><br>"
+                            
+                            # Title and main info
+                            html += f"<b>Titre :</b> {series_data.get('serie_name', 'N/A')}<br>"
+                            
+                            # Try to get year information
+                            year_info = series_data.get('year', '') or series_data.get('start_year', '') or series_data.get('date_debut', '')
+                            if year_info:
+                                html += f"<b>Année :</b> {year_info}<br>"
+                            
+                            # Try to get publisher information
+                            publisher_info = series_data.get('publisher', '') or series_data.get('editeur', '')
+                            if publisher_info:
+                                html += f"<b>Éditeur :</b> {publisher_info}<br>"
+                            
+                            # BDGest links
+                            if series_data.get('album_url'):
+                                html += f"<b>Page BDGest :</b> <a href='{series_data['album_url']}'>Voir sur BDGest</a><br>"
+                            
+                            # Series ID
+                            html += f"<b>Série ID :</b> {series_id}<br>"
+                            
+                            html += "<br><i>Récupération des albums...</i>"
                             self.detail_text.setHtml(html)
                             
                             # Set cover image if available
@@ -2079,39 +2107,72 @@ class ComicRenamer(QWidget):
                                             QApplication.processEvents()
                                     
                                     # Update the detail text with album count
-                                    html = "<b>Série sélectionnée :</b><br><ul>"
-                                    for k, v in series_data.items():
-                                        if v and str(v).strip():
-                                            html += f"<li><b>{k}</b> : {v}</li>"
-                                    html += f"</ul><br><b>{len(albums)} album(s) trouvé(s)</b>"
+                                    html = "<b>Série sélectionnée :</b><br><br>"
+                                    html += f"<b>Titre :</b> {series_data.get('serie_name', 'N/A')}<br>"
+                                    
+                                    # Try to get year information
+                                    year_info = series_data.get('year', '') or series_data.get('start_year', '') or series_data.get('date_debut', '')
+                                    if year_info:
+                                        html += f"<b>Année :</b> {year_info}<br>"
+                                    
+                                    # Try to get publisher information
+                                    publisher_info = series_data.get('publisher', '') or series_data.get('editeur', '')
+                                    if publisher_info:
+                                        html += f"<b>Éditeur :</b> {publisher_info}<br>"
+                                    
+                                    # BDGest links
+                                    if series_data.get('album_url'):
+                                        html += f"<b>Page BDGest :</b> <a href='{series_data['album_url']}'>Voir sur BDGest</a><br>"
+                                    
+                                    html += f"<br><b>{len(albums)} album(s) trouvé(s)</b>"
                                     self.detail_text.setHtml(html)
                                 else:
                                     # No albums found
                                     self.album_table.setRowCount(0)
-                                    html = "<b>Série sélectionnée :</b><br><ul>"
-                                    for k, v in series_data.items():
-                                        if v and str(v).strip():
-                                            html += f"<li><b>{k}</b> : {v}</li>"
-                                    html += "</ul><br><i>Aucun album trouvé pour cette série.</i>"
+                                    html = "<b>Série sélectionnée :</b><br><br>"
+                                    html += f"<b>Titre :</b> {series_data.get('serie_name', 'N/A')}<br>"
+                                    
+                                    # Try to get year information
+                                    year_info = series_data.get('year', '') or series_data.get('start_year', '') or series_data.get('date_debut', '')
+                                    if year_info:
+                                        html += f"<b>Année :</b> {year_info}<br>"
+                                    
+                                    # Try to get publisher information
+                                    publisher_info = series_data.get('publisher', '') or series_data.get('editeur', '')
+                                    if publisher_info:
+                                        html += f"<b>Éditeur :</b> {publisher_info}<br>"
+                                    
+                                    # BDGest links
+                                    if series_data.get('album_url'):
+                                        html += f"<b>Page BDGest :</b> <a href='{series_data['album_url']}'>Voir sur BDGest</a><br>"
+                                    
+                                    html += "<br><i>Aucun album trouvé pour cette série.</i>"
                                     self.detail_text.setHtml(html)
                                     
                             except Exception as e:
                                 print(f"[ERROR] Failed to fetch albums for series {series_name}: {e}")
                                 self.album_table.setRowCount(0)
-                                html = "<b>Série sélectionnée :</b><br><ul>"
-                                for k, v in series_data.items():
-                                    if v and str(v).strip():
-                                        html += f"<li><b>{k}</b> : {v}</li>"
-                                html += f"</ul><br><i>{tr('messages.errors.fetch_albums_error', error=str(e))}</i>"
+                                html = "<b>Série sélectionnée :</b><br><br>"
+                                html += f"<b>Titre :</b> {series_data.get('serie_name', 'N/A')}<br>"
+                                
+                                # Try to get year information
+                                year_info = series_data.get('year', '') or series_data.get('start_year', '') or series_data.get('date_debut', '')
+                                if year_info:
+                                    html += f"<b>Année :</b> {year_info}<br>"
+                                
+                                # Try to get publisher information
+                                publisher_info = series_data.get('publisher', '') or series_data.get('editeur', '')
+                                if publisher_info:
+                                    html += f"<b>Éditeur :</b> {publisher_info}<br>"
+                                
+                                html += f"<br><i>{tr('messages.errors.fetch_albums_error', error=str(e))}</i>"
                                 self.detail_text.setHtml(html)
                         else:
                             # Missing series ID or name
                             self.album_table.setRowCount(0)
-                            html = "<b>Série sélectionnée :</b><br><ul>"
-                            for k, v in series_data.items():
-                                if v and str(v).strip():
-                                    html += f"<li><b>{k}</b> : {v}</li>"
-                            html += "</ul><br><i>ID ou nom de série manquant pour récupérer les albums.</i>"
+                            html = "<b>Série sélectionnée :</b><br><br>"
+                            html += f"<b>Titre :</b> {series_data.get('serie_name', 'N/A')}<br>"
+                            html += "<br><i>ID ou nom de série manquant pour récupérer les albums.</i>"
                             self.detail_text.setHtml(html)
                 return
             else:
