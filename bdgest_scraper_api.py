@@ -46,6 +46,69 @@ def _decode_html_entities(text):
         return text
     return html.unescape(str(text))
 
+def _upgrade_bdgest_cover_url(cover_url, session=None, debug=False):
+    """
+    Améliore la qualité de l'URL de couverture BDGest en remplaçant
+    les URLs de miniatures par les URLs haute qualité si disponibles.
+    
+    Transforme: https://www.bedetheque.com/cache/thb_couv/Castaka1_20032007.jpg
+    En:         https://www.bedetheque.com/media/Couvertures/Castaka1_20032007.jpg
+    
+    Also converts relative URLs to absolute URLs:
+    /Couvertures/Test.jpg -> https://www.bedetheque.com/Couvertures/Test.jpg
+    
+    Args:
+        cover_url (str): URL originale de la couverture
+        session (requests.Session, optional): Session pour tester la disponibilité
+        debug (bool): Afficher les messages de debug
+    
+    Returns:
+        str: URL améliorée si disponible, sinon URL originale
+    """
+    if not cover_url:
+        return cover_url
+    
+    # Convert relative URLs to absolute URLs
+    if cover_url.startswith('/'):
+        cover_url = f"https://www.bedetheque.com{cover_url}"
+    
+    # Only process bedetheque.com URLs
+    if 'bedetheque.com' not in cover_url:
+        return cover_url
+    
+    # Vérifier si c'est une URL de miniature
+    if '/cache/thb_couv/' in cover_url:
+        # Extraire le nom du fichier
+        filename = cover_url.split('/')[-1]
+        # Construire l'URL haute qualité
+        hq_url = f"https://www.bedetheque.com/media/Couvertures/{filename}"
+        
+        if debug:
+            print(f"[DEBUG] Tentative d'amélioration de couverture:")
+            print(f"  Original: {cover_url}")
+            print(f"  Haute qualité: {hq_url}")
+        
+        # Tester si l'URL haute qualité existe
+        if session:
+            try:
+                response = session.head(hq_url, timeout=5)
+                if response.status_code == 200:
+                    if debug:
+                        print(f"  ✅ Image haute qualité disponible")
+                    return hq_url
+                else:
+                    if debug:
+                        print(f"  ❌ Image haute qualité non disponible (HTTP {response.status_code})")
+            except Exception as e:
+                if debug:
+                    print(f"  ❌ Erreur lors du test: {e}")
+        else:
+            # Sans session, on retourne directement l'URL améliorée
+            # (le test se fera lors du chargement de l'image)
+            return hq_url
+    
+    return cover_url
+
 def _check_too_many_results(soup, debug=False):
     """
     Check if BDGest returned a 'too many results' error message.
@@ -311,6 +374,8 @@ def fetch_albums(session, term, debug=True, verbose=False, log_path=None, fetch_
             continue
 
         cover_img = tds[1].find("img")["src"] if tds[1].find("img") else ""
+        # Améliorer la qualité de l'image de couverture si possible
+        cover_img = _upgrade_bdgest_cover_url(cover_img, session, debug=debug)
         serie_tag = tds[2].find("span", class_="serie")
         serie_name = _decode_html_entities(serie_tag.get_text(strip=True)) if serie_tag else ""
         titre_tag = tds[2].find("span", class_="titre")
@@ -435,6 +500,8 @@ def fetch_albums_by_series_id(session, series_id, series_name=None, debug=True, 
                 continue
 
             cover_img = tds[1].find("img")["src"] if tds[1].find("img") else ""
+            # Améliorer la qualité de l'image de couverture si possible
+            cover_img = _upgrade_bdgest_cover_url(cover_img, session, debug=debug)
             serie_tag = tds[2].find("span", class_="serie")
             serie_name_extracted = _decode_html_entities(serie_tag.get_text(strip=True)) if serie_tag else ""
             titre_tag = tds[2].find("span", class_="titre")
@@ -703,7 +770,8 @@ def fetch_series(session, term, debug=True, verbose=False, log_path=None):
                                 if "flag" in img["src"]:
                                     serie_info["country_flag"] = img["src"]
                                 else:
-                                    serie_info["cover_url"] = img["src"]
+                                    # Améliorer la qualité de l'image de couverture si possible
+                                    serie_info["cover_url"] = _upgrade_bdgest_cover_url(img["src"], session, debug=debug)
                             if img.has_attr("alt"):
                                 serie_info["country"] = img["alt"]
                         

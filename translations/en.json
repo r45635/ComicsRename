@@ -22,6 +22,7 @@
       "search_term": "Search term",
       "series_name_mode": "Series Name Mode",
       "recursive_folder_scan": "Recursive Folder Scan",
+      "safe_rename": "Safe Rename (PDF Cover Verification)",
       "provider": "Provider",
       "language": "Language",
       "volume": "Volume",
@@ -32,6 +33,7 @@
     "tooltips": {
       "series_name_mode": "Search only in series names (BDGest and ComicVine)",
       "recursive_folder_scan": "When enabled, scans all subfolders recursively when opening a folder. When disabled, only scans files in the current folder.",
+      "safe_rename": "When enabled, compares PDF covers with album covers before renaming to prevent mismatches.",
       "settings": "Application Settings",
       "rename_folder": "Rename folder with selected series name"
     },
@@ -140,6 +142,22 @@
     "confirmations": {
       "confirm_delete": "Confirm Deletion",
       "delete_file": "Are you sure you want to delete the file '{file}'?\n\nThis action cannot be undone."
+    },
+    "cover_comparison": {
+      "title": "Cover Comparison - Safe Rename",
+      "mismatch_detected": "Cover Mismatch Detected",
+      "file_label": "File: {file_name}",
+      "album_label": "Target Album: {album_name}",
+      "similarity_score": "Similarity Score: {score} (Threshold: {threshold})",
+      "pdf_cover": "PDF First Page",
+      "album_cover": "Album Cover",
+      "explanation": "The PDF's first page doesn't match the selected album cover well enough. Please review both images and decide whether to proceed with the rename.",
+      "proceed_anyway": "Rename Anyway",
+      "cancel_rename": "Cancel Rename",
+      "pdf_load_error": "Could not load PDF image",
+      "pdf_not_available": "PDF image not available",
+      "cover_load_error": "Could not load cover image",
+      "cover_not_available": "Cover image not available"
     }
   },
   "debug": {

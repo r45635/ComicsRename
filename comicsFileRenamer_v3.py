@@ -207,15 +207,27 @@ class ComicVineProvider(MetadataProvider):
         if not issues_list:
             return []
         
-        # Use the data we already have without additional API calls for speed
+        # Process issues and fetch individual cover images (limit to first 50 for performance)
         enriched_issues = []
-        for issue in issues_list:  # Process all issues, not just first 20
+        max_issues = min(50, len(issues_list))  # Limit to 50 issues for performance
+        
+        for i, issue in enumerate(issues_list[:max_issues]):
             issue_id = issue.get('id')
             if issue_id:
-                # Use the data we already have from the volume issues call
-                # This is much faster than making individual API calls
+                # Get detailed issue information to fetch individual cover images
+                if debug:
+                    print(f"[DEBUG] Fetching details for issue {i+1}/{max_issues} (ID: {issue_id})")
+                
+                issue_details = get_comicvine_issue_details(issue_id, api_key=api_key, debug=debug) if api_key else get_comicvine_issue_details(issue_id, debug=debug)
+                
+                # Use detailed issue data if available, otherwise fall back to basic issue data
+                if issue_details:
+                    merged_issue = {**issue, **issue_details}  # Merge basic and detailed data
+                else:
+                    merged_issue = issue
+                
                 # Determine publication date with fallback logic
-                publication_date = issue.get('cover_date')
+                publication_date = merged_issue.get('cover_date')
                 if not publication_date or publication_date == 'Date inconnue':
                     # Use volume start year as fallback
                     if volume_details and volume_details.get('start_year'):
@@ -224,19 +236,20 @@ class ComicVineProvider(MetadataProvider):
                         publication_date = 'Date inconnue'
                 
                 enriched_issue = {
-                    'id': issue.get('id'),
-                    'issue_number': issue.get('issue_number', 'N/A'),
-                    'name': issue.get('name', 'Sans titre'),
+                    'id': merged_issue.get('id'),
+                    'issue_number': merged_issue.get('issue_number', 'N/A'),
+                    'name': merged_issue.get('name', 'Sans titre'),
                     'cover_date': publication_date,
-                    'store_date': issue.get('store_date', ''),
-                    'description': issue.get('description', ''),
-                    'image': volume_details.get('image', {}) if volume_details else issue.get('image', {}),  # Use volume image if available
+                    'store_date': merged_issue.get('store_date', ''),
+                    'description': merged_issue.get('description', ''),
+                    'image': merged_issue.get('image', {}) or (volume_details.get('image', {}) if volume_details else {}),  # Prioritize detailed issue image
                     'volume': volume_details,  # Use volume details we already fetched
-                    'api_detail_url': issue.get('api_detail_url', ''),
+                    'api_detail_url': merged_issue.get('api_detail_url', ''),
                     # Add computed fields for consistency with BDGest
-                    'title': issue.get('name', 'Sans titre'),
-                    # Use volume image since individual issues don't have detailed image data
-                    'cover_url': volume_details.get('image', {}).get('original_url', '') if volume_details and volume_details.get('image') else '',
+                    'title': merged_issue.get('name', 'Sans titre'),
+                    # Prioritize detailed issue image over volume image for cover URL
+                    'cover_url': (merged_issue.get('image', {}).get('original_url', '') or 
+                                 (volume_details.get('image', {}).get('original_url', '') if volume_details and volume_details.get('image') else '')),
                     'album_url': f"https://comicvine.gamespot.com/issue/4000-{issue_id}/",
                 }
                 
@@ -709,7 +722,32 @@ class FileTable(QTableWidget):
             if row < 0:
                 return
             payload = event.mimeData().data('application/x-comic-meta').data().decode()
+            
+            # Try to get full metadata for Safe Rename
+            meta = None
+            if event.mimeData().hasFormat('application/x-comic-meta-full'):
+                try:
+                    import json
+                    meta_json = event.mimeData().data('application/x-comic-meta-full').data().decode()
+                    meta = json.loads(meta_json)
+                except Exception as e:
+                    if hasattr(self.main, 'debug') and self.main.debug:
+                        print(f"[DEBUG][DnD] Failed to deserialize metadata: {e}")
+                    meta = None
+            
             # print(f"[DEBUG][DnD] Payload: {payload}")  # Debug disabled by default
+            
+            # Check if Safe Rename is enabled and file is PDF
+            f = self.main.files[row]
+            safe_rename_enabled = self.main.settings.value('safe_rename', 'false') == 'true'
+            is_pdf = str(f['path']).lower().endswith('.pdf')
+            
+            if safe_rename_enabled and is_pdf and meta:
+                # Perform Safe Rename check
+                success = self.main._perform_safe_rename_check(f, meta)
+                if not success:
+                    return  # User cancelled or comparison failed
+            
             # Try to parse the payload as "Series - Num - Title (Year)"
             # Use similar cleaning as in _rename_selected
             parts = payload.split(' - ', 2)
@@ -735,7 +773,6 @@ class FileTable(QTableWidget):
             base = f"{clean(series)} - {format_num(num)} - {clean(title)}"
             if y:
                 base += f" ({y})"
-            f = self.main.files[row]
             ext = f['ext'].lstrip('.')
             new_name = f"{base}.{ext}"
             new_path = pathlib.Path(f['folder']) / new_name
@@ -956,8 +993,23 @@ class AlbumTable(QTableWidget):
         if not it:
             return
         # print(f"[DEBUG][DnD] Drag value: {it.text()}")  # Debug disabled by default
+        
+        # Get the metadata for Safe Rename
+        meta = it.data(Qt.UserRole)
+        
         mime = QMimeData()
         mime.setData('application/x-comic-meta', QByteArray(it.text().encode()))
+        
+        # Also include metadata for Safe Rename if available
+        if meta:
+            import json
+            try:
+                meta_json = json.dumps(meta, default=str)  # default=str handles non-serializable objects
+                mime.setData('application/x-comic-meta-full', QByteArray(meta_json.encode()))
+            except Exception as e:
+                if hasattr(self.main, 'debug') and self.main.debug:
+                    print(f"[DEBUG][DnD] Failed to serialize metadata: {e}")
+        
         drag = QDrag(self)
         drag.setMimeData(mime)
         drag.exec(Qt.CopyAction)
@@ -1035,6 +1087,16 @@ class SettingsDialog(QDialog):
         self.recursive_cb.setToolTip(tr("ui.tooltips.recursive_folder_scan"))
         self.layout.addRow(tr("ui.labels.recursive_folder_scan"), self.recursive_cb)
 
+        self.safe_rename_cb = QCheckBox()
+        self.safe_rename_cb.setChecked(self.settings.value('safe_rename', 'false') == 'true')
+        self.safe_rename_cb.setToolTip(tr("ui.tooltips.safe_rename"))
+        self.layout.addRow(tr("ui.labels.safe_rename"), self.safe_rename_cb)
+
+        self.skip_problematic_pdfs_cb = QCheckBox()
+        self.skip_problematic_pdfs_cb.setChecked(self.settings.value('skip_problematic_pdfs', 'false') == 'true')
+        self.skip_problematic_pdfs_cb.setToolTip("Skip Safe Rename for PDFs that cannot be loaded (password-protected, corrupted, etc.)")
+        self.layout.addRow("Skip Problematic PDFs", self.skip_problematic_pdfs_cb)
+
         self.bdgest_user = QLineEdit(self.settings.value('bdgest_user', ''))
         self.layout.addRow(tr("dialogs.settings.username"), self.bdgest_user)
         self.bdgest_pass = QLineEdit(self.settings.value('bdgest_pass', ''))
@@ -1074,6 +1136,8 @@ class SettingsDialog(QDialog):
         self.settings.setValue("debug", 'true' if self.debug_cb.isChecked() else 'false')
         self.settings.setValue("verbose", 'true' if self.verbose_cb.isChecked() else 'false')
         self.settings.setValue("recursive", 'true' if self.recursive_cb.isChecked() else 'false')
+        self.settings.setValue("safe_rename", 'true' if self.safe_rename_cb.isChecked() else 'false')
+        self.settings.setValue("skip_problematic_pdfs", 'true' if self.skip_problematic_pdfs_cb.isChecked() else 'false')
         self.settings.setValue("bdgest_user", self.bdgest_user.text())
         self.settings.setValue("bdgest_pass", self.bdgest_pass.text())
         self.settings.setValue("comicvine_api", self.comicvine_api.text())
@@ -1731,26 +1795,6 @@ class ComicRenamer(QWidget):
                     QMessageBox.warning(self, title, full_message)
                     # Don't populate any results
                     error_handled = True
-                    self._restore_search_ui()
-                    return
-                
-                for album in series_list:
-                    s = album.get('serie_name', '')
-                    if s:
-                        albums.append(album)
-                
-                # Check for "too many results" error (legacy fallback)
-                if albums and len(albums) == 1 and albums[0].get('error') == 'too_many_results':
-                    # Use internationalized error messages
-                    title = tr("messages.errors.too_many_results_title")
-                    message = tr("messages.errors.too_many_results_message")
-                    hint = tr("messages.errors.too_many_results_hint")
-                    full_message = f"{message}\n\n{hint}"
-                    
-                    QMessageBox.warning(self, title, full_message)
-                    # Don't populate any results
-                    albums = []
-                    error_handled = True
                 
                 self._bdgest_album_results = albums
                 if self._source == 'BDGest':
@@ -2099,9 +2143,8 @@ class ComicRenamer(QWidget):
                                         itm = QTableWidgetItem(val)
                                         itm.setData(Qt.UserRole, alb)
                                         self.album_table.setItem(r, 0, itm)
-                                        if r == 0 and alb.get('cover_url'):
-                                            self.series_cover_url = alb.get('cover_url')
-                                            
+                                        # Note: Don't set series_cover_url here - each album has its own cover
+                                        
                                         # Process UI events every 10 albums for responsiveness
                                         if r % 10 == 0:
                                             QApplication.processEvents()
@@ -2190,9 +2233,7 @@ class ComicRenamer(QWidget):
                     itm = QTableWidgetItem(val)
                     itm.setData(Qt.UserRole, alb)
                     self.album_table.setItem(r, 0, itm)
-                    if r == 0 and alb.get('cover_url'):
-                        self.series_cover_url = alb.get('cover_url')
-                    self.series_cover_url = alb.get('cover_url')
+                    # Note: Don't set series_cover_url here - each album has its own cover
         if self.folder_rename_btn is not None:
             self.folder_rename_btn.setEnabled(False)  # Disable when repopulating albums
         # Adjust album table column after populating
@@ -2639,6 +2680,18 @@ class ComicRenamer(QWidget):
         if not meta:
             QMessageBox.critical(self, 'Error', 'Album metadata missing')
             return
+            
+        # Check if Safe Rename is enabled and file is PDF
+        safe_rename_enabled = self.settings.value('safe_rename', 'false') == 'true'
+        file_path = str(f['path'])
+        is_pdf = file_path.lower().endswith('.pdf')
+        
+        if safe_rename_enabled and is_pdf:
+            # Perform cover comparison for PDF files
+            success = self._perform_safe_rename_check(f, meta)
+            if not success:
+                return  # User cancelled or comparison failed
+                
         # Build new filename
         series = meta.get('serie_name') or (meta.get('volume') or {}).get('name', '')
         num = meta.get('album_number') or meta.get('issue_number') or ''
@@ -2684,6 +2737,157 @@ class ComicRenamer(QWidget):
                 self._load_files(f['folder'])
             except Exception as e:
                 QMessageBox.critical(self, tr("messages.errors.rename_error"), str(e))
+
+    def _perform_safe_rename_check(self, file_info, meta):
+        """
+        Perform Safe Rename check by comparing PDF cover with album cover.
+        
+        Args:
+            file_info (dict): File information
+            meta (dict): Album metadata
+            
+        Returns:
+            bool: True if rename should proceed, False if cancelled
+        """
+        try:
+            # Try Qt-native version first (no Poppler dependency)
+            try:
+                from pdf_cover_comparator_qt import PDFCoverComparator
+                comparator_type = "Qt-native"
+            except ImportError:
+                # Fallback to Poppler-based version
+                from pdf_cover_comparator import PDFCoverComparator
+                comparator_type = "Poppler-based"
+            
+            from cover_comparison_dialog import CoverComparisonDialog
+            
+            # Get cover URL from metadata
+            cover_url = meta.get('cover_url', '')
+            if not cover_url:
+                # Try alternative fields
+                cover_url = meta.get('image_url', '')
+                if not cover_url and meta.get('image'):
+                    cover_url = meta.get('image', {}).get('original_url', '')
+            
+            if not cover_url:
+                if self.debug:
+                    print("[DEBUG] No cover URL found in metadata, skipping Safe Rename check")
+                return True  # No cover to compare, proceed with rename
+            
+            # Create comparator
+            threshold = 0.7  # Could be made configurable in settings later
+            comparator = PDFCoverComparator(ssim_threshold=threshold)
+            
+            # Perform comparison
+            if self.debug:
+                print(f"[DEBUG] Safe Rename ({comparator_type}): Comparing {file_info['path']} with {cover_url}")
+                
+            result = comparator.compare(str(file_info['path']), cover_url)
+            
+            if result['match']:
+                if self.debug:
+                    print(f"[DEBUG] Safe Rename: Cover match successful (score: {result['ssim_score']:.3f})")
+                # Clean up temp files
+                comparator.cleanup_temp_files(result.get('temp_files', []))
+                return True  # Good match, proceed with rename
+            else:
+                    print("[DEBUG] No cover URL found in metadata, skipping Safe Rename check")
+                return True  # No cover to compare, proceed with rename
+            
+            # Create comparator
+            threshold = 0.7  # Could be made configurable in settings later
+            comparator = PDFCoverComparator(ssim_threshold=threshold)
+            
+            # Perform comparison
+            if self.debug:
+                print(f"[DEBUG] Safe Rename ({comparator_type}): Comparing {file_info['path']} with {cover_url}")
+                
+            result = comparator.compare(str(file_info['path']), cover_url)
+            
+            if result['match']:
+                if self.debug:
+                    print(f"[DEBUG] Safe Rename: Cover match successful (score: {result['ssim_score']:.3f})")
+                # Clean up temp files
+                comparator.cleanup_temp_files(result.get('temp_files', []))
+                return True  # Good match, proceed with rename
+            else:
+                if self.debug:
+                    print(f"[DEBUG] Safe Rename: Cover mismatch detected (score: {result['ssim_score']:.3f})")
+                
+                # Show comparison dialog
+                file_name = os.path.basename(file_info['path'])
+                album_name = meta.get('album_name') or meta.get('name') or 'Unknown Album'
+                
+                dialog = CoverComparisonDialog(
+                    parent=self,
+                    pdf_image_path=result.get('pdf_image_path'),
+                    cover_image_path=result.get('cover_image_path'),
+                    ssim_score=result['ssim_score'],
+                    threshold=threshold,
+                    file_name=file_name,
+                    album_name=album_name
+                )
+                
+                dialog.exec()
+                user_choice = dialog.get_user_choice()
+                
+                # Clean up temp files
+                comparator.cleanup_temp_files(result.get('temp_files', []))
+                
+                return user_choice == 'proceed'
+                
+        except ImportError as e:
+            if self.debug:
+                print(f"[DEBUG] Safe Rename dependencies not available: {e}")
+            QMessageBox.warning(
+                self, 
+                "Safe Rename Unavailable", 
+                "Safe Rename feature requires additional dependencies.\n"
+                "Please install: pip install opencv-python scikit-image"
+            )
+            return True  # Proceed without check if dependencies missing
+        except Exception as e:
+            if self.debug:
+                print(f"[DEBUG] Safe Rename error: {e}")
+            
+            # Check if user wants to skip problematic PDFs
+            skip_problematic = self.settings.value('skip_problematic_pdfs', 'false') == 'true'
+            
+            # Check if this is a PDF loading issue
+            error_msg = str(e)
+            if "Failed to load PDF" in error_msg or "Failed to extract first page" in error_msg:
+                if skip_problematic:
+                    if self.debug:
+                        print(f"[DEBUG] Skipping Safe Rename for problematic PDF (user setting enabled)")
+                    return True  # Skip check and proceed with rename
+                
+                # This is a PDF-specific issue - show detailed dialog
+                reply = QMessageBox.question(
+                    self,
+                    "PDF Loading Issue",
+                    f"Cannot verify PDF cover due to file format issues:\n\n"
+                    f"{error_msg}\n\n"
+                    f"This can happen with:\n"
+                    f"• Password-protected PDFs\n"
+                    f"• Corrupted PDF files\n"
+                    f"• Unsupported PDF formats\n"
+                    f"• Files with special security features\n\n"
+                    f"Would you like to proceed with the rename anyway?\n\n"
+                    f"💡 Tip: You can disable Safe Rename for problematic PDFs in Settings",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+            else:
+                # Generic error
+                reply = QMessageBox.question(
+                    self,
+                    "Safe Rename Error",
+                    f"Cover comparison failed: {e}\n\nProceed with rename anyway?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+            
+            return reply == QMessageBox.Yes
 
     def _open_settings(self):
         dlg = SettingsDialog(self, self.settings)

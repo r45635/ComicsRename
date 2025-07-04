@@ -22,6 +22,7 @@
       "search_term": "Terme de recherche",
       "series_name_mode": "Mode nom de série",
       "recursive_folder_scan": "Parcours récursif des dossiers",
+      "safe_rename": "Renommage Sécurisé (Vérification Couverture PDF)",
       "provider": "Fournisseur",
       "language": "Langue",
       "volume": "Volume",
@@ -32,6 +33,7 @@
     "tooltips": {
       "series_name_mode": "Rechercher uniquement dans les noms de séries (BDGest et ComicVine)",
       "recursive_folder_scan": "Lorsque activé, parcourt récursivement tous les sous-dossiers lors de l'ouverture d'un dossier. Lorsque désactivé, ne charge que les fichiers du dossier courant.",
+      "safe_rename": "Lorsque activé, compare les couvertures PDF avec les couvertures d'albums avant le renommage pour éviter les erreurs.",
       "settings": "Paramètres de l'application",
       "rename_folder": "Renommer le dossier avec le nom de la série sélectionnée"
     },
@@ -140,6 +142,22 @@
     "confirmations": {
       "confirm_delete": "Confirmer la suppression",
       "delete_file": "Êtes-vous sûr de vouloir supprimer le fichier '{file}' ?\n\nCette action ne peut pas être annulée."
+    },
+    "cover_comparison": {
+      "title": "Comparaison des Couvertures - Renommage Sécurisé",
+      "mismatch_detected": "Différence de Couverture Détectée",
+      "file_label": "Fichier : {file_name}",
+      "album_label": "Album Cible : {album_name}",
+      "similarity_score": "Score de Similarité : {score} (Seuil : {threshold})",
+      "pdf_cover": "Première Page du PDF",
+      "album_cover": "Couverture de l'Album",
+      "explanation": "La première page du PDF ne correspond pas suffisamment à la couverture de l'album sélectionné. Veuillez examiner les deux images et décider si vous souhaitez continuer le renommage.",
+      "proceed_anyway": "Renommer Quand Même",
+      "cancel_rename": "Annuler le Renommage",
+      "pdf_load_error": "Impossible de charger l'image PDF",
+      "pdf_not_available": "Image PDF non disponible",
+      "cover_load_error": "Impossible de charger l'image de couverture",
+      "cover_not_available": "Image de couverture non disponible"
     }
   },
   "debug": {
