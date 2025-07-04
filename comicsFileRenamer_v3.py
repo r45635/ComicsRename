@@ -1795,6 +1795,26 @@ class ComicRenamer(QWidget):
                     QMessageBox.warning(self, title, full_message)
                     # Don't populate any results
                     error_handled = True
+                    self._restore_search_ui()
+                    return
+                
+                for album in series_list:
+                    s = album.get('serie_name', '')
+                    if s:
+                        albums.append(album)
+                
+                # Check for "too many results" error (legacy fallback)
+                if albums and len(albums) == 1 and albums[0].get('error') == 'too_many_results':
+                    # Use internationalized error messages
+                    title = tr("messages.errors.too_many_results_title")
+                    message = tr("messages.errors.too_many_results_message")
+                    hint = tr("messages.errors.too_many_results_hint")
+                    full_message = f"{message}\n\n{hint}"
+                    
+                    QMessageBox.warning(self, title, full_message)
+                    # Don't populate any results
+                    albums = []
+                    error_handled = True
                 
                 self._bdgest_album_results = albums
                 if self._source == 'BDGest':
@@ -2771,26 +2791,6 @@ class ComicRenamer(QWidget):
             
             if not cover_url:
                 if self.debug:
-                    print("[DEBUG] No cover URL found in metadata, skipping Safe Rename check")
-                return True  # No cover to compare, proceed with rename
-            
-            # Create comparator
-            threshold = 0.7  # Could be made configurable in settings later
-            comparator = PDFCoverComparator(ssim_threshold=threshold)
-            
-            # Perform comparison
-            if self.debug:
-                print(f"[DEBUG] Safe Rename ({comparator_type}): Comparing {file_info['path']} with {cover_url}")
-                
-            result = comparator.compare(str(file_info['path']), cover_url)
-            
-            if result['match']:
-                if self.debug:
-                    print(f"[DEBUG] Safe Rename: Cover match successful (score: {result['ssim_score']:.3f})")
-                # Clean up temp files
-                comparator.cleanup_temp_files(result.get('temp_files', []))
-                return True  # Good match, proceed with rename
-            else:
                     print("[DEBUG] No cover URL found in metadata, skipping Safe Rename check")
                 return True  # No cover to compare, proceed with rename
             
