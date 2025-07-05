@@ -17,6 +17,8 @@ import sys
 import os
 import pathlib
 import requests
+import json
+import shutil
 from collections import defaultdict
 import subprocess
 import re
@@ -1797,7 +1799,9 @@ class ComicRenamer(QWidget):
                     error_handled = True
                     self._restore_search_ui()
                     return
-                
+            
+            # Process normal results (moved outside of the error check block)
+            if series_list and not error_handled:
                 for album in series_list:
                     s = album.get('serie_name', '')
                     if s:
@@ -1841,11 +1845,12 @@ class ComicRenamer(QWidget):
                     # Process UI events periodically
                     if len(series_seen) % 5 == 0:  # Every 5 items
                         QApplication.processEvents()
-                # Inform user if no BDGest results (but only if we didn't handle an error)
-                if not albums and not error_handled:
-                    title = tr("messages.info.no_result")
-                    message = tr("messages.errors.no_albums_found")
-                    QMessageBox.information(self, title, message)
+            
+            # Inform user if no BDGest results (but only if we didn't handle an error)
+            if not albums and not error_handled:
+                title = tr("messages.info.no_result")
+                message = tr("messages.errors.no_albums_found")
+                QMessageBox.information(self, title, message)
         
         # Restore UI state after search completion
         self._restore_search_ui()

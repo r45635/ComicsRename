@@ -24,12 +24,36 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Dynamically set the Qt plugin path
 if hasattr(sys, '_MEIPASS'):
     # PyInstaller creates a temp folder and stores path in _MEIPASS
-    plugin_path = os.path.join(sys._MEIPASS, 'PySide6', 'Qt', 'plugins')
+    # Try multiple possible plugin paths for PyInstaller
+    meipass = getattr(sys, '_MEIPASS', None)
+    if meipass:
+        possible_paths = [
+            os.path.join(meipass, 'PySide6', 'Qt', 'plugins'),
+            os.path.join(meipass, 'Qt', 'plugins'),
+            os.path.join(meipass, 'plugins'),
+            os.path.join(meipass, 'PySide6', 'plugins'),
+            meipass  # Sometimes plugins are in the root of _MEIPASS
+        ]
+        
+        plugin_path = None
+        for path in possible_paths:
+            if os.path.exists(path) and os.path.isdir(path):
+                plugin_path = path
+                break
+        
+        if plugin_path:
+            QCoreApplication.addLibraryPath(plugin_path)
+        # If no plugin path found, Qt will use its default search mechanism
 else:
-    import PySide6
-    plugin_path = os.path.join(os.path.dirname(PySide6.__file__), "Qt", "plugins")
-
-QCoreApplication.addLibraryPath(plugin_path)
+    # Running from development environment
+    try:
+        import PySide6
+        plugin_path = os.path.join(os.path.dirname(PySide6.__file__), "Qt", "plugins")
+        if os.path.exists(plugin_path):
+            QCoreApplication.addLibraryPath(plugin_path)
+    except ImportError:
+        # PySide6 not available, Qt will handle plugin loading
+        pass
 
 def main():
     """Main entry point for the ComicsRename application"""
