@@ -1774,6 +1774,7 @@ class ComicRenamer(QWidget):
             
             # First check for errors in series_list before filtering
             if series_list and len(series_list) == 1:
+
                 error_item = series_list[0]
                 if error_item.get('error') == 'authentication_failed':
                     # Use internationalized error messages
@@ -1797,8 +1798,6 @@ class ComicRenamer(QWidget):
                     QMessageBox.warning(self, title, full_message)
                     # Don't populate any results
                     error_handled = True
-                    self._restore_search_ui()
-                    return
             
             # Process normal results (moved outside of the error check block)
             if series_list and not error_handled:
@@ -2427,7 +2426,7 @@ class ComicRenamer(QWidget):
                         for k, v in value.items():
                             if isinstance(v, (str, int, float)) and v:
                                 display_key = str(k).replace('_', ' ').title()
-                                items.append(f"{display_key}: {make_links_clickable(v, k)}")
+                                items.append(f"{display_key}: {v}")
                         return {'type': 'list', 'items': items} if items else make_links_clickable(str(value), field_name)
                 else:
                     # Convert dict to structured list
@@ -2435,7 +2434,7 @@ class ComicRenamer(QWidget):
                     for k, v in value.items():
                         if isinstance(v, (str, int, float)) and v:
                             display_key = str(k).replace('_', ' ').title()
-                            items.append(f"{display_key}: {make_links_clickable(v, k)}")
+                            items.append(f"{display_key}: {v}")
                     return {'type': 'list', 'items': items} if items else make_links_clickable(str(value), field_name)
             elif isinstance(value, list):
                 # Convert list to structured format
@@ -2890,6 +2889,7 @@ class ComicRenamer(QWidget):
                     f"Cover comparison failed: {e}\n\nProceed with rename anyway?",
                     QMessageBox.Yes | QMessageBox.No,
                     QMessageBox.No
+                )
                 )
             
             return reply == QMessageBox.Yes
