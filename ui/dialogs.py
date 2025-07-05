@@ -67,6 +67,12 @@ class SettingsDialog(QDialog):
         self.recursive_cb.setToolTip(tr("ui.tooltips.recursive_folder_scan"))
         self.layout.addRow(tr("ui.labels.recursive_folder_scan"), self.recursive_cb)
 
+        # Add Safe Rename option
+        self.safe_rename_cb = QCheckBox()
+        self.safe_rename_cb.setChecked(self.settings.value('safe_rename', 'false') == 'true')
+        self.safe_rename_cb.setToolTip(tr("ui.tooltips.safe_rename"))
+        self.layout.addRow(tr("ui.labels.safe_rename"), self.safe_rename_cb)
+
         self.bdgest_user = QLineEdit(self.settings.value('bdgest_user', ''))
         self.layout.addRow(tr("dialogs.settings.username"), self.bdgest_user)
         self.bdgest_pass = QLineEdit(self.settings.value('bdgest_pass', ''))
@@ -106,6 +112,7 @@ class SettingsDialog(QDialog):
         self.settings.setValue("debug", 'true' if self.debug_cb.isChecked() else 'false')
         self.settings.setValue("verbose", 'true' if self.verbose_cb.isChecked() else 'false')
         self.settings.setValue("recursive", 'true' if self.recursive_cb.isChecked() else 'false')
+        self.settings.setValue("safe_rename", 'true' if self.safe_rename_cb.isChecked() else 'false')
         self.settings.setValue("bdgest_user", self.bdgest_user.text())
         self.settings.setValue("bdgest_pass", self.bdgest_pass.text())
         self.settings.setValue("comicvine_api", self.comicvine_api.text())

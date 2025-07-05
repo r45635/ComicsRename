@@ -4,6 +4,8 @@ Core components for ComicsRename application.
 from .providers import PROVIDERS, MetadataProvider, BDGestProvider, ComicVineProvider
 from .workers import SearchWorker
 from .folder_renamer import FolderRenamer
+from .details_formatter import DetailsFormatter
+from .album_populator import AlbumPopulator
 
 __all__ = [
     'PROVIDERS',
@@ -11,5 +13,7 @@ __all__ = [
     'BDGestProvider', 
     'ComicVineProvider',
     'SearchWorker',
-    'FolderRenamer'
+    'FolderRenamer',
+    'DetailsFormatter',
+    'AlbumPopulator'
 ]

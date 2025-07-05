@@ -48,6 +48,26 @@ class PDFCoverComparator:
         
         if not QT_PDF_AVAILABLE:
             raise ImportError("Qt PDF modules not available. Please install PySide6 with PDF support.")
+        
+        # Cache for extracted PDF pages to avoid re-extraction
+        self._pdf_page_cache = {}
+
+    def _get_pdf_cache_key(self, pdf_path):
+        """
+        Generate a cache key for a PDF file based on its path and modification time.
+        
+        Args:
+            pdf_path (str): Path to the PDF file.
+            
+        Returns:
+            str: Cache key for the PDF file.
+        """
+        try:
+            stat = os.stat(pdf_path)
+            return f"{pdf_path}_{stat.st_mtime}_{stat.st_size}"
+        except Exception:
+            # Fallback to just the path if stat fails
+            return pdf_path
 
     def _download_image(self, url):
         """
@@ -197,13 +217,15 @@ class PDFCoverComparator:
         except Exception as e:
             raise Exception(f"Failed to process image {path}: {e}")
 
-    def compare(self, pdf_path, cover_path_or_url):
+    def compare(self, pdf_path, cover_path_or_url, local_cover_path=None):
         """
         Compare a PDF's first page with a reference cover image.
         
         Args:
             pdf_path (str): Path to the PDF file.
             cover_path_or_url (str): Path to cover image file or URL.
+            local_cover_path (str, optional): Path to locally cached cover image.
+                                            If provided, this will be used instead of downloading.
             
         Returns:
             dict: Contains 'ssim_score' (float), 'match' (bool), 
@@ -219,8 +241,12 @@ class PDFCoverComparator:
             extracted_cover = self._extract_first_page_qt(pdf_path)
             temp_files.append(extracted_cover)
 
-            # Download if cover is a URL
-            if cover_path_or_url.startswith("http://") or cover_path_or_url.startswith("https://"):
+            # Use local cached cover if available, otherwise download/use provided path
+            if local_cover_path and os.path.exists(local_cover_path):
+                cover_path = local_cover_path
+                print(f"[DEBUG] Using cached cover image: {local_cover_path}")
+            elif cover_path_or_url.startswith("http://") or cover_path_or_url.startswith("https://"):
+                print(f"[DEBUG] Downloading cover image from: {cover_path_or_url}")
                 cover_path = self._download_image(cover_path_or_url)
                 temp_files.append(cover_path)
             else:

@@ -55,61 +55,99 @@ class FileTable(QTableWidget):
         event.accept()
 
     def dropEvent(self, event):
+        print(f"[DEBUG] Drop event triggered")
+        
         # Internal drag & drop (DnD rename)
         if event.mimeData().hasFormat('application/x-comic-meta'):
+            print(f"[DEBUG] Drop - Has comic meta format")
+            
             pos = event.position().toPoint() if hasattr(event, "position") else event.pos()
             row = self.rowAt(pos.y())
+            print(f"[DEBUG] Drop - Target row: {row}")
+            
             if row < 0:
+                print(f"[DEBUG] Drop - Invalid row, returning")
                 return
+            
             payload = event.mimeData().data('application/x-comic-meta').data().decode()
-            # Try to parse the payload as "Series - Num - Title (Year)"
-            parts = payload.split(' - ', 2)
-            if len(parts) < 3:
-                return
-            series, num, rest = parts
-            # Extract title and year if present
-            title = rest
-            y = ''
-            m = re.match(r"^(.*)\s+\((\d{4})\)$", rest)
-            if m:
-                title = m.group(1)
-                y = m.group(2)
+            print(f"[DEBUG] Drop - Payload length: {len(payload)}")
+            print(f"[DEBUG] Drop - Payload preview: {payload[:100]}...")
             
-            def format_num(n):
-                try:
-                    n_int = int(n)
-                    return f"{n_int:02d}"
-                except Exception:
-                    return str(n)
+            # Try to parse as JSON (complete metadata)
+            try:
+                import json
+                meta = json.loads(payload)
+                print(f"[DEBUG] Drop - Successfully parsed JSON metadata")
+                print(f"[DEBUG] Drop - Meta keys: {list(meta.keys()) if isinstance(meta, dict) else 'Not a dict'}")
+                
+                # Extract information from metadata - CORRECTED
+                series = meta.get('serie_name', meta.get('series', ''))  # serie_name for BDGest
+                num = meta.get('album_number', meta.get('issue_number', meta.get('num', '')))  # album_number for BDGest
+                title = meta.get('album_name', meta.get('title', ''))  # album_name for BDGest
+                
+                # Extract year from date field
+                y = ''
+                date_str = meta.get('date', meta.get('parution', meta.get('year', '')))
+                if date_str:
+                    import re
+                    year_match = re.search(r'(\d{4})', str(date_str))
+                    if year_match:
+                        y = year_match.group(1)
+                
+                print(f"[DEBUG] Drop - Extracted: series='{series}', num='{num}', title='{title}', year='{y}'")
+                
+                # Check for cover URLs
+                cover_url = meta.get('cover_url', meta.get('image_url', ''))
+                print(f"[DEBUG] Drop - Cover URL: {cover_url}")
+                
+                # Use the complete metadata for SafeRename
+                use_complete_meta = True
+                
+            except (json.JSONDecodeError, TypeError) as e:
+                print(f"[DEBUG] Drop - JSON parsing failed: {e}")
+                # Fallback to parsing text format
+                use_complete_meta = False
+                
+                # Try to parse the payload as "Series - Num - Title (Year)"
+                parts = payload.split(' - ', 2)
+                if len(parts) < 3:
+                    print(f"[DEBUG] Drop - Text parsing failed, not enough parts")
+                    return
+                series, num, rest = parts
+                # Extract title and year if present
+                title = rest
+                y = ''
+                m = re.match(r"^(.*)\s+\((\d{4})\)$", rest)
+                if m:
+                    title = m.group(1)
+                    y = m.group(2)
+                
+                print(f"[DEBUG] Drop - Text fallback: series={series}, num={num}, title={title}, year={y}")
+                
+                # Create basic metadata for SafeRename
+                meta = {
+                    'series': series,
+                    'num': num,
+                    'title': title,
+                    'year': y,
+                    'album_name': title,
+                    'serie_name': series,
+                    'album_number': num,
+                    'date': y,
+                    'cover_url': '',
+                    'image_url': ''
+                }
+                print(f"[DEBUG] Drop - Created fallback metadata")
             
-            def clean(s):
-                return re.sub(r"[^\w\s'\u2019\-\_()]", '', str(s), flags=re.UNICODE).strip()
-            
-            base = f"{clean(series)} - {format_num(num)} - {clean(title)}"
-            if y:
-                base += f" ({y})"
+            # Use unified rename method from main
             f = self.main.files[row]
-            ext = f['ext'].lstrip('.')
-            new_name = f"{base}.{ext}"
-            new_path = pathlib.Path(f['folder']) / new_name
-            confirm = QMessageBox.question(
-                self,
-                tr("dialogs.rename_confirmation.title"),
-                tr("dialogs.rename_confirmation.file_message", new_name=new_name),
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if confirm == QMessageBox.Yes:
-                try:
-                    if not os.path.exists(f['path']):
-                        QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_not_exists", path=f['path']))
-                        return
-                    if new_path.exists():
-                        QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_already_exists", name=new_name))
-                        return
-                    os.rename(f['path'], new_path)
-                    self.main._load_files(f['folder'])
-                except Exception as e:
-                    QMessageBox.critical(self, tr("messages.errors.rename_error"), str(e))
+            
+            # Use unified rename method - confirmation will be shown by the method
+            success = self.main._unified_rename_file(f, meta, show_confirmation=True)
+            if success:
+                print(f"[DEBUG] Drop - Rename successful")
+            else:
+                print(f"[DEBUG] Drop - Rename failed or cancelled")
             return
 
         # External file drop (from Finder, etc.)
@@ -260,8 +298,35 @@ class AlbumTable(QTableWidget):
         it = self.itemAt(event.pos())
         if not it:
             return
-        mime = QMimeData()
-        mime.setData('application/x-comic-meta', QByteArray(it.text().encode()))
+        
+        # Get the full metadata stored in UserRole
+        import json
+        from PySide6.QtCore import Qt
+        
+        meta = it.data(Qt.ItemDataRole.UserRole)
+        print(f"[DEBUG] Drag started - Text: {it.text()}")
+        print(f"[DEBUG] Drag started - Meta available: {meta is not None}")
+        
+        if meta:
+            # Store complete metadata as JSON
+            meta_json = json.dumps(meta, default=str)
+            print(f"[DEBUG] Drag started - Meta JSON length: {len(meta_json)}")
+            print(f"[DEBUG] Drag started - Meta keys: {list(meta.keys()) if isinstance(meta, dict) else 'Not a dict'}")
+            if isinstance(meta, dict):
+                if 'cover_url' in meta:
+                    print(f"[DEBUG] Drag started - Cover URL: {meta.get('cover_url', 'None')}")
+                if 'cover_local_path' in meta:
+                    print(f"[DEBUG] Drag started - Cover local path: {meta.get('cover_local_path', 'None')}")
+                else:
+                    print(f"[DEBUG] Drag started - No cover_local_path in metadata")
+            mime = QMimeData()
+            mime.setData('application/x-comic-meta', QByteArray(meta_json.encode()))
+        else:
+            # Fallback to text-only if no metadata
+            print(f"[DEBUG] Drag started - Using text fallback")
+            mime = QMimeData()
+            mime.setData('application/x-comic-meta', QByteArray(it.text().encode()))
+        
         drag = QDrag(self)
         drag.setMimeData(mime)
         drag.exec(Qt.CopyAction)

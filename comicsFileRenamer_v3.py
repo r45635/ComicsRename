@@ -41,7 +41,7 @@ from bdgest_scraper_api import get_bdgest_series
 from core.providers import PROVIDERS
 from core.workers import SearchWorker
 from core.widgets import DroppableLineEdit, EditableFolderLineEdit
-from core import FolderRenamer
+from core import FolderRenamer, DetailsFormatter, AlbumPopulator
 
 # Import UI components  
 from ui.tables import FileTable, AlbumTable
@@ -68,10 +68,17 @@ class ComicRenamer(QWidget):
         self.debug = self.settings.value('debug', 'false') == 'true'
         self.verbose = self.settings.value('verbose', 'false') == 'true'
         
+        # Initialize default provider first
+        self.default_provider = str(self.settings.value("default_provider", "BDGest"))
+        
         # Initialize folder renamer
         self.folder_renamer = FolderRenamer(debug=self.debug)
         
-        self.default_provider = self.settings.value("default_provider", "BDGest")
+        # Initialize details formatter (will be updated when source changes)
+        self.details_formatter = DetailsFormatter(source=self.default_provider, debug=self.debug)
+        
+        # Initialize album populator
+        self.album_populator = AlbumPopulator(self, debug=self.debug)
         self.provider_combo = QComboBox()
         self.provider_combo.addItems(["BDGest", "ComicVine"])
         idx = self.provider_combo.findText(self.default_provider)
@@ -91,7 +98,7 @@ class ComicRenamer(QWidget):
         self.series_cover_url = ''
 
         # Synchronize source_combo with user preference
-        default_provider = self.settings.value("default_provider", "BDGest")
+        default_provider = str(self.settings.value("default_provider", "BDGest"))
         idx = self.source_combo.findText(default_provider)
         if idx >= 0:
             self.source_combo.setCurrentIndex(idx)
@@ -328,6 +335,9 @@ class ComicRenamer(QWidget):
 
     def _change_source(self,src):
         self._source=src
+        # Update details formatter source
+        self.details_formatter = DetailsFormatter(source=src, debug=self.debug)
+        
         self.series_combo.clear()
         self.album_table.clearContents();self.album_table.setRowCount(0); self.series_cover_url = ''
         self.detail_text.clear();self.detail_image.clear();self._original_cover_pixmap = None
@@ -1178,6 +1188,7 @@ class ComicRenamer(QWidget):
             print(f"[DEBUG] _show_details called for row {r}, col {c}")
         itm = self.album_table.item(r, 0)
         meta = itm.data(Qt.UserRole) if itm else None
+        
         if not meta:
             # Clear the details and image when no metadata
             self.detail_text.setHtml("<p>No details available.</p>")
@@ -1187,6 +1198,7 @@ class ComicRenamer(QWidget):
         
         if self.debug:
             print(f"[DEBUG] Clearing existing image before loading new one")
+        
         # Clear the existing image before loading new one
         self.detail_image.clear()
         self.detail_image.setPixmap(QPixmap())  # Set empty pixmap explicitly
@@ -1195,364 +1207,16 @@ class ComicRenamer(QWidget):
         self.detail_image.repaint()
         self.detail_image.update()
         QApplication.processEvents()
-        html = """
-        <style>
-        body, div, ul, li, p { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-            background: transparent !important; 
-            margin: 0; 
-            padding: 0; 
-        }
-        .details-container { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-            background: transparent !important;
-            color: #333;
-            line-height: 1.4;
-        }
-        .details-container ul { 
-            margin: 5px 0; 
-            padding-left: 20px; 
-            background: transparent !important;
-        }
-        .details-container li { 
-            margin: 2px 0; 
-            background: transparent !important;
-            list-style-type: disc;
-            line-height: 1.3;
-        }
-        .sub-section { 
-            background-color: #f8f9fa !important; 
-            padding: 6px 8px; 
-            margin: 4px 0; 
-            border-radius: 4px; 
-            border: 1px solid #e9ecef;
-        }
-        .sub-section > b { 
-            color: #495057; 
-            background: transparent !important;
-        }
-        .sub-list { 
-            margin: 5px 0 5px 15px; 
-            background: transparent !important;
-        }
-        .sub-list li { 
-            margin: 1px 0; 
-            color: #6c757d; 
-            font-size: 0.95em; 
-            background: transparent !important;
-            list-style-type: circle;
-        }
-        .complex-data { 
-            background-color: #e9ecef !important; 
-            padding: 4px 6px; 
-            border-radius: 3px; 
-            margin: 2px 0;
-        }
-        a { 
-            color: #007bff !important; 
-            text-decoration: underline;
-            background: transparent !important;
-        }
-        a:hover { 
-            color: #0056b3 !important; 
-            background: transparent !important;
-            text-decoration: underline;
-        }
-        b, strong { 
-            background: transparent !important; 
-            font-weight: 600;
-        }
-        /* Ensure no unwanted backgrounds appear */
-        * { 
-            background-attachment: scroll !important;
-        }
-        </style>
-        <div class="details-container">"""
         
-        # For BDGest, we'll handle the structure differently
-        if self._source == 'BDGest':
-            html += "<ul>"
-        else:
-            html += "<b>Détails complets :</b><br><ul>"
-        
-        # Helper function to detect and make URLs clickable
-        def make_links_clickable(text, field_name=None):
-            """Convert URLs in text to clickable HTML links with clean display text"""
-            import re
-            
-            # If the text already contains HTML links, return as-is
-            if '<a href=' in str(text):
-                return str(text)
-            
-            # URL pattern to match http/https URLs
-            url_pattern = r'(https?://[^\s<>"]{2,})'
-            
-            # If this is a URL field and the entire text is just a URL, make a clean link
-            if field_name in ['album_url', 'cover_url', 'api_detail_url', 'image_url'] and re.match(r'^https?://', str(text).strip()):
-                url = str(text).strip()
-                if field_name == 'album_url':
-                    if 'comicvine.gamespot.com' in url:
-                        return f'<a href="{url}">ComicVine Page</a>'
-                    elif 'bedetheque.com' in url:
-                        return f'<a href="{url}">BDGest Page</a>'
-                    else:
-                        return f'<a href="{url}">View Page</a>'
-                elif field_name == 'api_detail_url':
-                    return f'<a href="{url}">API Details</a>'
-                elif field_name == 'cover_url':
-                    return f'<a href="{url}">View Cover</a>'
-                elif field_name == 'image_url':
-                    return f'<a href="{url}">View Image</a>'
-                else:
-                    return f'<a href="{url}">Link</a>'
-            
-            # Replace URLs with HTML links
-            def replace_url(match):
-                url = match.group(1)
-                
-                # For other fields, show a shortened URL
-                if len(url) <= 50:
-                    return f'<a href="{url}">{url}</a>'
-                else:
-                    display_url = url[:47] + '...'
-                    return f'<a href="{url}">{display_url}</a>'
-            
-            return re.sub(url_pattern, replace_url, str(text))
-        
-        # Helper function to format any data type for display
-        def format_display_value(value, field_name=None):
-            """Format any value for HTML display"""
-            if isinstance(value, dict):
-                if value.get('type') == 'list':
-                    # Already structured list data
-                    return value
-                elif field_name == 'volume':
-                    # Special handling for volume field - show just the name
-                    if value.get('name'):
-                        return f"Name: {value.get('name')}"
-                    else:
-                        # Convert dict to structured list for other volume info
-                        items = []
-                        for k, v in value.items():
-                            if isinstance(v, (str, int, float)) and v:
-                                display_key = str(k).replace('_', ' ').title()
-                                items.append(f"{display_key}: {v}")
-                        return {'type': 'list', 'items': items} if items else make_links_clickable(str(value), field_name)
-                else:
-                    # Convert dict to structured list
-                    items = []
-                    for k, v in value.items():
-                        if isinstance(v, (str, int, float)) and v:
-                            display_key = str(k).replace('_', ' ').title()
-                            items.append(f"{display_key}: {v}")
-                    return {'type': 'list', 'items': items} if items else make_links_clickable(str(value), field_name)
-            elif isinstance(value, list):
-                # Convert list to structured format
-                items = []
-                for item in value[:10]:  # Limit display
-                    if isinstance(item, dict):
-                        # Try to extract meaningful info from dict
-                        display_val = (item.get('name') or 
-                                     item.get('title') or 
-                                     item.get('id') or 
-                                     str(item)[:60] + '...' if len(str(item)) > 60 else str(item))
-                        items.append(str(display_val))
-                    else:
-                        items.append(str(item))
-                return {'type': 'list', 'items': items} if items else str(value)
-            else:
-                # For URL fields, don't process with make_links_clickable here
-                # Let the main display logic handle it
-                return str(value)
-        
-        # Display all main fields except 'details'
-        # Define the preferred order - different for BDGest vs ComicVine
-        if self._source == 'BDGest':
-            # BDGest-specific order: show most important info first
-            field_order = [
-                'serie_name',
-                'style', 
-                'album_name',
-                'album_number',
-                'ISBN',
-                'date',
-                'details'  # This will be handled specially
-            ]
-        else:
-            # ComicVine order - optimized for better user experience
-            field_order = [
-                'name',           # Issue title (most important)
-                'issue_number',   # Issue number
-                'volume',         # Series/Volume info
-                'cover_date',     # Cover date (when published)
-                'store_date',     # Store date (when released)
-                'description',    # Issue description
-                'story_arc',      # Story arc information
-                'character_credits', # Characters
-                'person_credits', # Creators
-                'location_credits', # Locations
-                'concept_credits', # Concepts/themes
-                'team_credits',   # Teams
-                'id',             # ComicVine ID
-                'album_url',      # ComicVine page URL
-                'api_detail_url', # API detail URL
-                'cover_url',      # Cover image URL
-                'image'           # Image information
-            ]
-        
-        # Display fields in the preferred order
-        displayed_fields = set()
-        
-        # Helper function to get display name for ComicVine fields
-        def get_display_name(field_name):
-            """Get a user-friendly display name for ComicVine fields"""
-            if self._source == 'ComicVine':
-                display_names = {
-                    'name': 'Title',
-                    'issue_number': 'Issue #',
-                    'volume': 'Series',
-                    'cover_date': 'Cover Date',
-                    'store_date': 'Store Date',
-                    'description': 'Description',
-                    'story_arc': 'Story Arc',
-                    'character_credits': 'Characters',
-                    'person_credits': 'Creators',
-                    'location_credits': 'Locations',
-                    'concept_credits': 'Concepts',
-                    'team_credits': 'Teams',
-                    'id': 'ComicVine ID',
-                    'album_url': 'ComicVine Page',
-                    'api_detail_url': 'API Details',
-                    'cover_url': 'Cover Image',
-                    'image': 'Image Info'
-                }
-                return display_names.get(field_name, field_name.replace('_', ' ').title())
-            else:
-                return field_name.replace('_', ' ').title()
-        
-        for field in field_order:
-            if field in meta:
-                if field == "details":
-                    # Handle details specially - will be processed later
-                    continue
-                    
-                v = meta[field]
-                formatted_value = format_display_value(v, field)
-                display_name = get_display_name(field)
-                if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                    html += f'<li class="sub-section"><b>{display_name} :</b><ul class="sub-list">'
-                    for item in formatted_value.get('items', []):
-                        html += f"<li>{item}</li>"
-                    html += "</ul></li>"
-                else:
-                    html += f"<li><b>{display_name}</b> : {make_links_clickable(formatted_value, field)}</li>"
-                displayed_fields.add(field)
-        
-        # Add the details section
-        if self._source == 'BDGest':
-            # For BDGest, show "Détails complets" with album_url, cover_url, then details, then remaining fields
-            html += "<li><b>Détails complets :</b><ul>"
-            
-            # First add album_url and cover_url if they exist
-            for url_field in ['album_url', 'cover_url']:
-                if url_field in meta and meta[url_field]:
-                    formatted_value = format_display_value(meta[url_field], url_field)
-                    html += f"<li><b>{url_field}</b> : {make_links_clickable(formatted_value, url_field)}</li>"
-                    displayed_fields.add(url_field)
-            
-            # Then add the details dict content
-            details = meta.get("details")
-            if isinstance(details, dict):
-                html += "<li><b>Détails :</b><ul>"
-                for label, value in details.items():
-                    formatted_value = format_display_value(value, label)
-                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                        # Handle structured list data as styled sub-sections
-                        html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
-                        for item in formatted_value.get('items', []):
-                            html += f"<li>{item}</li>"
-                        html += "</ul></li>"
-                    else:
-                        # Handle regular string/simple data
-                        html += f"<li><b>{label}</b> : {make_links_clickable(formatted_value, label)}</li>"
-                html += "</ul></li>"
-            
-            # Then add any remaining fields
-            for k, v in meta.items():
-                if k not in displayed_fields and k != "details":
-                    formatted_value = format_display_value(v, k)
-                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                        html += f'<li class="sub-section"><b>{k} :</b><ul class="sub-list">'
-                        for item in formatted_value.get('items', []):
-                            html += f"<li>{item}</li>"
-                        html += "</ul></li>"
-                    else:
-                        html += f"<li><b>{k}</b> : {make_links_clickable(formatted_value, k)}</li>"
-            
-            html += "</ul></li>"
-        else:
-            # For ComicVine, create a better structured display
-            html += "<li><b>Détails ComicVine :</b><ul>"
-            
-            # Add important links first
-            for url_field in ['album_url', 'api_detail_url', 'cover_url']:
-                if url_field in meta and meta[url_field]:
-                    formatted_value = format_display_value(meta[url_field], url_field)
-                    html += f"<li><b>{url_field.replace('_', ' ').title()}</b> : {make_links_clickable(formatted_value, url_field)}</li>"
-                    displayed_fields.add(url_field)
-            
-            # Add credits section if any credits are available
-            credit_fields = ['character_credits', 'person_credits', 'location_credits', 'concept_credits', 'team_credits']
-            available_credits = [field for field in credit_fields if field in meta and meta[field]]
-            
-            if available_credits:
-                html += "<li><b>Crédits :</b><ul>"
-                for credit_field in available_credits:
-                    if credit_field in meta and meta[credit_field]:
-                        formatted_value = format_display_value(meta[credit_field], credit_field)
-                        display_name = credit_field.replace('_credits', '').replace('_', ' ').title() + 's'
-                        if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                            html += f'<li class="sub-section"><b>{display_name} :</b><ul class="sub-list">'
-                            for item in formatted_value.get('items', []):
-                                html += f"<li>{item}</li>"
-                            html += "</ul></li>"
-                        else:
-                            html += f"<li><b>{display_name}</b> : {make_links_clickable(formatted_value, credit_field)}</li>"
-                        displayed_fields.add(credit_field)
-                html += "</ul></li>"
-            
-            # Process any details dict if present
-            details = meta.get("details")
-            if isinstance(details, dict):
-                html += "<li><b>Détails supplémentaires :</b><ul>"
-                for label, value in details.items():
-                    formatted_value = format_display_value(value, label)
-                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                        # Handle structured list data as styled sub-sections
-                        html += f'<li class="sub-section"><b>{label} :</b><ul class="sub-list">'
-                        for item in formatted_value.get('items', []):
-                            html += f"<li>{item}</li>"
-                        html += "</ul></li>"
-                    else:
-                        # Handle regular string/simple data
-                        html += f"<li><b>{label}</b> : {make_links_clickable(formatted_value, label)}</li>"
-                html += "</ul></li>"
-            
-            # Display any remaining fields that weren't in our preferred order
-            for k, v in meta.items():
-                if k not in displayed_fields and k != "details":
-                    formatted_value = format_display_value(v, k)
-                    if isinstance(formatted_value, dict) and formatted_value.get('type') == 'list':
-                        html += f'<li class="sub-section"><b>{k.replace("_", " ").title()} :</b><ul class="sub-list">'
-                        for item in formatted_value.get('items', []):
-                            html += f"<li>{item}</li>"
-                        html += "</ul></li>"
-                    else:
-                        html += f"<li><b>{k.replace('_', ' ').title()}</b> : {make_links_clickable(formatted_value, k)}</li>"
-            
-            html += "</ul></li>"
-        html += "</ul></div>"
+        # Use DetailsFormatter to generate HTML
+        html = self.details_formatter.format_metadata_to_html(meta)
         self.detail_text.setHtml(html)
+        
+        # Handle cover image loading
+        self._load_cover_image(meta)
+    
+    def _load_cover_image(self, meta):
+        """Load and display cover image from metadata."""
         img_url = meta.get('cover_url') or meta.get('image', {}).get('original_url')
         
         # Handle different URL formats for different providers
@@ -1582,6 +1246,33 @@ class ComicRenamer(QWidget):
                         print(f"[DEBUG] Failed to create QPixmap from data")
                     self.detail_image.clear()
                     return
+                
+                # Save the downloaded image to a temporary file for SafeRename optimization
+                import tempfile
+                import os
+                try:
+                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+                    temp_file.write(data)
+                    temp_file.close()
+                    
+                    # Store the local path in metadata for SafeRename to use
+                    meta['cover_local_path'] = temp_file.name
+                    if self.debug:
+                        print(f"[DEBUG] Cover image cached locally at: {temp_file.name}")
+                    
+                    # Update the album metadata in the table with the cached path
+                    current_row = self.album_table.currentRow()
+                    if current_row >= 0:
+                        current_item = self.album_table.item(current_row, 0)
+                        if current_item:
+                            current_item.setData(Qt.UserRole, meta)
+                            if self.debug:
+                                print(f"[DEBUG] Updated album metadata with cached cover path")
+                        
+                except Exception as e:
+                    if self.debug:
+                        print(f"[DEBUG] Failed to cache cover image locally: {e}")
+                    # Continue without local cache - SafeRename will download again if needed
                     
                 # Store original for future rescaling
                 self._original_cover_pixmap = pm
@@ -1602,6 +1293,134 @@ class ComicRenamer(QWidget):
                 print("[DEBUG] No cover image URL found")
             self.detail_image.clear()
 
+    def _unified_rename_file(self, file_info, meta, show_confirmation=True):
+        """
+        Unified method to rename a file with metadata.
+        Handles SafeRename, filename generation, and actual renaming.
+        
+        Args:
+            file_info (dict): File information with 'path', 'folder', 'ext' keys
+            meta (dict): Album metadata
+            show_confirmation (bool): Whether to show confirmation dialog
+            
+        Returns:
+            bool: True if rename was successful, False if cancelled or failed
+        """
+        if not meta:
+            if show_confirmation:
+                QMessageBox.critical(self, 'Error', 'Album metadata missing')
+            return False
+            
+        print(f"[DEBUG] Unified rename - Starting for: {file_info['path']}")
+        print(f"[DEBUG] Unified rename - Meta keys: {list(meta.keys()) if isinstance(meta, dict) else 'Not a dict'}")
+        
+        # Check if Safe Rename is enabled and file is PDF
+        safe_rename_enabled = self.settings.value('safe_rename', 'false') == 'true'
+        file_path = str(file_info['path'])
+        is_pdf = file_path.lower().endswith('.pdf') or file_info['ext'].lower() == 'pdf'
+        
+        print(f"[DEBUG] Unified rename - SafeRename enabled: {safe_rename_enabled}")
+        print(f"[DEBUG] Unified rename - File is PDF: {is_pdf}")
+        
+        # IMPORTANT: SafeRename BEFORE asking user confirmation
+        if safe_rename_enabled and is_pdf:
+            print(f"[DEBUG] Unified rename - Performing SafeRename check")
+            result = self._perform_safe_rename_check(file_info, meta)
+            print(f"[DEBUG] Unified rename - SafeRename result: {result}")
+            
+            if not result['proceed']:
+                print(f"[DEBUG] Unified rename - SafeRename cancelled: {result['reason']}")
+                return False  # SafeRename failed or user cancelled
+                
+        # Build new filename
+        series = meta.get('serie_name') or meta.get('series') or (meta.get('volume') or {}).get('name', '')
+        num = meta.get('album_number') or meta.get('num') or meta.get('issue_number') or ''
+        title = meta.get('album_name') or meta.get('title') or meta.get('name') or ''
+        
+        # Extract year from various date fields
+        y = ''
+        date_fields = ['date', 'parution', 'cover_date', 'year']
+        for field in date_fields:
+            date_str = meta.get(field, '')
+            if date_str:
+                import re
+                year_match = re.search(r'(\d{4})', str(date_str))
+                if year_match:
+                    y = year_match.group(1)
+                    break
+        
+        # Format number and clean strings
+        def format_num(n):
+            try:
+                n_int = int(n)
+                return f"{n_int:02d}"
+            except Exception:
+                return str(n)
+        
+        def clean(s):
+            if self.debug:
+                print(f"[DEBUG] clean() input: {repr(s)}")
+            cleaned = re.sub(r"[^\w\s'\u2019\-\_()]", '', str(s), flags=re.UNICODE).strip()
+            if self.debug:
+                print(f"[DEBUG] clean() output: {repr(cleaned)}")
+            return cleaned
+        
+        if self.debug:
+            print(f"[DEBUG] Unified rename - series: {repr(series)}")
+            print(f"[DEBUG] Unified rename - num: {repr(num)}")
+            print(f"[DEBUG] Unified rename - title: {repr(title)}")
+            print(f"[DEBUG] Unified rename - year: {repr(y)}")
+        
+        # Build filename: Serie Name - Album Number - Album Title (Year)
+        base = f"{clean(series)} - {format_num(num)} - {clean(title)}"
+        if y:
+            base += f" ({y})"
+            
+        # Ensure extension does not have a leading dot
+        ext = file_info['ext'].lstrip('.')
+        new_name = f"{base}.{ext}"
+        new_path = pathlib.Path(file_info['folder']) / new_name
+        
+        print(f"[DEBUG] Unified rename - New filename: {new_name}")
+        print(f"[DEBUG] Unified rename - New path: {new_path}")
+        
+        # Check if target file already exists
+        if new_path.exists():
+            if show_confirmation:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_already_exists", name=new_name))
+            return False
+        
+        # Ask for user confirmation if requested
+        if show_confirmation:
+            confirm = QMessageBox.question(
+                self, 
+                tr("dialogs.rename_confirmation.title"), 
+                tr("dialogs.rename_confirmation.file_message", new_name=new_name), 
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if confirm != QMessageBox.Yes:
+                print(f"[DEBUG] Unified rename - User cancelled confirmation")
+                return False
+        
+        # Perform the actual rename
+        try:
+            if not os.path.exists(str(file_info['path'])):
+                if show_confirmation:
+                    QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_not_exists", path=file_info['path']))
+                return False
+                
+            print(f"[DEBUG] Unified rename - Performing rename")
+            os.rename(str(file_info['path']), str(new_path))
+            self._load_files(file_info['folder'])
+            print(f"[DEBUG] Unified rename - Rename successful")
+            return True
+            
+        except Exception as e:
+            print(f"[DEBUG] Unified rename - Error: {e}")
+            if show_confirmation:
+                QMessageBox.critical(self, tr("messages.errors.rename_error"), str(e))
+            return False
+
     def _rename_selected(self):
         fr = self.file_table.currentRow()
         ar = self.album_table.currentRow()
@@ -1611,66 +1430,12 @@ class ComicRenamer(QWidget):
         f = self.files[fr]
         itm = self.album_table.item(ar, 0)
         meta = itm.data(Qt.UserRole) if itm else None
-        if not meta:
-            QMessageBox.critical(self, 'Error', 'Album metadata missing')
-            return
-            
-        # Check if Safe Rename is enabled and file is PDF
-        safe_rename_enabled = self.settings.value('safe_rename', 'false') == 'true'
-        file_path = str(f['path'])
-        is_pdf = file_path.lower().endswith('.pdf')
         
-        if safe_rename_enabled and is_pdf:
-            # Perform cover comparison for PDF files
-            success = self._perform_safe_rename_check(f, meta)
-            if not success:
-                return  # User cancelled or comparison failed
-                
-        # Build new filename
-        series = meta.get('serie_name') or (meta.get('volume') or {}).get('name', '')
-        num = meta.get('album_number') or meta.get('issue_number') or ''
-        title = meta.get('album_name') or meta.get('name') or ''
-        y = extract_year(meta.get('date') or meta.get('cover_date') or '')
-        # Format number on two digits if it's a number
-        def format_num(n):
-            try:
-                n_int = int(n)
-                return f"{n_int:02d}"
-            except Exception:
-                return str(n)
-        # Only keep allowed characters: unicode letters, numbers, spaces, apostrophes, hyphens, underscores, parentheses
-        def clean(s):
-            if self.debug:
-                print(f"[DEBUG] clean() input: {repr(s)}")
-            cleaned = re.sub(r"[^\w\s'\u2019\-\_()]", '', str(s), flags=re.UNICODE).strip()
-            if self.debug:
-                print(f"[DEBUG] clean() output: {repr(cleaned)}")
-            return cleaned
-        if self.debug:
-            print(f"[DEBUG] series before clean: {repr(series)}")
-            print(f"[DEBUG] num before clean: {repr(num)}")
-            print(f"[DEBUG] title before clean: {repr(title)}")
-        base = f"{clean(series)} - {format_num(num)} - {clean(title)}"
-        if y:
-            base += f" ({y})"
-        if self.debug:
-            print(f"[DEBUG] base filename after clean: {repr(base)}")
-        # Ensure extension does not have a leading dot
-        ext = f['ext'].lstrip('.')
-        new_name = f"{base}.{ext}"
-        new_path = pathlib.Path(f['folder']) / new_name
-        if new_path.exists():
-            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_already_exists", name=new_name))
-            return
-        if QMessageBox.question(self, tr("dialogs.rename_confirmation.title"), tr("dialogs.rename_confirmation.file_message", new_name=new_name), QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
-            try:
-                if not os.path.exists(str(f['path'])):
-                    QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.file_not_exists", path=f['path']))
-                    return
-                os.rename(str(f['path']), str(new_path))
-                self._load_files(f['folder'])
-            except Exception as e:
-                QMessageBox.critical(self, tr("messages.errors.rename_error"), str(e))
+        # Use unified rename method
+        if self._unified_rename_file(f, meta):
+            QMessageBox.information(self, "Renaming", "Renaming successful")
+        else:
+            QMessageBox.warning(self, "Renaming", "Renaming failed or cancelled")
 
     def _perform_safe_rename_check(self, file_info, meta):
         """
@@ -1681,17 +1446,27 @@ class ComicRenamer(QWidget):
             meta (dict): Album metadata
             
         Returns:
-            bool: True if rename should proceed, False if cancelled
+            dict: {
+                'proceed': bool,  # True if rename should proceed
+                'reason': str,    # Reason for the result
+                'user_cancelled': bool  # True if user explicitly cancelled
+            }
         """
+        print(f"[DEBUG] SafeRename - Starting check for {file_info['path']}")
+        print(f"[DEBUG] SafeRename - Meta keys: {list(meta.keys()) if isinstance(meta, dict) else 'Not a dict'}")
+        
         try:
             # Try Qt-native version first (no Poppler dependency)
             try:
                 from pdf_cover_comparator_qt import PDFCoverComparator
                 comparator_type = "Qt-native"
-            except ImportError:
+                print(f"[DEBUG] SafeRename - Using Qt-native comparator")
+            except ImportError as e:
+                print(f"[DEBUG] SafeRename - Qt-native import failed: {e}")
                 # Fallback to Poppler-based version
                 from pdf_cover_comparator import PDFCoverComparator
                 comparator_type = "Poppler-based"
+                print(f"[DEBUG] SafeRename - Using Poppler-based comparator")
             
             from cover_comparison_dialog import CoverComparisonDialog
             
@@ -1703,27 +1478,49 @@ class ComicRenamer(QWidget):
                 if not cover_url and meta.get('image'):
                     cover_url = meta.get('image', {}).get('original_url', '')
             
-            if not cover_url:
+            # Check if we have a locally cached cover image
+            local_cover_path = meta.get('cover_local_path', '')
+            if local_cover_path and os.path.exists(local_cover_path):
+                print(f"[DEBUG] SafeRename - Using cached cover image: {local_cover_path}")
+            else:
+                local_cover_path = None
+                print(f"[DEBUG] SafeRename - No cached cover, will use URL: {cover_url}")
+            
+            print(f"[DEBUG] SafeRename - Cover URL: {cover_url}")
+            
+            if not cover_url and not local_cover_path:
                 if self.debug:
-                    print("[DEBUG] No cover URL found in metadata, skipping Safe Rename check")
-                return True  # No cover to compare, proceed with rename
+                    print("[DEBUG] No cover URL or cached image found in metadata, skipping Safe Rename check")
+                return {
+                    'proceed': True,
+                    'reason': 'No cover URL or cached image available',
+                    'user_cancelled': False
+                }
             
             # Create comparator
             threshold = 0.7  # Could be made configurable in settings later
             comparator = PDFCoverComparator(ssim_threshold=threshold)
             
-            # Perform comparison
+            # Perform comparison with cached image if available
             if self.debug:
                 print(f"[DEBUG] Safe Rename ({comparator_type}): Comparing {file_info['path']} with {cover_url}")
+                if local_cover_path:
+                    print(f"[DEBUG] Safe Rename: Using cached cover image from {local_cover_path}")
                 
-            result = comparator.compare(str(file_info['path']), cover_url)
+            result = comparator.compare(str(file_info['path']), cover_url, local_cover_path)
+            
+            print(f"[DEBUG] SafeRename - Comparison result: {result}")
             
             if result['match']:
                 if self.debug:
                     print(f"[DEBUG] Safe Rename: Cover match successful (score: {result['ssim_score']:.3f})")
                 # Clean up temp files
                 comparator.cleanup_temp_files(result.get('temp_files', []))
-                return True  # Good match, proceed with rename
+                return {
+                    'proceed': True,
+                    'reason': f'Cover match (score: {result["ssim_score"]:.3f})',
+                    'user_cancelled': False
+                }
             else:
                 if self.debug:
                     print(f"[DEBUG] Safe Rename: Cover mismatch detected (score: {result['ssim_score']:.3f})")
@@ -1748,7 +1545,12 @@ class ComicRenamer(QWidget):
                 # Clean up temp files
                 comparator.cleanup_temp_files(result.get('temp_files', []))
                 
-                return user_choice == 'proceed'
+                proceed = user_choice == 'proceed'
+                return {
+                    'proceed': proceed,
+                    'reason': f'User {"approved" if proceed else "rejected"} mismatch (score: {result["ssim_score"]:.3f})',
+                    'user_cancelled': not proceed
+                }
                 
         except ImportError as e:
             if self.debug:
@@ -1759,7 +1561,11 @@ class ComicRenamer(QWidget):
                 "Safe Rename feature requires additional dependencies.\n"
                 "Please install: pip install opencv-python scikit-image"
             )
-            return True  # Proceed without check if dependencies missing
+            return {
+                'proceed': True,
+                'reason': 'Dependencies missing',
+                'user_cancelled': False
+            }
         except Exception as e:
             if self.debug:
                 print(f"[DEBUG] Safe Rename error: {e}")
@@ -1773,7 +1579,11 @@ class ComicRenamer(QWidget):
                 if skip_problematic:
                     if self.debug:
                         print(f"[DEBUG] Skipping Safe Rename for problematic PDF (user setting enabled)")
-                    return True  # Skip check and proceed with rename
+                    return {
+                        'proceed': True,
+                        'reason': 'Skipped problematic PDF',
+                        'user_cancelled': False
+                    }
                 
                 # This is a PDF-specific issue - show detailed dialog
                 reply = QMessageBox.question(
@@ -1801,7 +1611,12 @@ class ComicRenamer(QWidget):
                     QMessageBox.No
                 )
             
-            return reply == QMessageBox.Yes
+            proceed = reply == QMessageBox.Yes
+            return {
+                'proceed': proceed,
+                'reason': f'Error: {e}',
+                'user_cancelled': False  # This is a technical error, not user cancellation
+            }
 
     def _open_settings(self):
         dlg = SettingsDialog(self, self.settings)
@@ -1947,6 +1762,7 @@ class ComicRenamer(QWidget):
 
     def _update_cover_image_size(self):
         """Update cover image scaling when detail panel size changes"""
+       
         if self._original_cover_pixmap and not self._original_cover_pixmap.isNull():
             # Wait a bit for the layout to settle
             from PySide6.QtCore import QTimer
