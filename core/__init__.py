@@ -6,6 +6,10 @@ from .workers import SearchWorker
 from .folder_renamer import FolderRenamer
 from .details_formatter import DetailsFormatter
 from .album_populator import AlbumPopulator
+from .settings_manager import SettingsManager
+from .error_handler import ErrorHandler
+from .filename_generator import FilenameGenerator
+from .image_manager import ImageManager
 
 __all__ = [
     'PROVIDERS',
@@ -15,5 +19,9 @@ __all__ = [
     'SearchWorker',
     'FolderRenamer',
     'DetailsFormatter',
-    'AlbumPopulator'
+    'AlbumPopulator',
+    'SettingsManager',
+    'ErrorHandler',
+    'FilenameGenerator',
+    'ImageManager'
 ]

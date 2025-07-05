@@ -41,7 +41,7 @@ from bdgest_scraper_api import get_bdgest_series
 from core.providers import PROVIDERS
 from core.workers import SearchWorker
 from core.widgets import DroppableLineEdit, EditableFolderLineEdit
-from core import FolderRenamer, DetailsFormatter, AlbumPopulator
+from core import FolderRenamer, DetailsFormatter, AlbumPopulator, SettingsManager, ErrorHandler, FilenameGenerator, ImageManager
 
 # Import UI components  
 from ui.tables import FileTable, AlbumTable
@@ -62,14 +62,21 @@ class ComicRenamer(QWidget):
         if not app_icon.isNull():
             self.setWindowIcon(app_icon)
         
+        # Initialize new core modules
+        self.settings_manager = SettingsManager()
+        self.error_handler = ErrorHandler(parent_widget=self, debug=self.settings_manager.get_debug_mode())
+        self.filename_generator = FilenameGenerator(debug=self.settings_manager.get_debug_mode())
+        self.image_manager = ImageManager(debug=self.settings_manager.get_debug_mode())
+        
+        # Keep legacy settings for backward compatibility
         self.settings = QSettings("ComicsRename", "App")
         
-        # Initialize debug/verbose early to avoid AttributeError
-        self.debug = self.settings.value('debug', 'false') == 'true'
-        self.verbose = self.settings.value('verbose', 'false') == 'true'
+        # Get settings from new manager
+        self.debug = self.settings_manager.get_debug_mode()
+        self.verbose = self.settings_manager.get_verbose_mode()
         
         # Initialize default provider first
-        self.default_provider = str(self.settings.value("default_provider", "BDGest"))
+        self.default_provider = self.settings_manager.get_default_provider()
         
         # Initialize folder renamer
         self.folder_renamer = FolderRenamer(debug=self.debug)
