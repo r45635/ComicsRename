@@ -41,6 +41,7 @@ from bdgest_scraper_api import get_bdgest_series
 from core.providers import PROVIDERS
 from core.workers import SearchWorker
 from core.widgets import DroppableLineEdit, EditableFolderLineEdit
+from core import FolderRenamer
 
 # Import UI components  
 from ui.tables import FileTable, AlbumTable
@@ -66,6 +67,9 @@ class ComicRenamer(QWidget):
         # Initialize debug/verbose early to avoid AttributeError
         self.debug = self.settings.value('debug', 'false') == 'true'
         self.verbose = self.settings.value('verbose', 'false') == 'true'
+        
+        # Initialize folder renamer
+        self.folder_renamer = FolderRenamer(debug=self.debug)
         
         self.default_provider = self.settings.value("default_provider", "BDGest")
         self.provider_combo = QComboBox()
@@ -1837,6 +1841,7 @@ class ComicRenamer(QWidget):
             QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.no_files_in_folder"))
             return
         current_folder = pathlib.Path(self.files[0]['folder'])
+        
         # Get selected album
         ar = self.album_table.currentRow()
         if ar < 0:
@@ -1847,126 +1852,46 @@ class ComicRenamer(QWidget):
         if not meta:
             QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.album_metadata_missing"))
             return
-        # Extract serie_name
-        serie_name = meta.get('serie_name') or (meta.get('volume') or {}).get('name', '')
-        # Extract style from various possible locations
-        style = ''
-        details = meta.get('details', {})
         
-        # Try multiple field names and locations for style information
-        style_fields = ['Style', 'Genre', 'Style/Genre', 'Styles', 'Genres']
+        # Use FolderRenamer to get rename info
+        serie_name, style, new_folder_name = self.folder_renamer.get_folder_rename_info(current_folder, meta)
         
-        # First try top-level meta
-        for field in style_fields:
-            if meta.get(field):
-                style = meta.get(field)
-                break
-        
-        # Then try details dict
-        if not style and isinstance(details, dict):
-            for field in style_fields:
-                if field in details and details[field]:
-                    style = details[field]
-                    break
-            
-            # Try nested 'Détails' structure
-            if not style and 'Détails' in details and isinstance(details['Détails'], dict):
-                for field in style_fields:
-                    if field in details['Détails'] and details['Détails'][field]:
-                        style = details['Détails'][field]
-                        break
-        
-        # Finally try the original 'style' field
-        if not style:
-            style = meta.get('style', '')
-        
-        # If no style found in metadata, try to extract from current folder name
-        if not style:
-            import re
-            current_name = current_folder.name
-            
-            # Try to extract style from patterns like "[Style] Series" or "Style Series"
-            # First try bracketed style: [Style] Series
-            bracket_match = re.match(r'^\[([^\]]+)\]\s*(.+)$', current_name)
-            if bracket_match:
-                potential_style = bracket_match.group(1).strip()
-                potential_series = bracket_match.group(2).strip()
-                # Check if the series part matches our serie_name
-                if potential_series.lower() == serie_name.lower():
-                    style = potential_style
-                    if self.debug:
-                        print(f"[DEBUG] Extracted style from bracketed folder name: '{style}'")
-            
-            # If not bracketed, try "Style Series" pattern
-            if not style and serie_name:
-                # Check if folder name starts with a style followed by the series name
-                if current_name.lower().endswith(serie_name.lower()):
-                    potential_style = current_name[:-len(serie_name)].strip()
-                    # Only consider it a style if it's a reasonable length and not empty
-                    if potential_style and len(potential_style) <= 30 and not potential_style.isdigit():
-                        style = potential_style
-                        if self.debug:
-                            print(f"[DEBUG] Extracted style from folder name pattern: '{style}'")
         if not serie_name:
             QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.cannot_determine_series"))
             return
-        # Clean up names
-        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in "-_(),' ").strip()
-        style_clean = clean(style)
-        serie_clean = clean(serie_name)
-        new_folder_name = f"[{style_clean}] {serie_clean}" if style_clean else serie_clean
-        parent_dir = current_folder.parent
-
-        # DEBUG: Print current and new folder names and paths
-        if self.debug:
-            print(f"[DEBUG] current_folder: {current_folder}")
-            print(f"[DEBUG] current_folder.name: {current_folder.name}")
-            print(f"[DEBUG] serie_name: '{serie_name}'")
-            print(f"[DEBUG] extracted style: '{style}'")
-            print(f"[DEBUG] style_clean: '{style_clean}'")
-            print(f"[DEBUG] serie_clean: '{serie_clean}'")
-            print(f"[DEBUG] new_folder_name: {new_folder_name}")
-            print(f"[DEBUG] new_folder_path: {parent_dir / new_folder_name}")
-            print(f"[DEBUG] meta keys: {list(meta.keys())}")
-            print(f"[DEBUG] details keys: {list(details.keys()) if isinstance(details, dict) else 'Not a dict'}")
-            if isinstance(details, dict) and 'Détails' in details:
-                print(f"[DEBUG] nested Détails keys: {list(details['Détails'].keys()) if isinstance(details['Détails'], dict) else 'Not a dict'}")
-
-        if current_folder.name == new_folder_name:
-            if self.debug:
-                print("[DEBUG] Folder name is already the target name, aborting rename.")
-            QMessageBox.information(self, "Info", "Le dossier porte déjà ce nom.")
-            return
-
-        if style_clean and current_folder.name == serie_clean and new_folder_name != current_folder.name:
-            if self.debug:
-                print("[DEBUG] Folder is only serie name, will rename to [Style] SerieName.")
-
-        new_folder_path = parent_dir / new_folder_name
-        if new_folder_path.exists():
-            if self.debug:
-                print("[DEBUG] Target folder already exists, aborting rename.")
-            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_folder_name))
-            return
-
+        
+        # Print debug info
+        self.folder_renamer.debug_info(current_folder, serie_name, style, new_folder_name, meta)
+        
+        # Validate the rename
+        is_valid, reason = self.folder_renamer.validate_rename(current_folder, new_folder_name)
+        if not is_valid:
+            if reason == "Folder name is already the target name":
+                QMessageBox.information(self, "Info", "Le dossier porte déjà ce nom.")
+                return
+            elif "already exists" in reason:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_folder_name))
+                return
+            else:
+                QMessageBox.critical(self, tr("messages.errors.error"), reason)
+                return
+        
+        # Confirm the rename operation
         if QMessageBox.question(
             self,
             tr("messages.errors.rename_folder_title"),
             tr("dialogs.rename_confirmation.folder_message", old_name=current_folder.name, new_name=new_folder_name),
             QMessageBox.Yes | QMessageBox.No
         ) == QMessageBox.Yes:
-            try:
-                if self.debug:
-                    print(f"[DEBUG] Renaming {current_folder} -> {new_folder_path}")
-                os.rename(str(current_folder), str(new_folder_path))
-                # NE PAS mettre à jour last_folder - garder l'ancien chemin pour la logique de fallback
-                # self.settings.setValue('last_folder', str(new_folder_path))  # Supprimé
+            # Perform the rename
+            success, error_msg, new_folder_path = self.folder_renamer.perform_rename(current_folder, new_folder_name)
+            
+            if success:
+                # Reload files from the new location
                 self._load_files(str(new_folder_path))
                 QMessageBox.information(self, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=new_folder_name))
-            except Exception as e:
-                if self.debug:
-                    print(f"[DEBUG] Exception during rename: {e}")
-                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=str(e)))
+            else:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=error_msg))
 
     def _confirm_and_rename_folder(self, old_name, new_name):
         """Handle folder rename from direct editing of folder name"""
@@ -1975,23 +1900,24 @@ class ComicRenamer(QWidget):
             return False
             
         current_folder = pathlib.Path(self.files[0]['folder'])
-        parent_dir = current_folder.parent
         
-        # Clean up the new name to prevent filesystem issues but allow brackets for style formatting
-        clean = lambda s: ''.join(c for c in str(s) if c.isalnum() or c in "-_(),' []").strip()
-        new_name_clean = clean(new_name)
+        # Clean up the new name using FolderRenamer
+        new_name_clean = self.folder_renamer.clean_folder_name(new_name)
         
         if not new_name_clean:
             QMessageBox.warning(self, tr("messages.errors.error"), "Le nouveau nom de dossier ne peut pas être vide.")
             return False
-            
-        new_folder_path = parent_dir / new_name_clean
         
-        # Check if target folder already exists
-        if new_folder_path.exists():
-            QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_name_clean))
-            return False
-            
+        # Validate the rename
+        is_valid, reason = self.folder_renamer.validate_rename(current_folder, new_name_clean)
+        if not is_valid:
+            if "already exists" in reason:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_name_clean))
+                return False
+            else:
+                QMessageBox.critical(self, tr("messages.errors.error"), reason)
+                return False
+        
         # Confirm the rename operation
         if QMessageBox.question(
             self,
@@ -1999,18 +1925,16 @@ class ComicRenamer(QWidget):
             tr("dialogs.rename_confirmation.folder_message", old_name=old_name, new_name=new_name_clean),
             QMessageBox.Yes | QMessageBox.No
         ) == QMessageBox.Yes:
-            try:
-                if self.debug:
-                    print(f"[DEBUG] Direct rename: {current_folder} -> {new_folder_path}")
-                os.rename(str(current_folder), str(new_folder_path))
-                # NE PAS mettre à jour last_folder - garder l'ancien chemin pour la logique de fallback
+            # Perform the rename
+            success, error_msg, new_folder_path = self.folder_renamer.perform_rename(current_folder, new_name_clean)
+            
+            if success:
+                # Reload files from the new location
                 self._load_files(str(new_folder_path))
                 QMessageBox.information(self, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=new_name_clean))
                 return True
-            except Exception as e:
-                if self.debug:
-                    print(f"[DEBUG] Exception during direct rename: {e}")
-                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=str(e)))
+            else:
+                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=error_msg))
                 return False
         else:
             return False  # User cancelled
