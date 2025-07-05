@@ -41,7 +41,11 @@ from bdgest_scraper_api import get_bdgest_series
 from core.providers import PROVIDERS
 from core.workers import SearchWorker
 from core.widgets import DroppableLineEdit, EditableFolderLineEdit
-from core import FolderRenamer, DetailsFormatter, AlbumPopulator, SettingsManager, ErrorHandler, FilenameGenerator, ImageManager
+from core import (
+    FolderRenamer, DetailsFormatter, AlbumPopulator, 
+    SettingsManager, ErrorHandler, FilenameGenerator, 
+    ImageManager, SafeRenameManager
+)
 
 # Import UI components  
 from ui.tables import FileTable, AlbumTable
@@ -67,6 +71,12 @@ class ComicRenamer(QWidget):
         self.error_handler = ErrorHandler(parent_widget=self, debug=self.settings_manager.get_debug_mode())
         self.filename_generator = FilenameGenerator(debug=self.settings_manager.get_debug_mode())
         self.image_manager = ImageManager(debug=self.settings_manager.get_debug_mode())
+        self.safe_rename_manager = SafeRenameManager(
+            self.settings_manager, 
+            self.error_handler, 
+            self.image_manager,
+            debug=self.settings_manager.get_debug_mode()
+        )
         
         # Keep legacy settings for backward compatibility
         self.settings = QSettings("ComicsRename", "App")
@@ -119,7 +129,7 @@ class ComicRenamer(QWidget):
 
         # Recharge automatiquement le dernier dossier utilisé
         last_folder = self.settings.value("last_folder", "")
-        if last_folder:
+        if last_folder and isinstance(last_folder, str):
             # D'abord essayer le chemin exact tel qu'il est stocké
             if pathlib.Path(last_folder).exists():
                 self._load_files(last_folder)
@@ -131,7 +141,7 @@ class ComicRenamer(QWidget):
     def keyPressEvent(self, event):
         """Handle key press events - Escape cancels search"""
         from PySide6.QtCore import Qt
-        if event.key() == Qt.Key_Escape and self._search_in_progress:
+        if event.key() == Qt.Key.Key_Escape and self._search_in_progress:
             # Cancel search with Escape key
             self._search_cancelled = True
             self._restore_search_ui()
@@ -166,7 +176,7 @@ class ComicRenamer(QWidget):
             ctrl.addWidget(w)
         layout.addLayout(ctrl)
 
-        splitter_main = QSplitter(Qt.Horizontal)
+        splitter_main = QSplitter(Qt.Orientation.Horizontal)
 
         # --- Folder display ---
         file_panel = QWidget()
@@ -191,7 +201,7 @@ class ComicRenamer(QWidget):
         splitter_main.addWidget(file_panel)
         # --- End block ---
 
-        splitter_right = QSplitter(Qt.Vertical)
+        splitter_right = QSplitter(Qt.Orientation.Vertical)
         alb_widget = QWidget()
         alb_layout = QVBoxLayout(alb_widget)
         self.series_combo = QComboBox()
@@ -213,7 +223,7 @@ class ComicRenamer(QWidget):
         
         # Configure QTextBrowser for better link handling and styling
         self.detail_text.setTextInteractionFlags(
-            Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard | Qt.LinksAccessibleByMouse
+            Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard | Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
         # QTextBrowser has built-in support for opening external links
         self.detail_text.setOpenExternalLinks(True)
@@ -222,13 +232,13 @@ class ComicRenamer(QWidget):
         self.detail_image = QLabel()
         # Configure image label to be responsive and centered
         self.detail_image.setScaledContents(False)  # Don't force scaling to fill
-        self.detail_image.setAlignment(Qt.AlignCenter)  # Center the image
+        self.detail_image.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center the image
         self.detail_image.setMinimumSize(50, 50)  # Small minimum size
         self.detail_image.setMaximumSize(300, 400)  # Reasonable maximum
         self.detail_image.setSizePolicy(self.detail_image.sizePolicy().horizontalPolicy(), 
                                        self.detail_image.sizePolicy().verticalPolicy())
         # Make cover image clickable for Amazon search
-        self.detail_image.setCursor(Qt.PointingHandCursor)
+        self.detail_image.setCursor(Qt.CursorShape.PointingHandCursor)
         self.detail_image.mousePressEvent = self._on_cover_image_clicked
         
         # Add both sections to the albums management area
@@ -267,15 +277,15 @@ class ComicRenamer(QWidget):
 
     def _adjust_table_columns(self):
         # Adjust file_table: set 'Name' column to fit contents, others to reasonable defaults
-        self.file_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.file_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
-        self.file_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Interactive)
-        self.file_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Interactive)
+        self.file_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.file_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
+        self.file_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        self.file_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
         # Optionally, set minimum width for 'Name' column
         self.file_table.setColumnWidth(0, max(200, self.file_table.sizeHintForColumn(0)))
 
         # Adjust album_table: single column stretches to fill available space
-        self.album_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.album_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
 
     def _restore_session(self):
         folder = self.settings.value('last_folder','')
@@ -287,7 +297,7 @@ class ComicRenamer(QWidget):
         if ac:
             self.album_table.setColumnWidth(0,int(ac))
         # Note: debug/verbose are now initialized earlier in __init__
-        if folder:
+        if folder and isinstance(folder, str):
             # D'abord essayer le chemin exact tel qu'il est stocké
             if pathlib.Path(folder).exists():
                 self._load_files(folder)
@@ -335,7 +345,7 @@ class ComicRenamer(QWidget):
         # Scale the image maintaining aspect ratio
         scaled_pixmap = pixmap.scaled(
             new_width, new_height, 
-            Qt.KeepAspectRatio, Qt.SmoothTransformation
+            Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
         )
         
         return scaled_pixmap
@@ -364,10 +374,10 @@ class ComicRenamer(QWidget):
         msg = QMessageBox(self)
         msg.setWindowTitle("Sélection du dossier")
         msg.setText("Où souhaitez-vous commencer la navigation ?")
-        btn_volumes = msg.addButton("Disques externes (/Volumes)", QMessageBox.ActionRole)
-        btn_last = msg.addButton("Dernier dossier utilisé", QMessageBox.ActionRole)
-        btn_home = msg.addButton("Dossier personnel", QMessageBox.ActionRole)
-        btn_cancel = msg.addButton(QMessageBox.Cancel)
+        btn_volumes = msg.addButton("Disques externes (/Volumes)", QMessageBox.ButtonRole.ActionRole)
+        btn_last = msg.addButton("Dernier dossier utilisé", QMessageBox.ButtonRole.ActionRole)
+        btn_home = msg.addButton("Dossier personnel", QMessageBox.ButtonRole.ActionRole)
+        btn_cancel = msg.addButton(QMessageBox.StandardButton.Cancel)
         msg.exec()
         if msg.clickedButton() == btn_volumes:
             start_dir = "/Volumes"
@@ -383,9 +393,9 @@ class ComicRenamer(QWidget):
             return  # Cancelled
 
         dialog = QFileDialog(self, 'Select Folder', start_dir)
-        dialog.setFileMode(QFileDialog.Directory)
-        dialog.setOption(QFileDialog.ShowDirsOnly, True)
-        dialog.setOption(QFileDialog.DontUseNativeDialog, True)  # <-- This enables the "Up" button
+        dialog.setFileMode(QFileDialog.FileMode.Directory)
+        dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
+        dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # <-- This enables the "Up" button
         if dialog.exec():
             folders = dialog.selectedFiles()
             if folders:
@@ -574,7 +584,7 @@ class ComicRenamer(QWidget):
                     self.series_combo.addItem(series_name)
                     idx = self.series_combo.count() - 1
                     # Store the full series data for later use
-                    self.series_combo.setItemData(idx, series, Qt.UserRole)
+                    self.series_combo.setItemData(idx, series, Qt.ItemDataRole.UserRole)
                     
                 # Process UI events to allow cancellation
                 QApplication.processEvents()
@@ -765,7 +775,7 @@ class ComicRenamer(QWidget):
                     if s and s not in series_seen:
                         self.series_combo.addItem(s)
                         idx = self.series_combo.count() - 1
-                        self.series_combo.setItemData(idx, serie_id, Qt.UserRole)
+                        self.series_combo.setItemData(idx, serie_id, Qt.ItemDataRole.UserRole)
                         series_seen.add(s)
                         
                     # Process UI events periodically
@@ -843,7 +853,7 @@ class ComicRenamer(QWidget):
             return
             
         # Debug output
-        debug = self.debug_cb.isChecked() if hasattr(self, 'debug_cb') else False
+        debug = self.settings_manager.get_debug_mode()
         if debug:
             print(f"[DEBUG][UI] _populate_albums called with series: '{txt}' (provider: {self._source})")
             
@@ -875,7 +885,7 @@ class ComicRenamer(QWidget):
                     print(f"[DEBUG][UI] Looking for series '{txt}' in dropdown - found at index {series_index}")
                 
                 if series_index >= 0:
-                    series_data = self.series_combo.itemData(series_index, Qt.UserRole)
+                    series_data = self.series_combo.itemData(series_index, Qt.ItemDataRole.UserRole)
                     if debug:
                         print(f"[DEBUG][UI] Found series data: {series_data is not None}")
                     if series_data:
@@ -930,8 +940,8 @@ class ComicRenamer(QWidget):
                                 self.detail_text.setHtml(html.replace("<i>Récupération des issues...</i>", "<i>Récupération des issues en cours...</i>"))
                                 QApplication.processEvents()  # Allow UI update and cancellation
                                 
-                                debug = self.debug_cb.isChecked() if hasattr(self, 'debug_cb') else False
-                                verbose = self.verbose_cb.isChecked() if hasattr(self, 'verbose_cb') else False
+                                debug = self.settings_manager.get_debug_mode()
+                                verbose = self.settings_manager.get_verbose_mode()
                                 
                                 # Use ComicVine provider to get volume issues
                                 provider = PROVIDERS[self._source]
@@ -952,7 +962,7 @@ class ComicRenamer(QWidget):
                                     y = (issue.get('cover_date') or '')[:4]
                                     val = f"{series_name} - {n_fmt} - {t} ({y})"
                                     itm = QTableWidgetItem(val)
-                                    itm.setData(Qt.UserRole, issue)
+                                    itm.setData(Qt.ItemDataRole.UserRole, issue)
                                     self.album_table.setItem(r, 0, itm)
                                 
                                 # Update details with success message
@@ -976,7 +986,7 @@ class ComicRenamer(QWidget):
                         y = (it.get('cover_date') or '')[:4]
                         val = f"{series} - {n_fmt} - {t} ({y})"
                         itm = QTableWidgetItem(val)
-                        itm.setData(Qt.UserRole, it)
+                        itm.setData(Qt.ItemDataRole.UserRole, it)
                         self.album_table.setItem(r, 0, itm)
         else:  # BDGest
             # Check if we're in series mode (SeriesName checkbox checked)
@@ -984,7 +994,7 @@ class ComicRenamer(QWidget):
                 # In series mode - fetch and display albums for the selected series
                 current_index = self.series_combo.currentIndex()
                 if current_index >= 0:
-                    series_data = self.series_combo.itemData(current_index, Qt.UserRole)
+                    series_data = self.series_combo.itemData(current_index, Qt.ItemDataRole.UserRole)
                     if series_data:
                         series_id = series_data.get('serie_id') or series_data.get('id')
                         series_name = series_data.get('serie_name') or series_data.get('label') or series_data.get('value')
@@ -1050,8 +1060,8 @@ class ComicRenamer(QWidget):
                                 self.detail_text.setHtml(html.replace("<i>Récupération des albums...</i>", "<i>Récupération des albums en cours...</i>"))
                                 QApplication.processEvents()  # Allow UI update and cancellation
                                 
-                                debug = self.debug_cb.isChecked() if hasattr(self, 'debug_cb') else False
-                                verbose = self.verbose_cb.isChecked() if hasattr(self, 'verbose_cb') else False
+                                debug = self.settings_manager.get_debug_mode()
+                                verbose = self.settings_manager.get_verbose_mode()
                                 albums = provider.search_albums_by_series_id(series_id, series_name, debug=debug, verbose=verbose)
                                 
                                 # Check for cancellation after fetching
@@ -1092,7 +1102,7 @@ class ComicRenamer(QWidget):
                                         y = extract_year(alb.get('date', '') or alb.get('dateAlbum', ''))
                                         val = f"{s} - {n_fmt} - {t} ({y})"
                                         itm = QTableWidgetItem(val)
-                                        itm.setData(Qt.UserRole, alb)
+                                        itm.setData(Qt.ItemDataRole.UserRole, alb)
                                         self.album_table.setItem(r, 0, itm)
                                         # Note: Don't set series_cover_url here - each album has its own cover
                                         
@@ -1182,19 +1192,19 @@ class ComicRenamer(QWidget):
                     y = extract_year(alb.get('date', '') or alb.get('dateAlbum', ''))
                     val = f"{s} - {n_fmt} - {t} ({y})"
                     itm = QTableWidgetItem(val)
-                    itm.setData(Qt.UserRole, alb)
+                    itm.setData(Qt.ItemDataRole.UserRole, alb)
                     self.album_table.setItem(r, 0, itm)
                     # Note: Don't set series_cover_url here - each album has its own cover
         if self.folder_rename_btn is not None:
             self.folder_rename_btn.setEnabled(False)  # Disable when repopulating albums
         # Adjust album table column after populating
-        self.album_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.album_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
 
     def _show_details(self, r, c):
         if self.debug:
             print(f"[DEBUG] _show_details called for row {r}, col {c}")
         itm = self.album_table.item(r, 0)
-        meta = itm.data(Qt.UserRole) if itm else None
+        meta = itm.data(Qt.ItemDataRole.UserRole) if itm else None
         
         if not meta:
             # Clear the details and image when no metadata
@@ -1223,81 +1233,54 @@ class ComicRenamer(QWidget):
         self._load_cover_image(meta)
     
     def _load_cover_image(self, meta):
-        """Load and display cover image from metadata."""
+        """Load and display cover image from metadata using ImageManager."""
         img_url = meta.get('cover_url') or meta.get('image', {}).get('original_url')
         
-        # Handle different URL formats for different providers
-        if img_url:
-            # BDGest URLs start with '/' and need domain prepended
-            if img_url.startswith('/'):
-                img_url = 'https://www.bedetheque.com' + img_url
-            # Comic Vine URLs are already complete URLs (start with http)
-            # No modification needed for Comic Vine URLs
+        if not img_url:
+            if self.debug:
+                print("[DEBUG] No cover image URL found")
+            self.detail_image.clear()
+            return
         
-        if img_url:
-            try:
-                if self.debug:
-                    print(f"[DEBUG] Loading cover image from: {img_url}")
-                # Add headers to prevent caching issues
-                headers = {
-                    'User-Agent': 'ComicsRename/3.2',
-                    'Cache-Control': 'no-cache'
-                }
-                data = requests.get(img_url, timeout=10, headers=headers).content
-                pm = QPixmap()
-                pm.loadFromData(data)
+        try:
+            # Use ImageManager to load and cache the image
+            provider = self.settings_manager.get_default_provider().lower()
+            pixmap, cached_path = self.image_manager.load_and_cache_cover(img_url, meta, provider)
+            
+            if pixmap and not pixmap.isNull():
+                # Update album metadata in the table with the cached path
+                current_row = self.album_table.currentRow()
+                if current_row >= 0:
+                    current_item = self.album_table.item(current_row, 0)
+                    if current_item:
+                        # Use proper Qt enum access
+                        from PySide6.QtCore import Qt
+                        current_item.setData(Qt.ItemDataRole.UserRole, meta)
+                        if self.debug:
+                            print(f"[DEBUG] Updated album metadata with cached cover path")
                 
-                # Ensure we have a valid image
-                if pm.isNull():
-                    if self.debug:
-                        print(f"[DEBUG] Failed to create QPixmap from data")
-                    self.detail_image.clear()
-                    return
-                
-                # Save the downloaded image to a temporary file for SafeRename optimization
-                import tempfile
-                import os
-                try:
-                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-                    temp_file.write(data)
-                    temp_file.close()
-                    
-                    # Store the local path in metadata for SafeRename to use
-                    meta['cover_local_path'] = temp_file.name
-                    if self.debug:
-                        print(f"[DEBUG] Cover image cached locally at: {temp_file.name}")
-                    
-                    # Update the album metadata in the table with the cached path
-                    current_row = self.album_table.currentRow()
-                    if current_row >= 0:
-                        current_item = self.album_table.item(current_row, 0)
-                        if current_item:
-                            current_item.setData(Qt.UserRole, meta)
-                            if self.debug:
-                                print(f"[DEBUG] Updated album metadata with cached cover path")
-                        
-                except Exception as e:
-                    if self.debug:
-                        print(f"[DEBUG] Failed to cache cover image locally: {e}")
-                    # Continue without local cache - SafeRename will download again if needed
-                    
                 # Store original for future rescaling
-                self._original_cover_pixmap = pm
+                self._original_cover_pixmap = pixmap
+                
                 # Scale to fit available space while maintaining aspect ratio
-                scaled_pm = self._scale_image_to_fit(pm)
+                scaled_pm = self.image_manager.scale_image_to_fit(pixmap)
                 self.detail_image.setPixmap(scaled_pm)
+                
                 # Force update to ensure the new image is displayed
                 self.detail_image.update()
                 self.detail_image.repaint()
-                QApplication.processEvents()
+                
                 if self.debug:
-                    print(f"[DEBUG] Cover image loaded successfully, size: {pm.width()}x{pm.height()}")
-            except Exception as e:
-                print(f"[ERROR] Image load failed for URL {img_url}: {e}")
+                    print(f"[DEBUG] Cover image loaded successfully, size: {pixmap.width()}x{pixmap.height()}")
+                    if cached_path:
+                        print(f"[DEBUG] Cover image cached at: {cached_path}")
+            else:
+                if self.debug:
+                    print(f"[DEBUG] Failed to load cover image from: {img_url}")
                 self.detail_image.clear()
-        else:
-            if self.debug:
-                print("[DEBUG] No cover image URL found")
+                
+        except Exception as e:
+            self.error_handler.log_error(f"Image load failed for URL {img_url}", e)
             self.detail_image.clear()
 
     def _unified_rename_file(self, file_info, meta, show_confirmation=True):
@@ -1403,9 +1386,9 @@ class ComicRenamer(QWidget):
                 self, 
                 tr("dialogs.rename_confirmation.title"), 
                 tr("dialogs.rename_confirmation.file_message", new_name=new_name), 
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
-            if confirm != QMessageBox.Yes:
+            if confirm != QMessageBox.StandardButton.Yes:
                 print(f"[DEBUG] Unified rename - User cancelled confirmation")
                 return False
         
@@ -1436,7 +1419,7 @@ class ComicRenamer(QWidget):
             return
         f = self.files[fr]
         itm = self.album_table.item(ar, 0)
-        meta = itm.data(Qt.UserRole) if itm else None
+        meta = itm.data(Qt.ItemDataRole.UserRole) if itm else None
         
         # Use unified rename method
         if self._unified_rename_file(f, meta):
@@ -1447,6 +1430,7 @@ class ComicRenamer(QWidget):
     def _perform_safe_rename_check(self, file_info, meta):
         """
         Perform Safe Rename check by comparing PDF cover with album cover.
+        Uses the new SafeRenameManager for all logic.
         
         Args:
             file_info (dict): File information
@@ -1459,171 +1443,7 @@ class ComicRenamer(QWidget):
                 'user_cancelled': bool  # True if user explicitly cancelled
             }
         """
-        print(f"[DEBUG] SafeRename - Starting check for {file_info['path']}")
-        print(f"[DEBUG] SafeRename - Meta keys: {list(meta.keys()) if isinstance(meta, dict) else 'Not a dict'}")
-        
-        try:
-            # Try Qt-native version first (no Poppler dependency)
-            try:
-                from pdf_cover_comparator_qt import PDFCoverComparator
-                comparator_type = "Qt-native"
-                print(f"[DEBUG] SafeRename - Using Qt-native comparator")
-            except ImportError as e:
-                print(f"[DEBUG] SafeRename - Qt-native import failed: {e}")
-                # Fallback to Poppler-based version
-                from pdf_cover_comparator import PDFCoverComparator
-                comparator_type = "Poppler-based"
-                print(f"[DEBUG] SafeRename - Using Poppler-based comparator")
-            
-            from cover_comparison_dialog import CoverComparisonDialog
-            
-            # Get cover URL from metadata
-            cover_url = meta.get('cover_url', '')
-            if not cover_url:
-                # Try alternative fields
-                cover_url = meta.get('image_url', '')
-                if not cover_url and meta.get('image'):
-                    cover_url = meta.get('image', {}).get('original_url', '')
-            
-            # Check if we have a locally cached cover image
-            local_cover_path = meta.get('cover_local_path', '')
-            if local_cover_path and os.path.exists(local_cover_path):
-                print(f"[DEBUG] SafeRename - Using cached cover image: {local_cover_path}")
-            else:
-                local_cover_path = None
-                print(f"[DEBUG] SafeRename - No cached cover, will use URL: {cover_url}")
-            
-            print(f"[DEBUG] SafeRename - Cover URL: {cover_url}")
-            
-            if not cover_url and not local_cover_path:
-                if self.debug:
-                    print("[DEBUG] No cover URL or cached image found in metadata, skipping Safe Rename check")
-                return {
-                    'proceed': True,
-                    'reason': 'No cover URL or cached image available',
-                    'user_cancelled': False
-                }
-            
-            # Create comparator
-            threshold = 0.7  # Could be made configurable in settings later
-            comparator = PDFCoverComparator(ssim_threshold=threshold)
-            
-            # Perform comparison with cached image if available
-            if self.debug:
-                print(f"[DEBUG] Safe Rename ({comparator_type}): Comparing {file_info['path']} with {cover_url}")
-                if local_cover_path:
-                    print(f"[DEBUG] Safe Rename: Using cached cover image from {local_cover_path}")
-                
-            result = comparator.compare(str(file_info['path']), cover_url, local_cover_path)
-            
-            print(f"[DEBUG] SafeRename - Comparison result: {result}")
-            
-            if result['match']:
-                if self.debug:
-                    print(f"[DEBUG] Safe Rename: Cover match successful (score: {result['ssim_score']:.3f})")
-                # Clean up temp files
-                comparator.cleanup_temp_files(result.get('temp_files', []))
-                return {
-                    'proceed': True,
-                    'reason': f'Cover match (score: {result["ssim_score"]:.3f})',
-                    'user_cancelled': False
-                }
-            else:
-                if self.debug:
-                    print(f"[DEBUG] Safe Rename: Cover mismatch detected (score: {result['ssim_score']:.3f})")
-                
-                # Show comparison dialog
-                file_name = os.path.basename(file_info['path'])
-                album_name = meta.get('album_name') or meta.get('name') or 'Unknown Album'
-                
-                dialog = CoverComparisonDialog(
-                    parent=self,
-                    pdf_image_path=result.get('pdf_image_path'),
-                    cover_image_path=result.get('cover_image_path'),
-                    ssim_score=result['ssim_score'],
-                    threshold=threshold,
-                    file_name=file_name,
-                    album_name=album_name
-                )
-                
-                dialog.exec()
-                user_choice = dialog.get_user_choice()
-                
-                # Clean up temp files
-                comparator.cleanup_temp_files(result.get('temp_files', []))
-                
-                proceed = user_choice == 'proceed'
-                return {
-                    'proceed': proceed,
-                    'reason': f'User {"approved" if proceed else "rejected"} mismatch (score: {result["ssim_score"]:.3f})',
-                    'user_cancelled': not proceed
-                }
-                
-        except ImportError as e:
-            if self.debug:
-                print(f"[DEBUG] Safe Rename dependencies not available: {e}")
-            QMessageBox.warning(
-                self, 
-                "Safe Rename Unavailable", 
-                "Safe Rename feature requires additional dependencies.\n"
-                "Please install: pip install opencv-python scikit-image"
-            )
-            return {
-                'proceed': True,
-                'reason': 'Dependencies missing',
-                'user_cancelled': False
-            }
-        except Exception as e:
-            if self.debug:
-                print(f"[DEBUG] Safe Rename error: {e}")
-            
-            # Check if user wants to skip problematic PDFs
-            skip_problematic = self.settings.value('skip_problematic_pdfs', 'false') == 'true'
-            
-            # Check if this is a PDF loading issue
-            error_msg = str(e)
-            if "Failed to load PDF" in error_msg or "Failed to extract first page" in error_msg:
-                if skip_problematic:
-                    if self.debug:
-                        print(f"[DEBUG] Skipping Safe Rename for problematic PDF (user setting enabled)")
-                    return {
-                        'proceed': True,
-                        'reason': 'Skipped problematic PDF',
-                        'user_cancelled': False
-                    }
-                
-                # This is a PDF-specific issue - show detailed dialog
-                reply = QMessageBox.question(
-                    self,
-                    "PDF Loading Issue",
-                    f"Cannot verify PDF cover due to file format issues:\n\n"
-                    f"{error_msg}\n\n"
-                    f"This can happen with:\n"
-                    f"• Password-protected PDFs\n"
-                    f"• Corrupted PDF files\n"
-                    f"• Unsupported PDF formats\n"
-                    f"• Files with special security features\n\n"
-                    f"Would you like to proceed with the rename anyway?\n\n"
-                    f"💡 Tip: You can disable Safe Rename for problematic PDFs in Settings",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
-                )
-            else:
-                # Generic error
-                reply = QMessageBox.question(
-                    self,
-                    "Safe Rename Error",
-                    f"Cover comparison failed: {e}\n\nProceed with rename anyway?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
-                )
-            
-            proceed = reply == QMessageBox.Yes
-            return {
-                'proceed': proceed,
-                'reason': f'Error: {e}',
-                'user_cancelled': False  # This is a technical error, not user cancellation
-            }
+        return self.safe_rename_manager.check_rename_safety(file_info, meta)
 
     def _open_settings(self):
         dlg = SettingsDialog(self, self.settings)
@@ -1635,14 +1455,15 @@ class ComicRenamer(QWidget):
             
             # Met à jour le selector après modification des paramètres
             new_provider = self.settings.value("default_provider", "BDGest")
-            idx = self.provider_combo.findText(new_provider)
-            if idx >= 0:
-                self.provider_combo.setCurrentIndex(idx)
-            # Update the search source selector as well
-            idx2 = self.source_combo.findText(new_provider)
-            if idx2 >= 0:
-                self.source_combo.setCurrentIndex(idx2)
-            self.default_provider = new_provider
+            if isinstance(new_provider, str):
+                idx = self.provider_combo.findText(new_provider)
+                if idx >= 0:
+                    self.provider_combo.setCurrentIndex(idx)
+                # Update the search source selector as well
+                idx2 = self.source_combo.findText(new_provider)
+                if idx2 >= 0:
+                    self.source_combo.setCurrentIndex(idx2)
+                self.default_provider = new_provider
 
     def _update_folder_display(self, selected, deselected):
         rows = self.file_table.selectionModel().selectedRows()
@@ -1652,7 +1473,9 @@ class ComicRenamer(QWidget):
             self.folder_display.setText(os.path.basename(folder.rstrip('/\\')))
         else:
             # If nothing selected, show root folder name
-            self.folder_display.setText(os.path.basename(self.settings.value('last_folder', '').rstrip('/\\')))
+            last_folder = self.settings.value('last_folder', '')
+            if isinstance(last_folder, str):
+                self.folder_display.setText(os.path.basename(last_folder.rstrip('/\\')))
         
         # Update rename button state based on both file and album selections
         self._update_rename_button_state()
@@ -1670,7 +1493,7 @@ class ComicRenamer(QWidget):
             QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.no_album_selected"))
             return
         itm = self.album_table.item(ar, 0)
-        meta = itm.data(Qt.UserRole) if itm else None
+        meta = itm.data(Qt.ItemDataRole.UserRole) if itm else None
         if not meta:
             QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.album_metadata_missing"))
             return
@@ -1703,8 +1526,8 @@ class ComicRenamer(QWidget):
             self,
             tr("messages.errors.rename_folder_title"),
             tr("dialogs.rename_confirmation.folder_message", old_name=current_folder.name, new_name=new_folder_name),
-            QMessageBox.Yes | QMessageBox.No
-        ) == QMessageBox.Yes:
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        ) == QMessageBox.StandardButton.Yes:
             # Perform the rename
             success, error_msg, new_folder_path = self.folder_renamer.perform_rename(current_folder, new_folder_name)
             
@@ -1745,8 +1568,8 @@ class ComicRenamer(QWidget):
             self,
             tr("messages.errors.rename_folder_title"),
             tr("dialogs.rename_confirmation.folder_message", old_name=old_name, new_name=new_name_clean),
-            QMessageBox.Yes | QMessageBox.No
-        ) == QMessageBox.Yes:
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        ) == QMessageBox.StandardButton.Yes:
             # Perform the rename
             success, error_msg, new_folder_path = self.folder_renamer.perform_rename(current_folder, new_name_clean)
             
@@ -1925,7 +1748,7 @@ class ComicRenamer(QWidget):
 
     def _on_cover_image_clicked(self, event):
         """Handle click on cover image to search Amazon"""
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             # Get current album metadata
             selected_rows = self.album_table.selectionModel().selectedRows()
             if not selected_rows:
@@ -1936,7 +1759,7 @@ class ComicRenamer(QWidget):
             if not item:
                 return
             
-            meta = item.data(Qt.UserRole)
+            meta = item.data(Qt.ItemDataRole.UserRole)
             if not meta:
                 return
             

@@ -10,6 +10,7 @@ from .settings_manager import SettingsManager
 from .error_handler import ErrorHandler
 from .filename_generator import FilenameGenerator
 from .image_manager import ImageManager
+from .safe_rename_manager import SafeRenameManager
 
 __all__ = [
     'PROVIDERS',
@@ -23,5 +24,6 @@ __all__ = [
     'SettingsManager',
     'ErrorHandler',
     'FilenameGenerator',
-    'ImageManager'
+    'ImageManager',
+    'SafeRenameManager'
 ]
