@@ -187,7 +187,7 @@ class PDFCoverComparator:
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
             temp_file.close()
             
-            if not rendered_image.save(temp_file.name, "PNG"):
+            if not rendered_image.save(temp_file.name, b"PNG"):
                 raise Exception("Failed to save rendered page")
             
             return temp_file.name
@@ -256,10 +256,15 @@ class PDFCoverComparator:
             img_pdf = self._load_and_resize(extracted_cover)
             img_cover = self._load_and_resize(cover_path)
             score = ssim(img_pdf, img_cover)
+            # If ssim returns a tuple (score, diff), extract the score
+            if isinstance(score, tuple):
+                score_value = score[0]
+            else:
+                score_value = score
 
             return {
-                "ssim_score": score,
-                "match": score > self.threshold,
+                "ssim_score": score_value,
+                "match": score_value > self.threshold,
                 "pdf_image_path": extracted_cover,
                 "cover_image_path": cover_path,
                 "temp_files": temp_files  # For cleanup by caller
