@@ -187,7 +187,7 @@ class PDFCoverComparator:
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
             temp_file.close()
             
-            if not rendered_image.save(temp_file.name, b"PNG"):
+            if not rendered_image.save(temp_file.name):
                 raise Exception("Failed to save rendered page")
             
             return temp_file.name

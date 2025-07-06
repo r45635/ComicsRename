@@ -113,8 +113,11 @@ class SafeRenameManager:
         file_path = file_info.get('path', '')
         ext = file_info.get('ext', '')
         
+        # Ensure file_path is a string for comparison
+        file_path_str = str(file_path) if file_path else ''
+        
         return (
-            file_path.lower().endswith('.pdf') or
+            file_path_str.lower().endswith('.pdf') or
             ext.lower() in ['pdf', '.pdf']
         )
     
@@ -127,7 +130,25 @@ class SafeRenameManager:
         if cache_key in self._comparator_cache:
             return self._comparator_cache[cache_key]
         
-        # Try Qt-native version first
+        # Try enhanced comparator first (if enabled)
+        use_enhanced = str(self.settings_manager.settings.value('use_enhanced_comparator', 'true')).lower() == 'true'
+        if use_enhanced:
+            try:
+                from pdf_cover_comparator_enhanced import EnhancedPDFCoverComparator
+                comparator = EnhancedPDFCoverComparator(
+                    ssim_threshold=threshold,
+                    use_adaptive_threshold=True,
+                    debug=self.debug
+                )
+                self._comparator_cache[cache_key] = comparator
+                if self.debug:
+                    print(f"[DEBUG] SafeRename: Using enhanced comparator")
+                return comparator
+            except ImportError as e:
+                if self.debug:
+                    print(f"[DEBUG] SafeRename: Enhanced comparator import failed: {e}")
+        
+        # Try Qt-native version
         try:
             from pdf_cover_comparator_qt import PDFCoverComparator
             comparator = PDFCoverComparator(ssim_threshold=threshold)
@@ -226,25 +247,47 @@ class SafeRenameManager:
     
     def _process_comparison_result(self, comparison_result: Dict[str, Any], file_info: Dict[str, Any], meta: Dict[str, Any]) -> Dict[str, Any]:
         """Process the comparison result and determine action."""
-        if comparison_result['match']:
+        # Handle enhanced comparator results
+        if 'combined_score' in comparison_result:
+            # Enhanced comparator result
+            match = comparison_result['match']
+            score = comparison_result['combined_score']
+            ssim_score = comparison_result['ssim_score']
+            
+            if self.debug:
+                print(f"[DEBUG] SafeRename: Enhanced comparison - Combined: {score:.3f}, SSIM: {ssim_score:.3f}, Match: {match}")
+                if 'pdf_quality' in comparison_result:
+                    pdf_qual = comparison_result['pdf_quality']['quality']
+                    cover_qual = comparison_result['cover_quality']['quality']
+                    print(f"[DEBUG] SafeRename: Quality assessment - PDF: {pdf_qual}, Cover: {cover_qual}")
+        else:
+            # Standard comparator result
+            match = comparison_result['match']
+            score = comparison_result['score']
+            ssim_score = score
+            
+            if self.debug:
+                print(f"[DEBUG] SafeRename: Standard comparison - SSIM: {score:.3f}, Match: {match}")
+        
+        if match:
             # Covers match - proceed with rename
             if self.debug:
-                print(f"[DEBUG] SafeRename: Cover match (score: {comparison_result['score']:.3f})")
+                print(f"[DEBUG] SafeRename: Cover match (score: {score:.3f})")
             
             # Clean up temp files
             self._cleanup_temp_files(comparison_result.get('temp_files', []))
             
             return {
                 'proceed': True,
-                'reason': f'Cover match (score: {comparison_result["score"]:.3f})',
+                'reason': f'Cover match (score: {score:.3f})',
                 'user_cancelled': False,
-                'comparison_score': comparison_result['score'],
+                'comparison_score': score,
                 'used_cache': comparison_result['used_cache']
             }
         else:
             # Covers don't match - show dialog
             if self.debug:
-                print(f"[DEBUG] SafeRename: Cover mismatch (score: {comparison_result['score']:.3f})")
+                print(f"[DEBUG] SafeRename: Cover mismatch (score: {score:.3f})")
             
             user_choice = self._show_comparison_dialog(
                 comparison_result, file_info, meta
@@ -256,9 +299,9 @@ class SafeRenameManager:
             proceed = user_choice == 'proceed'
             return {
                 'proceed': proceed,
-                'reason': f'User {"approved" if proceed else "rejected"} mismatch (score: {comparison_result["score"]:.3f})',
+                'reason': f'User {"approved" if proceed else "rejected"} mismatch (score: {score:.3f})',
                 'user_cancelled': not proceed,
-                'comparison_score': comparison_result['score'],
+                'comparison_score': score,
                 'used_cache': comparison_result['used_cache']
             }
     

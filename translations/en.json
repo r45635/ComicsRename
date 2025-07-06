@@ -15,7 +15,8 @@
       "ok": "OK",
       "cancel": "Cancel",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "confirm": "Confirm"
     },
     "labels": {
       "folder": "Folder",
@@ -79,6 +80,27 @@
     },
     "quick_view": {
       "title": "Quick View - {title}"
+    },
+    "folder_rename_options": {
+      "title": "Folder Rename Options",
+      "subtitle": "Choose how to handle the folder rename operation",
+      "current_info": "Current folder: {current_folder}\nSeries name: {series_name}",
+      "options_title": "Rename Options",
+      "rename_current": "Rename current folder '{folder_name}' to '{series_name}'",
+      "create_same_level": "Create new folder '{series_name}' at the same level",
+      "create_subfolder": "Create new subfolder '{series_name}' inside current folder",
+      "create_parent_level": "Create new folder '{series_name}' in parent folder '{parent_folder}'",
+      "create_root_level": "Create new folder '{series_name}' in root folder '{root_folder}'",
+      "preview_title": "Preview",
+      "preview_rename_current": "The folder '{old_name}' will be renamed to '{new_name}'",
+      "preview_create_same": "A new folder will be created at: {new_path}",
+      "preview_create_subfolder": "A new subfolder will be created at: {new_path}",
+      "preview_create_parent": "A new folder will be created at: {new_path}",
+      "preview_create_root": "A new folder will be created at: {new_path}",
+      "preview_none": "No preview available",
+      "additional_options": "Additional Options",
+      "cleanup_empty": "Clean up empty source folder after move",
+      "no_option_selected": "Please select an option"
     }
   },
   "messages": {

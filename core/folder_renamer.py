@@ -248,3 +248,344 @@ class FolderRenamer:
         print(f"[DEBUG] details keys: {list(details.keys()) if isinstance(details, dict) else 'Not a dict'}")
         if isinstance(details, dict) and 'Détails' in details:
             print(f"[DEBUG] nested Détails keys: {list(details['Détails'].keys()) if isinstance(details['Détails'], dict) else 'Not a dict'}")
+
+    def validate_rename_with_move_option(self, current_folder: pathlib.Path, new_folder_name: str) -> Tuple[str, Optional[pathlib.Path]]:
+        """
+        Validate if a folder rename is possible and return the status with target path.
+        
+        Args:
+            current_folder (pathlib.Path): Current folder path
+            new_folder_name (str): Proposed new folder name
+            
+        Returns:
+            Tuple[str, Optional[pathlib.Path]]: (status, target_path)
+            Status can be: "valid", "same_name", "target_exists", "invalid"
+        """
+        if not new_folder_name:
+            return "invalid", None
+        
+        if current_folder.name == new_folder_name:
+            return "same_name", None
+        
+        new_folder_path = current_folder.parent / new_folder_name
+        if new_folder_path.exists():
+            return "target_exists", new_folder_path
+        
+        return "valid", new_folder_path
+    
+    def get_file_info(self, file_path: pathlib.Path) -> Dict[str, Any]:
+        """
+        Get file information including size and modification date.
+        
+        Args:
+            file_path (pathlib.Path): Path to the file
+            
+        Returns:
+            Dict[str, Any]: File information
+        """
+        try:
+            stat = file_path.stat()
+            import datetime
+            
+            # Format file size
+            size_bytes = stat.st_size
+            if size_bytes < 1024:
+                size_str = f"{size_bytes} B"
+            elif size_bytes < 1024**2:
+                size_str = f"{size_bytes/1024:.1f} KB"
+            elif size_bytes < 1024**3:
+                size_str = f"{size_bytes/(1024**2):.1f} MB"
+            else:
+                size_str = f"{size_bytes/(1024**3):.1f} GB"
+            
+            # Format modification date
+            mod_time = datetime.datetime.fromtimestamp(stat.st_mtime)
+            mod_date_str = mod_time.strftime("%Y-%m-%d %H:%M:%S")
+            
+            return {
+                'size_bytes': size_bytes,
+                'size_str': size_str,
+                'mod_time': mod_time,
+                'mod_date_str': mod_date_str,
+                'exists': True
+            }
+        except Exception as e:
+            if self.debug:
+                print(f"[DEBUG] Error getting file info for {file_path}: {e}")
+            return {
+                'size_bytes': 0,
+                'size_str': "Unknown",
+                'mod_time': None,
+                'mod_date_str': "Unknown",
+                'exists': False,
+                'error': str(e)
+            }
+    
+    def check_file_conflict(self, src_path: pathlib.Path, dst_path: pathlib.Path) -> Dict[str, Any]:
+        """
+        Check if there's a file conflict and return detailed information.
+        
+        Args:
+            src_path (pathlib.Path): Source file path
+            dst_path (pathlib.Path): Destination file path
+            
+        Returns:
+            Dict[str, Any]: Conflict information
+        """
+        if not dst_path.exists():
+            return {
+                'conflict': False,
+                'action': 'move'
+            }
+        
+        # Get info for both files
+        src_info = self.get_file_info(src_path)
+        dst_info = self.get_file_info(dst_path)
+        
+        return {
+            'conflict': True,
+            'src_info': src_info,
+            'dst_info': dst_info,
+            'action': 'conflict_resolution_needed'
+        }
+    
+    def move_files_to_existing_folder(self, files_list: list, current_folder: pathlib.Path, 
+                                     target_folder: pathlib.Path, conflict_handler=None) -> Dict[str, Any]:
+        """
+        Move selected files to an existing target folder with conflict resolution.
+        
+        Args:
+            files_list (list): List of file dictionaries from the main app
+            current_folder (pathlib.Path): Current folder path
+            target_folder (pathlib.Path): Target folder path (must exist)
+            conflict_handler (callable): Function to handle conflicts, should return 'overwrite', 'skip', or 'abort'
+            
+        Returns:
+            Dict[str, Any]: Operation result with statistics
+        """
+        if not target_folder.exists():
+            return {
+                'success': False,
+                'error': f"Target folder does not exist: {target_folder}",
+                'moved_count': 0,
+                'skipped_count': 0,
+                'failed_count': 0
+            }
+        
+        results = {
+            'success': True,
+            'moved_count': 0,
+            'skipped_count': 0,
+            'failed_count': 0,
+            'errors': [],
+            'moved_files': [],
+            'skipped_files': [],
+            'failed_files': []
+        }
+        
+        for file_info in files_list:
+            try:
+                src_path = pathlib.Path(file_info['path'])
+                dst_path = target_folder / src_path.name
+                
+                if self.debug:
+                    print(f"[DEBUG] Processing file: {src_path.name}")
+                
+                # Check for conflicts
+                conflict_info = self.check_file_conflict(src_path, dst_path)
+                
+                if conflict_info['conflict']:
+                    if self.debug:
+                        print(f"[DEBUG] Conflict detected for: {src_path.name}")
+                    
+                    if conflict_handler:
+                        action = conflict_handler(src_path, dst_path, conflict_info)
+                        if action == 'abort':
+                            results['success'] = False
+                            results['errors'].append(f"Operation aborted by user for file: {src_path.name}")
+                            break
+                        elif action == 'skip':
+                            results['skipped_count'] += 1
+                            results['skipped_files'].append(src_path.name)
+                            if self.debug:
+                                print(f"[DEBUG] Skipped: {src_path.name}")
+                            continue
+                        elif action != 'overwrite':
+                            results['failed_count'] += 1
+                            results['failed_files'].append(src_path.name)
+                            results['errors'].append(f"Unknown action '{action}' for file: {src_path.name}")
+                            continue
+                    else:
+                        # Default behavior: skip conflicts
+                        results['skipped_count'] += 1
+                        results['skipped_files'].append(src_path.name)
+                        continue
+                
+                # Perform the move
+                if self.debug:
+                    print(f"[DEBUG] Moving {src_path} -> {dst_path}")
+                
+                import shutil
+                shutil.move(str(src_path), str(dst_path))
+                
+                results['moved_count'] += 1
+                results['moved_files'].append(src_path.name)
+                
+                if self.debug:
+                    print(f"[DEBUG] Successfully moved: {src_path.name}")
+                
+            except Exception as e:
+                results['failed_count'] += 1
+                results['failed_files'].append(file_info.get('name', 'Unknown'))
+                results['errors'].append(f"Error moving {file_info.get('name', 'Unknown')}: {str(e)}")
+                results['success'] = False
+                
+                if self.debug:
+                    print(f"[DEBUG] Error moving {file_info.get('name', 'Unknown')}: {e}")
+        
+        return results
+    
+    def cleanup_empty_folder(self, folder_path: pathlib.Path) -> Tuple[bool, str]:
+        """
+        Remove a folder if it's empty.
+        
+        Args:
+            folder_path (pathlib.Path): Path to the folder to clean up
+            
+        Returns:
+            Tuple[bool, str]: (success, message)
+        """
+        try:
+            if not folder_path.exists():
+                return True, "Folder does not exist"
+            
+            if not folder_path.is_dir():
+                return False, "Path is not a directory"
+            
+            # Check if folder is empty
+            try:
+                # List all items (including hidden files)
+                items = list(folder_path.iterdir())
+                if items:
+                    return False, f"Folder is not empty ({len(items)} items remaining)"
+            except PermissionError:
+                return False, "Permission denied to access folder contents"
+            
+            # Remove the empty folder
+            folder_path.rmdir()
+            
+            if self.debug:
+                print(f"[DEBUG] Successfully removed empty folder: {folder_path}")
+            
+            return True, "Empty folder removed successfully"
+            
+        except Exception as e:
+            if self.debug:
+                print(f"[DEBUG] Error removing folder {folder_path}: {e}")
+            return False, f"Error removing folder: {str(e)}"
+    
+    def create_new_folder_with_move(self, files, current_folder, target_location, series_name, cleanup_empty=True):
+        """
+        Create a new folder at the specified location and move files there.
+        
+        Args:
+            files (list): List of file dictionaries
+            current_folder (pathlib.Path): Current folder path
+            target_location (pathlib.Path): Parent directory for the new folder
+            series_name (str): Name of the new folder
+            cleanup_empty (bool): Whether to clean up empty source folder
+            
+        Returns:
+            dict: Operation result with success status and details
+        """
+        if self.debug:
+            print(f"[DEBUG] Creating new folder and moving files")
+            print(f"  Current folder: {current_folder}")
+            print(f"  Target location: {target_location}")
+            print(f"  Series name: {series_name}")
+        
+        # Create target path
+        target_path = target_location / series_name
+        
+        # Check if target already exists
+        if target_path.exists():
+            if self.debug:
+                print(f"[DEBUG] Target folder already exists: {target_path}")
+            # Move files to existing folder
+            return self.move_files_to_existing_folder(files, current_folder, target_path)
+        
+        # Create new folder
+        try:
+            target_path.mkdir(parents=True, exist_ok=True)
+            if self.debug:
+                print(f"[DEBUG] Created new folder: {target_path}")
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f"Failed to create folder: {str(e)}",
+                'target_path': None
+            }
+        
+        # Move files to new folder
+        result = self.move_files_to_existing_folder(files, current_folder, target_path)
+        
+        # Clean up empty source folder if requested and operation was successful
+        if cleanup_empty and result['success'] and result['moved_count'] > 0:
+            cleanup_success, cleanup_message = self.cleanup_empty_folder(current_folder)
+            result['cleanup_performed'] = cleanup_success
+            result['cleanup_message'] = cleanup_message
+        
+        return result
+    
+    def handle_folder_rename_options(self, files, current_folder, options):
+        """
+        Handle folder rename operation based on user-selected options.
+        
+        Args:
+            files (list): List of file dictionaries
+            current_folder (pathlib.Path): Current folder path
+            options (dict): Options dictionary from folder rename dialog
+            
+        Returns:
+            dict: Operation result with success status and details
+        """
+        if self.debug:
+            print(f"[DEBUG] Handling folder rename options")
+            print(f"  Option: {options['option']}")
+            print(f"  Create new folder: {options['create_new_folder']}")
+            print(f"  Target location: {options['target_location']}")
+            print(f"  Series name: {options['series_name']}")
+        
+        series_name = options['series_name']
+        target_location = options['target_location']
+        cleanup_empty = options['cleanup_empty']
+        
+        if options['option'] == 'rename_current':
+            # Standard rename operation
+            success, error_msg, new_folder_path = self.perform_rename(current_folder, series_name)
+            
+            if success:
+                return {
+                    'success': True,
+                    'operation': 'rename',
+                    'new_path': new_folder_path,
+                    'message': f"Folder renamed to '{series_name}'"
+                }
+            else:
+                return {
+                    'success': False,
+                    'operation': 'rename',
+                    'error': error_msg
+                }
+        
+        elif options['create_new_folder']:
+            # Create new folder and move files
+            return self.create_new_folder_with_move(
+                files, current_folder, target_location, series_name, cleanup_empty
+            )
+        
+        else:
+            return {
+                'success': False,
+                'error': "Unknown operation option"
+            }

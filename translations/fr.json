@@ -15,7 +15,8 @@
       "ok": "OK",
       "cancel": "Annuler",
       "yes": "Oui",
-      "no": "Non"
+      "no": "Non",
+      "confirm": "Confirmer"
     },
     "labels": {
       "folder": "Dossier",
@@ -79,6 +80,27 @@
     },
     "quick_view": {
       "title": "Aperçu rapide - {title}"
+    },
+    "folder_rename_options": {
+      "title": "Options de Renommage de Dossier",
+      "subtitle": "Choisissez comment traiter l'opération de renommage de dossier",
+      "current_info": "Dossier actuel: {current_folder}\nNom de la série: {series_name}",
+      "options_title": "Options de Renommage",
+      "rename_current": "Renommer le dossier actuel '{folder_name}' en '{series_name}'",
+      "create_same_level": "Créer un nouveau dossier '{series_name}' au même niveau",
+      "create_subfolder": "Créer un nouveau sous-dossier '{series_name}' dans le dossier courant",
+      "create_parent_level": "Créer un nouveau dossier '{series_name}' dans le dossier parent '{parent_folder}'",
+      "create_root_level": "Créer un nouveau dossier '{series_name}' dans le dossier racine '{root_folder}'",
+      "preview_title": "Aperçu",
+      "preview_rename_current": "Le dossier '{old_name}' sera renommé en '{new_name}'",
+      "preview_create_same": "Un nouveau dossier sera créé à: {new_path}",
+      "preview_create_subfolder": "Un nouveau sous-dossier sera créé à: {new_path}",
+      "preview_create_parent": "Un nouveau dossier sera créé à: {new_path}",
+      "preview_create_root": "Un nouveau dossier sera créé à: {new_path}",
+      "preview_none": "Aucun aperçu disponible",
+      "additional_options": "Options Supplémentaires",
+      "cleanup_empty": "Nettoyer le dossier source vide après le déplacement",
+      "no_option_selected": "Veuillez sélectionner une option"
     }
   },
   "messages": {

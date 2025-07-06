@@ -127,16 +127,19 @@ class ComicRenamer(QWidget):
         else:
             self.series_name_cb.setVisible(False)
 
-        # Recharge automatiquement le dernier dossier utilisé
+        # Chargement robuste du dernier dossier utilisé
         last_folder = self.settings.value("last_folder", "")
-        if last_folder and isinstance(last_folder, str):
-            # D'abord essayer le chemin exact tel qu'il est stocké
-            if pathlib.Path(last_folder).exists():
+        if last_folder and isinstance(last_folder, str) and pathlib.Path(last_folder).exists():
+            try:
+                # Teste si le dossier est lisible (pas seulement existant)
+                test = os.listdir(last_folder)
                 self._load_files(last_folder)
-            else:
-                # Seulement si le chemin exact n'existe pas, utiliser la logique de fallback
-                best_folder = self._get_fallback_folder_path(last_folder)
-                self._load_files(best_folder)
+            except Exception as e:
+                if self.debug:
+                    print(f"[DEBUG] Impossible de charger le dossier au démarrage : {e}")
+                self.folder_display.setText("Cliquez sur 'Choisir dossier' pour commencer")
+        else:
+            self.folder_display.setText("Cliquez sur 'Choisir dossier' pour commencer")
 
     def keyPressEvent(self, event):
         """Handle key press events - Escape cancels search"""
@@ -288,7 +291,7 @@ class ComicRenamer(QWidget):
         self.album_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
 
     def _restore_session(self):
-        folder = self.settings.value('last_folder','')
+        # Restore UI settings only - NO automatic folder loading
         fc = self.settings.value('file_cols')
         if fc:
             for i,w in enumerate(map(int,fc.split(','))):
@@ -296,15 +299,12 @@ class ComicRenamer(QWidget):
         ac = self.settings.value('album_cols')
         if ac:
             self.album_table.setColumnWidth(0,int(ac))
-        # Note: debug/verbose are now initialized earlier in __init__
-        if folder and isinstance(folder, str):
-            # D'abord essayer le chemin exact tel qu'il est stocké
-            if pathlib.Path(folder).exists():
-                self._load_files(folder)
-            else:
-                # Seulement si le chemin exact n'existe pas, utiliser la logique de fallback
-                best_folder = self._get_fallback_folder_path(folder)
-                self._load_files(best_folder)
+        
+        # Show welcome message instead of auto-loading
+        self.folder_display.setText("Cliquez sur 'Choisir dossier' pour commencer")
+        
+        # Note: We intentionally do NOT load the last folder automatically
+        # to prevent startup hangs when the folder doesn't exist or is slow to access
 
     def closeEvent(self,ev):
         self.settings.setValue('last_folder', self.settings.value('last_folder'))
@@ -378,14 +378,21 @@ class ComicRenamer(QWidget):
         btn_last = msg.addButton("Dernier dossier utilisé", QMessageBox.ButtonRole.ActionRole)
         btn_home = msg.addButton("Dossier personnel", QMessageBox.ButtonRole.ActionRole)
         btn_cancel = msg.addButton(QMessageBox.StandardButton.Cancel)
+        
+        # Disable "last folder" button if no folder is stored or if it's not accessible
+        if not current_folder or not isinstance(current_folder, str) or not pathlib.Path(current_folder).exists():
+            btn_last.setEnabled(False)
+            btn_last.setText("Dernier dossier utilisé (indisponible)")
+        
         msg.exec()
         if msg.clickedButton() == btn_volumes:
             start_dir = "/Volumes"
         elif msg.clickedButton() == btn_last:
-            if current_folder:
-                start_dir = self._get_fallback_folder_path(current_folder)
+            if current_folder and isinstance(current_folder, str) and pathlib.Path(current_folder).exists():
+                start_dir = current_folder
             else:
-                QMessageBox.information(self, "Information", "Aucun dossier précédent enregistré. Utilisation du dossier personnel.")
+                # Safe fallback - don't use the problematic _get_fallback_folder_path
+                QMessageBox.information(self, "Information", "Le dossier précédent n'est plus accessible. Utilisation du dossier personnel.")
                 start_dir = str(pathlib.Path.home())
         elif msg.clickedButton() == btn_home:
             start_dir = str(pathlib.Path.home())
@@ -1312,6 +1319,10 @@ class ComicRenamer(QWidget):
         print(f"[DEBUG] Unified rename - SafeRename enabled: {safe_rename_enabled}")
         print(f"[DEBUG] Unified rename - File is PDF: {is_pdf}")
         
+        # SafeRename status tracking
+        safe_rename_passed = False
+        safe_rename_score = 0.0
+        
         # IMPORTANT: SafeRename BEFORE asking user confirmation
         if safe_rename_enabled and is_pdf:
             print(f"[DEBUG] Unified rename - Performing SafeRename check")
@@ -1321,6 +1332,10 @@ class ComicRenamer(QWidget):
             if not result['proceed']:
                 print(f"[DEBUG] Unified rename - SafeRename cancelled: {result['reason']}")
                 return False  # SafeRename failed or user cancelled
+            else:
+                # SafeRename passed
+                safe_rename_passed = True
+                safe_rename_score = result.get('comparison_score', 0.0)
                 
         # Build new filename
         series = meta.get('serie_name') or meta.get('series') or (meta.get('volume') or {}).get('name', '')
@@ -1382,12 +1397,17 @@ class ComicRenamer(QWidget):
         
         # Ask for user confirmation if requested
         if show_confirmation:
-            confirm = QMessageBox.question(
-                self, 
-                tr("dialogs.rename_confirmation.title"), 
-                tr("dialogs.rename_confirmation.file_message", new_name=new_name), 
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            # Use enhanced confirmation dialog that shows SafeRename status
+            from enhanced_rename_confirmation_dialog import show_enhanced_rename_confirmation
+            
+            confirm = show_enhanced_rename_confirmation(
+                parent=self,
+                new_name=new_name,
+                safe_rename_passed=safe_rename_passed,
+                safe_rename_score=safe_rename_score,
+                is_folder=False
             )
+            
             if confirm != QMessageBox.StandardButton.Yes:
                 print(f"[DEBUG] Unified rename - User cancelled confirmation")
                 return False
@@ -1505,84 +1525,123 @@ class ComicRenamer(QWidget):
             QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.cannot_determine_series"))
             return
         
+        # Check if we have a single file selected (special case for extended options)
+        selected_files = self._get_selected_files()
+        if len(selected_files) == 1:
+            # Show extended folder rename options dialog
+            self._show_extended_folder_options(current_folder, new_folder_name, meta)
+        else:
+            # Use original logic for multiple files or no selection
+            self._handle_standard_folder_rename(current_folder, new_folder_name, meta)
+    
+    def _get_selected_files(self):
+        """Get list of selected files from the file table."""
+        selected_rows = self.file_table.selectionModel().selectedRows()
+        selected_files = []
+        for index in selected_rows:
+            if index.row() < len(self.files):
+                selected_files.append(self.files[index.row()])
+        return selected_files
+    
+    def _show_extended_folder_options(self, current_folder, new_folder_name, meta):
+        """
+        Show extended folder rename options dialog for single file selection.
+        
+        Args:
+            current_folder (pathlib.Path): Current folder path
+            new_folder_name (str): Proposed folder name
+            meta (dict): Album metadata
+        """
+        # Import the dialog
+        from ui.folder_rename_options_dialog import show_folder_rename_options
+        
+        # Determine parent and root folders
+        parent_folder = current_folder.parent if current_folder.parent != current_folder else None
+        root_folder = pathlib.Path(self.folder_display.text()) if hasattr(self, 'folder_display') else None
+        
+        # Show the dialog
+        options = show_folder_rename_options(
+            parent=self,
+            current_folder=current_folder,
+            series_name=new_folder_name,
+            parent_folder=parent_folder,
+            root_folder=root_folder
+        )
+        
+        if options:
+            # Pour un seul fichier sélectionné, ne traiter QUE ce fichier
+            selected_files = self._get_selected_files()
+            files_to_process = selected_files if selected_files else self.files
+            
+            # Execute the selected operation
+            result = self.folder_renamer.handle_folder_rename_options(
+                files_to_process, current_folder, options
+            )
+            
+            if result['success']:
+                # Show success message
+                if result.get('operation') == 'rename':
+                    success_msg = result['message']
+                    new_path = result['new_path']
+                else:
+                    # Move operation
+                    moved = result.get('moved_count', 0)
+                    skipped = result.get('skipped_count', 0)
+                    failed = result.get('failed_count', 0)
+                    
+                    success_msg = f"Opération terminée:\n• {moved} fichier(s) déplacé(s)"
+                    if skipped > 0:
+                        success_msg += f"\n• {skipped} fichier(s) ignoré(s)"
+                    if failed > 0:
+                        success_msg += f"\n• {failed} fichier(s) en échec"
+                    
+                    if result.get('cleanup_performed'):
+                        success_msg += f"\n• Dossier source vide supprimé"
+                    
+                    new_path = result.get('target_path')
+                
+                QMessageBox.information(self, "Succès", success_msg)
+                
+                # Reload files from new location
+                if new_path:
+                    self._load_files(str(new_path))
+            else:
+                # Show error message
+                error_msg = result.get('error', 'Unknown error')
+                QMessageBox.critical(self, "Erreur", error_msg)
+    
+    def _handle_standard_folder_rename(self, current_folder, new_folder_name, meta):
+        """
+        Handle standard folder rename operation (original logic).
+        
+        Args:
+            current_folder (pathlib.Path): Current folder path
+            new_folder_name (str): New folder name
+            meta (dict): Album metadata
+        """
         # Print debug info
+        serie_name, style, _ = self.folder_renamer.get_folder_rename_info(current_folder, meta)
         self.folder_renamer.debug_info(current_folder, serie_name, style, new_folder_name, meta)
         
-        # Validate the rename
-        is_valid, reason = self.folder_renamer.validate_rename(current_folder, new_folder_name)
-        if not is_valid:
-            if reason == "Folder name is already the target name":
-                QMessageBox.information(self, "Info", "Le dossier porte déjà ce nom.")
+        # Validate the rename with new logic
+        status, target_path = self.folder_renamer.validate_rename_with_move_option(current_folder, new_folder_name)
+        
+        if status == "same_name":
+            QMessageBox.information(self, "Info", "Le dossier porte déjà ce nom.")
+            return
+        elif status == "invalid":
+            QMessageBox.critical(self, tr("messages.errors.error"), "Impossible de déterminer le nouveau nom de dossier.")
+            return
+        elif status == "target_exists":
+            # Handle the case where target folder exists - offer to move files
+            if not self._handle_existing_folder_case(current_folder, target_path, meta):
                 return
-            elif "already exists" in reason:
-                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_folder_name))
-                return
-            else:
-                QMessageBox.critical(self, tr("messages.errors.error"), reason)
-                return
-        
-        # Confirm the rename operation
-        if QMessageBox.question(
-            self,
-            tr("messages.errors.rename_folder_title"),
-            tr("dialogs.rename_confirmation.folder_message", old_name=current_folder.name, new_name=new_folder_name),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        ) == QMessageBox.StandardButton.Yes:
-            # Perform the rename
-            success, error_msg, new_folder_path = self.folder_renamer.perform_rename(current_folder, new_folder_name)
-            
-            if success:
-                # Reload files from the new location
-                self._load_files(str(new_folder_path))
-                QMessageBox.information(self, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=new_folder_name))
-            else:
-                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=error_msg))
-
-    def _confirm_and_rename_folder(self, old_name, new_name):
-        """Handle folder rename from direct editing of folder name"""
-        if not self.files:
-            QMessageBox.warning(self, tr("messages.errors.error"), tr("messages.errors.no_files_in_folder"))
-            return False
-            
-        current_folder = pathlib.Path(self.files[0]['folder'])
-        
-        # Clean up the new name using FolderRenamer
-        new_name_clean = self.folder_renamer.clean_folder_name(new_name)
-        
-        if not new_name_clean:
-            QMessageBox.warning(self, tr("messages.errors.error"), "Le nouveau nom de dossier ne peut pas être vide.")
-            return False
-        
-        # Validate the rename
-        is_valid, reason = self.folder_renamer.validate_rename(current_folder, new_name_clean)
-        if not is_valid:
-            if "already exists" in reason:
-                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_already_exists", name=new_name_clean))
-                return False
-            else:
-                QMessageBox.critical(self, tr("messages.errors.error"), reason)
-                return False
-        
-        # Confirm the rename operation
-        if QMessageBox.question(
-            self,
-            tr("messages.errors.rename_folder_title"),
-            tr("dialogs.rename_confirmation.folder_message", old_name=old_name, new_name=new_name_clean),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        ) == QMessageBox.StandardButton.Yes:
-            # Perform the rename
-            success, error_msg, new_folder_path = self.folder_renamer.perform_rename(current_folder, new_name_clean)
-            
-            if success:
-                # Reload files from the new location
-                self._load_files(str(new_folder_path))
-                QMessageBox.information(self, tr("messages.errors.success_title"), tr("messages.errors.folder_renamed", name=new_name_clean))
-                return True
-            else:
-                QMessageBox.critical(self, tr("messages.errors.error"), tr("messages.errors.folder_rename_error", error=error_msg))
-                return False
+        elif status == "valid":
+            # Standard rename operation
+            self._perform_standard_folder_rename_simple(current_folder, new_folder_name)
         else:
-            return False  # User cancelled
+            QMessageBox.critical(self, tr("messages.errors.error"), f"Statut de validation inattendu: {status}")
+            return
 
     def resizeEvent(self, event):
         """Handle window resize to update cover image scaling"""
@@ -1610,8 +1669,8 @@ class ComicRenamer(QWidget):
         
         Strategy:
         1. If the exact stored path exists, use it
-        2. EXHAUSTIVE search for exact folder name in common locations
-        3. Fall back to renamed folders only as last resort
+        2. Limited search for exact folder name in safe locations
+        3. Fall back to home directory quickly if issues occur
         
         Args:
             stored_folder_path (str): The folder path stored in settings
@@ -1628,83 +1687,178 @@ class ComicRenamer(QWidget):
         if stored_path.exists():
             return str(stored_path)
         
-        # If the folder doesn't exist, search for exact folder name in multiple locations
+        # If the folder doesn't exist, search for exact folder name in safe locations only
         try:
+            import time
+            start_time = time.time()
+            
             parent_dir = stored_path.parent
             original_folder_name = stored_path.name
-            
-            # Force debug for this critical function
-            force_debug = False  # Respect user's debug setting
+            home = pathlib.Path.home()
             
             # Debug info
-            if force_debug or (hasattr(self, 'debug') and self.debug):
+            if self.debug:
                 print(f"[DEBUG] Original folder '{original_folder_name}' not found at '{stored_path}'")
-                print(f"[DEBUG] Searching for exact folder name in common locations...")
+                print(f"[DEBUG] Searching for exact folder name in safe locations...")
             
-            # EXHAUSTIVE search in parent directory and common locations
-            search_locations = []
+            # Limited search in SAFE locations only (avoid /Volumes which can hang)
+            safe_search_locations = []
             
-            # 1. Parent directory of the original path
-            if parent_dir.exists():
-                search_locations.append(parent_dir)
+            # 1. Parent directory of the original path (if it exists and is accessible)
+            if parent_dir.exists() and self._is_safe_directory(parent_dir):
+                safe_search_locations.append(parent_dir)
             
-            # 2. Common folder locations
-            home = pathlib.Path.home()
-            common_locations = [
+            # 2. Common safe folder locations
+            safe_locations = [
                 home / "Downloads",
                 home / "Documents", 
                 home / "Desktop",
                 home,  # Home directory itself
-                pathlib.Path("/Users") / "Shared",  # macOS shared folder
-                pathlib.Path("/Volumes")  # macOS external drives
             ]
             
-            # Add existing locations to search
-            for loc in common_locations:
-                if loc.exists() and loc not in search_locations:
-                    search_locations.append(loc)
+            # Add only existing and safe locations to search
+            for loc in safe_locations:
+                if loc.exists() and self._is_safe_directory(loc):
+                    safe_search_locations.append(loc)
             
-            # Search each location for exact folder name match
-            for search_dir in search_locations:
+            # Search each safe location for exact folder name match
+            for search_dir in safe_search_locations:
+                # Check if we've spent too much time already
+                if time.time() - start_time > 10.0:  # Maximum 10 seconds total
+                    if self.debug:
+                        print(f"[DEBUG] Search timeout after 10 seconds, falling back to home")
+                    break
+                    
                 try:
-                    if force_debug or self.debug:
+                    if self.debug:
                         print(f"[DEBUG] Searching in: {search_dir}")
                     
-                    for item in search_dir.iterdir():
-                        if item.is_dir() and item.name == original_folder_name:
-                            if force_debug or self.debug:
-                                print(f"[DEBUG] FOUND exact match: {item}")
-                            return str(item)
-                except (PermissionError, OSError) as e:
-                    if force_debug or self.debug:
+                    # Use timeout to prevent hanging on slow directories
+                    found_match = self._search_directory_with_timeout(search_dir, original_folder_name)
+                    if found_match:
+                        if self.debug:
+                            print(f"[DEBUG] FOUND exact match: {found_match}")
+                        return str(found_match)
+                        
+                except Exception as e:
+                    if self.debug:
                         print(f"[DEBUG] Cannot search {search_dir}: {e}")
                     continue
             
-            # If we still haven't found it, do a broader search for similar names
-            if force_debug or self.debug:
-                print(f"[DEBUG] Exact match not found, searching for similar folder names...")
-            
-            for search_dir in search_locations:
+            # If we still haven't found it, do a quick broader search in home directory only
+            if time.time() - start_time < 8.0:  # Only if we still have time
+                if self.debug:
+                    print(f"[DEBUG] Exact match not found, searching for similar folder names in home...")
+                
                 try:
-                    for item in search_dir.iterdir():
+                    for item in home.iterdir():
                         if item.is_dir():
                             # Check if folder name contains the original name (case-insensitive)
                             if original_folder_name.lower() in item.name.lower():
-                                if force_debug or self.debug:
+                                if self.debug:
                                     print(f"[DEBUG] Found similar folder: {item}")
                                 return str(item)
-                except (PermissionError, OSError):
-                    continue
+                except Exception as e:
+                    if self.debug:
+                        print(f"[DEBUG] Cannot search home directory: {e}")
             
             # Last resort: return home directory
-            if force_debug or self.debug:
-                print(f"[DEBUG] No matches found, falling back to home directory")
+            elapsed = time.time() - start_time
+            if self.debug:
+                print(f"[DEBUG] No matches found after {elapsed:.2f}s, falling back to home directory")
             return str(home)
             
         except Exception as e:
             if self.debug:
                 print(f"[DEBUG] Exception in _get_fallback_folder_path: {e}")
             return str(pathlib.Path.home())
+    
+    def _is_safe_directory(self, directory):
+        """
+        Check if a directory is safe to search (avoid network mounts, external drives, etc.)
+        
+        Args:
+            directory (pathlib.Path): Directory to check
+            
+        Returns:
+            bool: True if directory is safe to search
+        """
+        try:
+            path_str = str(directory)
+            # Avoid potentially problematic paths
+            unsafe_paths = [
+                '/Volumes',  # macOS external drives
+                '/Network',  # Network mounts
+                '/net',      # Network mounts
+                '/mnt',      # Mount points
+            ]
+            
+            for unsafe_path in unsafe_paths:
+                if path_str.startswith(unsafe_path):
+                    if self.debug:
+                        print(f"[DEBUG] Skipping unsafe path: {path_str}")
+                    return False
+            
+            # Additional check: try to access the directory quickly
+            try:
+                # Try to list just one item from the directory
+                next(directory.iterdir(), None)
+                return True
+            except (OSError, PermissionError) as e:
+                if self.debug:
+                    print(f"[DEBUG] Cannot access directory {directory}: {e}")
+                return False
+                
+        except Exception as e:
+            if self.debug:
+                print(f"[DEBUG] Error checking directory safety {directory}: {e}")
+            return False
+    
+    def _search_directory_with_timeout(self, directory, target_name):
+        """
+        Search for a folder name in a directory with timeout protection.
+        
+        Args:
+            directory (pathlib.Path): Directory to search in
+            target_name (str): Name to search for
+            
+        Returns:
+            pathlib.Path or None: Found directory or None
+        """
+        try:
+            import threading
+            import time
+            
+            result = [None]  # Use list to store result from thread
+            
+            def search_thread():
+                try:
+                    for item in directory.iterdir():
+                        if item.is_dir() and item.name == target_name:
+                            result[0] = item
+                            return
+                except (OSError, PermissionError):
+                    pass
+            
+            # Start the search in a separate thread
+            thread = threading.Thread(target=search_thread)
+            thread.daemon = True
+            thread.start()
+            
+            # Wait for up to 3 seconds
+            thread.join(timeout=3.0)
+            
+            if thread.is_alive():
+                if self.debug:
+                    print(f"[DEBUG] Search timeout in directory: {directory}")
+                return None
+            
+            return result[0]
+                
+        except Exception as e:
+            if self.debug:
+                print(f"[DEBUG] Error searching directory {directory}: {e}")
+            return None
 
     def _get_amazon_domain_for_provider(self, provider):
         """Get the appropriate Amazon domain based on the provider"""
@@ -1797,3 +1951,45 @@ class ComicRenamer(QWidget):
         # Open URL in default browser
         import webbrowser
         webbrowser.open(amazon_url)
+
+    def _handle_existing_folder_case(self, current_folder, target_path, meta):
+        reply = QMessageBox.question(self, "Dossier existant", 
+            f"Le dossier '{target_path.name}' existe déjà.\nDéplacer les fichiers sélectionnés ?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                import shutil
+                # Ne déplacer QUE les fichiers sélectionnés
+                selected_files = self._get_selected_files()
+                if not selected_files:
+                    selected_files = self.files  # Fallback si aucune sélection
+                
+                for file_info in selected_files:
+                    src = pathlib.Path(file_info['path'])
+                    dst = target_path / src.name
+                    if not dst.exists():
+                        shutil.move(str(src), str(dst))
+                self._load_files(str(target_path))
+                return True
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur", str(e))
+        return False
+    
+    def _perform_standard_folder_rename_simple(self, current_folder, new_folder_name):
+        try:
+            new_path = current_folder.parent / new_folder_name
+            os.rename(str(current_folder), str(new_path))
+            self._load_files(str(new_path))
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", str(e))
+    
+    def _offer_cleanup_empty_folder(self, folder_path):
+        try:
+            if not any(folder_path.iterdir()):
+                reply = QMessageBox.question(self, "Dossier vide", 
+                    f"Supprimer '{folder_path.name}' ?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
+                    os.rmdir(str(folder_path))
+        except: pass
