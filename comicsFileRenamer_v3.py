@@ -155,7 +155,23 @@ class ComicRenamer(QWidget):
             super().keyPressEvent(event)
 
     def _build_ui(self):
+        """Build the main user interface"""
         layout = QVBoxLayout(self)
+        
+        # Build UI components
+        toolbar_layout = self._build_toolbar()
+        layout.addLayout(toolbar_layout)
+        
+        splitter_main = self._build_main_content()
+        layout.addWidget(splitter_main)
+        layout.addWidget(self.rename_btn)
+        
+        # Connect signals and finalize
+        self._connect_signals()
+        self._adjust_table_columns()
+
+    def _build_toolbar(self):
+        """Build the top toolbar with search and navigation controls"""
         ctrl = QHBoxLayout()
         self.source_combo = QComboBox()
         self.source_combo.addItems(['ComicVine', 'BDGest'])
@@ -177,7 +193,124 @@ class ComicRenamer(QWidget):
         
         for w in (self.source_combo, self.search_bar, self.search_btn, self.dir_btn, self.series_name_cb, self.settings_btn):
             ctrl.addWidget(w)
-        layout.addLayout(ctrl)
+        return ctrl
+
+    def _build_main_content(self):
+        """Build the main content area with file and album panels"""
+        splitter_main = QSplitter(Qt.Orientation.Horizontal)
+
+        # Build file panel
+        file_panel = self._build_file_panel()
+        splitter_main.addWidget(file_panel)
+        
+        # Build album panel
+        album_panel = self._build_album_panel()
+        splitter_main.addWidget(album_panel)
+        
+        return splitter_main
+
+    def _build_file_panel(self):
+        """Build the file management panel"""
+        # --- Folder display ---
+        file_panel = QWidget()
+        file_panel_layout = QVBoxLayout(file_panel)
+        file_panel_layout.setContentsMargins(0, 0, 0, 0)
+        folder_display_layout = QHBoxLayout()
+        self.folder_display = EditableFolderLineEdit(main_window=self)
+        # Add the rename folder button
+        self.folder_rename_btn = QPushButton("✎")
+        self.folder_rename_btn.setToolTip(tr("ui.tooltips.rename_folder"))
+        self.folder_rename_btn.setFixedWidth(30)
+        self.folder_rename_btn.setEnabled(False)  # Disabled by default
+        self.folder_rename_btn.clicked.connect(self._rename_folder_to_serie)
+        folder_display_layout.addWidget(self.folder_display)
+        folder_display_layout.addWidget(self.folder_rename_btn)
+        file_panel_layout.addLayout(folder_display_layout)
+        self.file_table = FileTable(self)
+        self.file_table.setColumnCount(4)
+        self.file_table.setHorizontalHeaderLabels(['Name','Ext','Size','Folder'])
+        self.file_table.setSortingEnabled(True)
+        file_panel_layout.addWidget(self.file_table)
+        return file_panel
+
+    def _build_album_panel(self):
+        """Build the album management panel"""
+        splitter_right = QSplitter(Qt.Orientation.Vertical)
+        
+        # Album list section
+        alb_widget = QWidget()
+        alb_layout = QVBoxLayout(alb_widget)
+        self.series_combo = QComboBox()
+        self.album_table = AlbumTable(self)
+        self.album_table.setColumnCount(1)
+        self.album_table.setHorizontalHeaderLabels(['Albums'])
+        self.album_table.setSortingEnabled(True)
+        alb_layout.addWidget(self.series_combo)
+        alb_layout.addWidget(self.album_table)
+        splitter_right.addWidget(alb_widget)
+
+        # Album details section
+        albums_mgmt_widget = self._build_album_details_section()
+        splitter_right.addWidget(albums_mgmt_widget)
+
+        # Store splitter reference for image resize handling
+        self.splitter_right = splitter_right
+        return splitter_right
+
+    def _build_album_details_section(self):
+        """Build the album details and cover section"""
+        # Albums Management Area (regrouped album details + cover)
+        albums_mgmt_widget = QWidget()
+        albums_mgmt_widget.setWindowTitle("Albums Management")  # For potential future groupbox styling
+        albums_mgmt_layout = QHBoxLayout(albums_mgmt_widget)
+        
+        # Album Details Section
+        self.detail_text = QTextBrowser()  # Use QTextBrowser instead of QTextEdit for better link support
+        
+        # Configure QTextBrowser for better link handling and styling
+        self.detail_text.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard | Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
+        # QTextBrowser has built-in support for opening external links
+        self.detail_text.setOpenExternalLinks(True)
+        
+        # Album Cover Section
+        self.detail_image = QLabel()
+        # Configure image label to be responsive and centered
+        self.detail_image.setScaledContents(False)  # Don't force scaling to fill
+        self.detail_image.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center the image
+        self.detail_image.setMinimumSize(50, 50)  # Small minimum size
+        self.detail_image.setMaximumSize(300, 400)  # Reasonable maximum
+        self.detail_image.setSizePolicy(self.detail_image.sizePolicy().horizontalPolicy(), 
+                                       self.detail_image.sizePolicy().verticalPolicy())
+        # Make cover image clickable for Amazon search
+        self.detail_image.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.detail_image.mousePressEvent = self._on_cover_image_clicked
+        
+        # Add both sections to the albums management area
+        albums_mgmt_layout.addWidget(self.detail_text, 2)  # Album details take 2/3 of space
+        albums_mgmt_layout.addWidget(self.detail_image, 1)  # Album cover takes 1/3 of space
+        
+        return albums_mgmt_widget
+
+    def _connect_signals(self):
+        """Connect all UI signals to their handlers"""
+        self.source_combo.currentTextChanged.connect(self._change_source)
+        self.dir_btn.clicked.connect(self._choose_folder)
+        self.search_btn.clicked.connect(self._search_or_cancel)
+        self.search_bar.returnPressed.connect(self._search)
+        self.series_combo.currentTextChanged.connect(self._on_series_selection_changed)
+        self.album_table.cellClicked.connect(self._show_details)
+        self.album_table.cellClicked.connect(self._enable_folder_rename_btn)
+        self.album_table.selectionModel().selectionChanged.connect(self._on_album_selection_changed)
+        self.rename_btn.clicked.connect(self._rename_selected)
+        self.settings_btn.clicked.connect(self._open_settings)
+        
+        # Connect splitter movement to image resize
+        self.splitter_right.splitterMoved.connect(self._update_cover_image_size)
+
+        # Connect selection change to update folder display
+        self.file_table.selectionModel().selectionChanged.connect(self._update_folder_display)
 
         splitter_main = QSplitter(Qt.Orientation.Horizontal)
 
@@ -248,17 +381,10 @@ class ComicRenamer(QWidget):
         albums_mgmt_layout.addWidget(self.detail_text, 2)  # Album details take 2/3 of space
         albums_mgmt_layout.addWidget(self.detail_image, 1)  # Album cover takes 1/3 of space
         
-        # Add the albums management area to the right splitter
-        splitter_right.addWidget(albums_mgmt_widget)
+        return albums_mgmt_widget
 
-        splitter_main.addWidget(splitter_right)
-        layout.addWidget(splitter_main)
-        layout.addWidget(self.rename_btn)
-
-        # Store splitter reference for image resize handling
-        self.splitter_right = splitter_right
-
-        self.source_combo.currentTextChanged.connect(self._change_source)
+    def _connect_signals(self):
+        """Connect all UI signals to their handlers"""
         self.dir_btn.clicked.connect(self._choose_folder)
         self.search_btn.clicked.connect(self._search_or_cancel)
         self.search_bar.returnPressed.connect(self._search)
@@ -270,13 +396,10 @@ class ComicRenamer(QWidget):
         self.settings_btn.clicked.connect(self._open_settings)
         
         # Connect splitter movement to image resize
-        splitter_right.splitterMoved.connect(self._update_cover_image_size)
+        self.splitter_right.splitterMoved.connect(self._update_cover_image_size)
 
         # Connect selection change to update folder display
         self.file_table.selectionModel().selectionChanged.connect(self._update_folder_display)
-
-        # Adjust column widths after UI is built
-        self._adjust_table_columns()
 
     def _adjust_table_columns(self):
         # Adjust file_table: set 'Name' column to fit contents, others to reasonable defaults
