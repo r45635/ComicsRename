@@ -44,7 +44,7 @@ from core.widgets import DroppableLineEdit, EditableFolderLineEdit
 from core import (
     FolderRenamer, DetailsFormatter, AlbumPopulator, 
     SettingsManager, ErrorHandler, FilenameGenerator, 
-    ImageManager, SafeRenameManager
+    ImageManager, SafeRenameManager, SearchManager
 )
 
 # Import UI components  
@@ -76,6 +76,13 @@ class ComicRenamer(QWidget):
             self.error_handler, 
             self.image_manager,
             debug=self.settings_manager.get_debug_mode()
+        )
+        
+        # Initialize search manager
+        self.search_manager = SearchManager(
+            parent=self,
+            debug=self.settings_manager.get_debug_mode(),
+            verbose=self.settings_manager.get_verbose_mode()
         )
         
         # Keep legacy settings for backward compatibility
@@ -293,25 +300,6 @@ class ComicRenamer(QWidget):
         
         return albums_mgmt_widget
 
-    def _connect_signals(self):
-        """Connect all UI signals to their handlers"""
-        self.source_combo.currentTextChanged.connect(self._change_source)
-        self.dir_btn.clicked.connect(self._choose_folder)
-        self.search_btn.clicked.connect(self._search_or_cancel)
-        self.search_bar.returnPressed.connect(self._search)
-        self.series_combo.currentTextChanged.connect(self._on_series_selection_changed)
-        self.album_table.cellClicked.connect(self._show_details)
-        self.album_table.cellClicked.connect(self._enable_folder_rename_btn)
-        self.album_table.selectionModel().selectionChanged.connect(self._on_album_selection_changed)
-        self.rename_btn.clicked.connect(self._rename_selected)
-        self.settings_btn.clicked.connect(self._open_settings)
-        
-        # Connect splitter movement to image resize
-        self.splitter_right.splitterMoved.connect(self._update_cover_image_size)
-
-        # Connect selection change to update folder display
-        self.file_table.selectionModel().selectionChanged.connect(self._update_folder_display)
-
         splitter_main = QSplitter(Qt.Orientation.Horizontal)
 
         # --- Folder display ---
@@ -385,6 +373,7 @@ class ComicRenamer(QWidget):
 
     def _connect_signals(self):
         """Connect all UI signals to their handlers"""
+        self.source_combo.currentTextChanged.connect(self._change_source)
         self.dir_btn.clicked.connect(self._choose_folder)
         self.search_btn.clicked.connect(self._search_or_cancel)
         self.search_bar.returnPressed.connect(self._search)
@@ -400,6 +389,13 @@ class ComicRenamer(QWidget):
 
         # Connect selection change to update folder display
         self.file_table.selectionModel().selectionChanged.connect(self._update_folder_display)
+        
+        # Connect search manager signals
+        self.search_manager.search_started.connect(self._on_search_started)
+        self.search_manager.search_completed.connect(self._on_search_completed)
+        self.search_manager.search_cancelled.connect(self._on_search_cancelled)
+        self.search_manager.search_error.connect(self._on_search_error)
+        self.search_manager.progress_updated.connect(self._on_search_progress)
 
     def _adjust_table_columns(self):
         # Adjust file_table: set 'Name' column to fit contents, others to reasonable defaults
@@ -568,27 +564,20 @@ class ComicRenamer(QWidget):
 
     def _search_or_cancel(self):
         """Handle search button click - either start search or cancel current search"""
-        if self._search_in_progress:
+        if self.search_manager.is_search_in_progress():
             # Cancel current search
-            self._search_cancelled = True
-            self._restore_search_ui()
-            self.detail_text.setHtml("<i>Search cancelled by user</i>")
+            self.search_manager.cancel_search()
             print("[INFO] Search operation cancelled by user")
         else:
             # Start new search
             self._search()
 
     def _search(self):
+        """Execute search using the SearchManager"""
         q = self.search_bar.text().strip()
         if not q:
             return
             
-        # Set search in progress and update button
-        self._search_cancelled = False
-        self._search_in_progress = True
-        self.search_btn.setText("⏹️ Cancel Search")
-        self.search_btn.setToolTip("Cancel current search operation")
-        
         # Clear previous results
         self.series_combo.clear()
         self.album_table.clearContents()
@@ -597,329 +586,144 @@ class ComicRenamer(QWidget):
         self.detail_text.clear()
         self.detail_image.clear()
         self._original_cover_pixmap = None
-
-        provider = PROVIDERS[self._source]
-        # Pass debug/verbose to provider if supported
-        debug = self.settings.value('debug', 'false') == 'true'
-        verbose = self.settings.value('verbose', 'false') == 'true'
-        
-        # Only call search_series for providers in non-SeriesName mode
-        if (self._source == 'ComicVine' and not self.series_name_cb.isChecked()) or (self._source == 'BDGest' and not self.series_name_cb.isChecked()):
-            try:
-                # Try with debug parameter first
-                series_list = provider.search_series(q, debug=debug)
-            except TypeError:
-                # Fallback to old interface if debug parameter not supported
-                series_list = provider.search_series(q)
-            
-            # Check for "too many results" error early (BDGest specific)
-            if self._source == 'BDGest' and series_list and len(series_list) == 1 and series_list[0].get('error') == 'too_many_results':
-                # Use internationalized error messages
-                title = tr("messages.errors.too_many_results_title")
-                message = tr("messages.errors.too_many_results_message")
-                hint = tr("messages.errors.too_many_results_hint")
-                full_message = f"{message}\n\n{hint}"
-                
-                QMessageBox.warning(self, title, full_message)
-                # Restore UI and exit early
-                self._restore_search_ui()
-                return
-            
-            # Check for "authentication failed" error early (BDGest specific)
-            if self._source == 'BDGest' and series_list and len(series_list) == 1 and series_list[0].get('error') == 'authentication_failed':
-                # Use internationalized error messages
-                title = tr("messages.errors.authentication_failed_title")
-                message = tr("messages.errors.authentication_failed_message")
-                hint = tr("messages.errors.authentication_failed_hint")
-                full_message = f"{message}\n\n{hint}"
-                
-                QMessageBox.critical(self, title, full_message)
-                # Restore UI and exit early
-                self._restore_search_ui()
-                return
-        else:
-            # For BDGest or ComicVine in SeriesName mode, we'll call search_series_only later
-            series_list = []
-
         self.issues_by_series.clear()
         self._bdgest_album_results = []
-
-        # First check if SeriesName mode is enabled for either provider
-        if self.series_name_cb.isChecked():
-            # SERIES MODE: Use series-only search for both providers
-            if debug:
-                print(f"[DEBUG][UI] Using series-only mode for {self._source}")
-                
-            # Check for cancellation before starting series operations
-            if self._search_cancelled:
-                return
-                
-            # Use series-only search
-            series_results = provider.search_series_only(q, debug=debug, verbose=verbose) \
-                if hasattr(provider, 'search_series_only') \
-                else []
-            
-            # Check for "too many results" error in series search
-            series_error_handled = False  # Track if we handled an error for series
-            if series_results and len(series_results) == 1 and series_results[0].get('error') == 'too_many_results':
-                # Use internationalized error messages
-                title = tr("messages.errors.too_many_results_title")
-                message = tr("messages.errors.too_many_results_message")
-                hint = tr("messages.errors.too_many_results_hint")
-                full_message = f"{message}\n\n{hint}"
-                
-                QMessageBox.warning(self, title, full_message)
-                # Don't populate any results
-                series_results = []
-                series_error_handled = True
-            
-            # Check for "authentication failed" error in series search
-            if series_results and len(series_results) == 1 and series_results[0].get('error') == 'authentication_failed':
-                # Use internationalized error messages
-                title = tr("messages.errors.authentication_failed_title")
-                message = tr("messages.errors.authentication_failed_message")
-                hint = tr("messages.errors.authentication_failed_hint")
-                full_message = f"{message}\n\n{hint}"
-                
-                QMessageBox.critical(self, title, full_message)
-                # Don't populate any results and restore UI
-                series_results = []
-                series_error_handled = True
-                self._restore_search_ui()
-                return
-            
-            # Store series results based on provider
-            if self._source == 'BDGest':
-                self._bdgest_series_results = series_results
-                self._bdgest_album_results = []  # Clear album results when searching series
-            else:  # ComicVine
-                self._comicvine_series_results = series_results
-                self.issues_by_series.clear()  # Clear ComicVine issues
-            
-            # Populate series dropdown with series results
-            for series in series_results:
-                # Check for cancellation during series population
-                if self._search_cancelled:
-                    if debug:
-                        print(f"[DEBUG][UI] Search cancelled during {self._source} series population")
-                    return
-                    
-                # Get series name based on provider
-                if self._source == 'BDGest':
-                    series_name = series.get('serie_name', 'Unknown Series')
-                else:  # ComicVine
-                    series_name = series.get('serie_name', 'Unknown Series')  # ComicVineProvider normalizes this field
-                    
-                if series_name and series_name != 'Unknown Series':
-                    self.series_combo.addItem(series_name)
-                    idx = self.series_combo.count() - 1
-                    # Store the full series data for later use
-                    self.series_combo.setItemData(idx, series, Qt.ItemDataRole.UserRole)
-                    
-                # Process UI events to allow cancellation
-                QApplication.processEvents()
-            
-            # Inform user if no series results (but only if we didn't handle an error)
-            if not series_results and not series_error_handled:
-                title = tr("messages.info.no_result")
-                message = tr("messages.errors.no_series_found")
-                QMessageBox.information(self, title, message)
-            else:
-                # Clear album table since we're in series mode
-                self.album_table.clearContents()
-                self.album_table.setRowCount(0)
-                
-                # Show user how many series were found and instruction to select one
-                if self.series_combo.count() > 0:
-                    series_count = self.series_combo.count()
-                    instruction_html = f"<b>🔍 Recherche terminée</b><br><br>"
-                    instruction_html += f"<b>{series_count} série(s) trouvée(s)</b><br><br>"
-                    if series_count == 1:
-                        instruction_html += f"<i>� Chargement des albums de la série unique...</i>"
-                    else:
-                        instruction_html += f"<i>📚 Chargement des albums de la première série...</i>"
-                    self.detail_text.setHtml(instruction_html)
-                    self.detail_image.clear()
-                    
-                    # Auto-load albums for the first series (optimal UX)
-                    # The first series is automatically selected by default in the dropdown
-                    first_series_name = self.series_combo.itemText(0)
-                    if debug:
-                        print(f"[DEBUG][UI] Auto-loading albums for first series: '{first_series_name}' ({self._source} series mode)")
-                    
-                    # Trigger album population for the first series
-                    self._populate_albums(first_series_name)
-                    
-                    if debug:
-                        print(f"[DEBUG][UI] Series mode completed: {series_count} series found, first series albums auto-loaded")
         
-        elif self._source == 'ComicVine' and not self.series_name_cb.isChecked():
-            # COMICVINE NORMAL MODE: Use full search (only when NOT in series mode)
-            from comicVine_scraper_api import search_comicvine_issues
-            # Use the series_list already fetched by provider.search_series()
-            volumes = series_list
-            if volumes:
-                if debug:
-                    print(f"[DEBUG][UI] {len(volumes)} volumes found for '{q}' - loading all albums immediately")
-                
-                # Fetch albums for all series immediately - optimized for speed
-                total_volumes = len(volumes)
-                
-                # Show initial loading message
-                self.detail_text.setHtml(f"<i>Loading albums from {total_volumes} series...</i>")
-                QApplication.processEvents()  # Single UI update at start
-                
-                for vol_idx, series in enumerate(volumes, 1):
-                    # Check for cancellation
-                    if self._search_cancelled:
-                        if debug:
-                            print("[DEBUG][UI] Search cancelled during ComicVine album fetching")
-                        return
-                    
-                    series_name = series.get('name', 'Unknown')
-                    volume_id = str(series.get('id', ''))
-                    
-                    if debug:
-                        print(f"[DEBUG][UI] Fetching albums for volume {vol_idx}/{total_volumes}: {series_name}")
-                    
-                    # Update progress in UI
-                    self.detail_text.setHtml(f"<i>Loading albums from {total_volumes} series... ({vol_idx}/{total_volumes})</i>")
-                    QApplication.processEvents()  # Allow UI updates and cancellation
-                    
-                    # Fetch issues for this series without UI updates in the loop for maximum speed
-                    issues = provider.search_albums(volume_id, debug=debug)
-                    for issue in issues:
-                        issue['volume'] = {'name': series_name}
-                        self.issues_by_series.setdefault(series_name, []).append(issue)
-                
-                # Clear loading message after all fetching is complete
-                self.detail_text.clear()
-                
-                if not self.issues_by_series:
-                    QMessageBox.warning(self, tr("messages.info.no_result"), tr("messages.errors.no_results"))
-                    return
-                
-                # Populate series dropdown with album counts
-                for s in sorted(self.issues_by_series):
-                    self.series_combo.addItem(f"{s} ({len(self.issues_by_series[s])})")
-                
-                # Auto-select the first series to show albums immediately
-                if self.series_combo.count() > 0:
-                    self.series_combo.setCurrentIndex(0)
-                    # Trigger the selection manually to populate albums
-                    first_series_text = self.series_combo.currentText()
-                    self._populate_albums(first_series_text)
-                
-                if debug:
-                    total_albums = sum(len(albums) for albums in self.issues_by_series.values())
-                    print(f"[DEBUG][UI] Loaded {total_albums} total albums across {len(self.issues_by_series)} series")
-                    print(f"[DEBUG][UI] Auto-selected first series: {first_series_text if self.series_combo.count() > 0 else 'None'}")
-            else:
-                if debug:
-                    print(f"[DEBUG][UI] No volumes found for '{q}', fallback to issues search")
-                issues = search_comicvine_issues(q)
-                if debug:
-                    print(f"[DEBUG][UI] {len(issues)} issues found for '{q}'")
-                issues_by_series = {}
-                for it in issues:
-                    s = (it.get('volume') or {}).get('name', 'Sans série')
-                    issues_by_series.setdefault(s, []).append(it)
-                for s in sorted(issues_by_series):
-                    self.series_combo.addItem(f"{s} ({len(issues_by_series[s])})")
-                self.issues_by_series = issues_by_series
-                if not issues_by_series:
-                    QMessageBox.warning(self, 'Résultat', 'Aucun album trouvé pour cette recherche.')
+        # Use SearchManager to execute the search
+        series_name_mode = self.series_name_cb.isChecked()
+        self.search_manager.search(q, self._source, series_name_mode)
         
-        else:  # BDGest NORMAL MODE
-            # Check for cancellation before starting BDGest operations
-            if self._search_cancelled:
-                return
-                
-            # Use default album search (normal mode)
-            albums = []
-            error_handled = False  # Track if we handled an error
-            
-            # First check for errors in series_list before filtering
-            if series_list and len(series_list) == 1:
-
-                error_item = series_list[0]
-                if error_item.get('error') == 'authentication_failed':
-                    # Use internationalized error messages
-                    title = tr("messages.errors.authentication_failed_title")
-                    message = tr("messages.errors.authentication_failed_message")
-                    hint = tr("messages.errors.authentication_failed_hint")
-                    full_message = f"{message}\n\n{hint}"
-                    
-                    QMessageBox.critical(self, title, full_message)
-                    # Don't populate any results and restore UI
-                    error_handled = True
-                    self._restore_search_ui()
-                    return
-                elif error_item.get('error') == 'too_many_results':
-                    # Use internationalized error messages
-                    title = tr("messages.errors.too_many_results_title")
-                    message = tr("messages.errors.too_many_results_message")
-                    hint = tr("messages.errors.too_many_results_hint")
-                    full_message = f"{message}\n\n{hint}"
-                    
-                    QMessageBox.warning(self, title, full_message)
-                    # Don't populate any results
-                    error_handled = True
-            
-            # Process normal results (moved outside of the error check block)
-            if series_list and not error_handled:
-                for album in series_list:
-                    s = album.get('serie_name', '')
-                    if s:
-                        albums.append(album)
-                
-                # Check for "too many results" error (legacy fallback)
-                if albums and len(albums) == 1 and albums[0].get('error') == 'too_many_results':
-                    # Use internationalized error messages
-                    title = tr("messages.errors.too_many_results_title")
-                    message = tr("messages.errors.too_many_results_message")
-                    hint = tr("messages.errors.too_many_results_hint")
-                    full_message = f"{message}\n\n{hint}"
-                    
-                    QMessageBox.warning(self, title, full_message)
-                    # Don't populate any results
-                    albums = []
-                    error_handled = True
-                
-                self._bdgest_album_results = albums
-                if self._source == 'BDGest':
-                    self._bdgest_series_results = []  # Clear series results when searching albums
-                else:  # ComicVine
-                    self._comicvine_series_results = []  # Clear ComicVine series results when searching albums
-                
-                series_seen = set()
-                for album in albums:
-                    # Check for cancellation during album processing
-                    if self._search_cancelled:
-                        if debug:
-                            print("[DEBUG][UI] Search cancelled during BDGest album processing")
-                        return
-                        
-                    s = album.get('serie_name', '')
-                    serie_id = album.get('series_id', '')
-                    if s and s not in series_seen:
-                        self.series_combo.addItem(s)
-                        idx = self.series_combo.count() - 1
-                        self.series_combo.setItemData(idx, serie_id, Qt.ItemDataRole.UserRole)
-                        series_seen.add(s)
-                        
-                    # Process UI events periodically
-                    if len(series_seen) % 5 == 0:  # Every 5 items
-                        QApplication.processEvents()
-            
-            # Inform user if no BDGest results (but only if we didn't handle an error)
-            if not albums and not error_handled:
-                title = tr("messages.info.no_result")
-                message = tr("messages.errors.no_albums_found")
-                QMessageBox.information(self, title, message)
+    def _on_search_started(self):
+        """Handle search started signal"""
+        self._search_cancelled = False
+        self._search_in_progress = True
+        self.search_btn.setText("⏹️ Cancel Search")
+        self.search_btn.setToolTip("Cancel current search operation")
         
-        # Restore UI state after search completion
+    def _on_search_completed(self, results):
+        """Handle search completed signal"""
+        result_type = results.get('type')
+        
+        if result_type == 'series_results':
+            self._handle_series_results(results)
+        elif result_type == 'comicvine_albums':
+            self._handle_comicvine_albums(results)
+        elif result_type == 'comicvine_issues':
+            self._handle_comicvine_issues(results)
+        elif result_type == 'bdgest_albums':
+            self._handle_bdgest_albums(results)
+            
         self._restore_search_ui()
+        
+    def _on_search_cancelled(self):
+        """Handle search cancelled signal"""
+        self._search_cancelled = True
+        self._restore_search_ui()
+        self.detail_text.setHtml("<i>Search cancelled by user</i>")
+        
+    def _on_search_error(self, title, message):
+        """Handle search error signal"""
+        QMessageBox.critical(self, title, message)
+        self._restore_search_ui()
+        
+    def _on_search_progress(self, message):
+        """Handle search progress updates"""
+        self.detail_text.setHtml(f"<i>{message}</i>")
+        QApplication.processEvents()  # Allow UI updates
+        
+    def _handle_series_results(self, results):
+        """Handle series search results"""
+        series_results = results.get('series_results', [])
+        source = results.get('source')
+        
+        # Store series results based on provider
+        if source == 'BDGest':
+            self._bdgest_series_results = series_results
+            self._bdgest_album_results = []
+        else:  # ComicVine
+            self._comicvine_series_results = series_results
+            self.issues_by_series.clear()
+            
+        # Populate series dropdown
+        for series in series_results:
+            series_name = series.get('serie_name', 'Unknown Series')
+            
+            if series_name and series_name != 'Unknown Series':
+                self.series_combo.addItem(series_name)
+                idx = self.series_combo.count() - 1
+                self.series_combo.setItemData(idx, series, Qt.ItemDataRole.UserRole)
+                
+        # Show results and auto-load first series
+        if self.series_combo.count() > 0:
+            series_count = self.series_combo.count()
+            instruction_html = f"<b>🔍 Recherche terminée</b><br><br>"
+            instruction_html += f"<b>{series_count} série(s) trouvée(s)</b><br><br>"
+            if series_count == 1:
+                instruction_html += f"<i>📖 Chargement des albums de la série unique...</i>"
+            else:
+                instruction_html += f"<i>📚 Chargement des albums de la première série...</i>"
+            self.detail_text.setHtml(instruction_html)
+            self.detail_image.clear()
+            
+            # Auto-load albums for the first series
+            first_series_name = self.series_combo.itemText(0)
+            self._populate_albums(first_series_name)
+        else:
+            title = tr("messages.info.no_result")
+            message = tr("messages.errors.no_series_found")
+            QMessageBox.information(self, title, message)
+            
+    def _handle_comicvine_albums(self, results):
+        """Handle ComicVine albums search results"""
+        issues_by_series = results.get('issues_by_series', {})
+        self.issues_by_series = issues_by_series
+        
+        if not issues_by_series:
+            QMessageBox.warning(self, tr("messages.info.no_result"), tr("messages.errors.no_results"))
+            return
+            
+        # Populate series dropdown with album counts
+        for s in sorted(issues_by_series):
+            self.series_combo.addItem(f"{s} ({len(issues_by_series[s])})")
+            
+        # Auto-select the first series to show albums immediately
+        if self.series_combo.count() > 0:
+            self.series_combo.setCurrentIndex(0)
+            first_series_text = self.series_combo.currentText()
+            self._populate_albums(first_series_text)
+            
+    def _handle_comicvine_issues(self, results):
+        """Handle ComicVine issues search results"""
+        issues_by_series = results.get('issues_by_series', {})
+        self.issues_by_series = issues_by_series
+        
+        for s in sorted(issues_by_series):
+            self.series_combo.addItem(f"{s} ({len(issues_by_series[s])})")
+            
+        if not issues_by_series:
+            QMessageBox.warning(self, 'Résultat', 'Aucun album trouvé pour cette recherche.')
+            
+    def _handle_bdgest_albums(self, results):
+        """Handle BDGest albums search results"""
+        albums = results.get('albums', [])
+        self._bdgest_album_results = albums
+        self._bdgest_series_results = []
+        
+        # Populate series dropdown
+        series_seen = set()
+        for album in albums:
+            s = album.get('serie_name', '')
+            serie_id = album.get('series_id', '')
+            if s and s not in series_seen:
+                self.series_combo.addItem(s)
+                idx = self.series_combo.count() - 1
+                self.series_combo.setItemData(idx, serie_id, Qt.ItemDataRole.UserRole)
+                series_seen.add(s)
+                
+        if not albums:
+            title = tr("messages.info.no_result")
+            message = tr("messages.errors.no_albums_found")
+            QMessageBox.information(self, title, message)
 
     def _restore_search_ui(self):
         """Restore UI elements after search completion or cancellation"""
