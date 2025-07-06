@@ -5,6 +5,45 @@ All notable changes to the ComicsRename project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2025-07-05
+
+### 🚀 Major Architecture Refactoring
+
+#### **🔧 New Features**
+- **NEW: SearchManager Class** - Dedicated class for centralized search operations
+- **NEW: Signal-Based Communication** - Qt signals for async UI-business logic communication
+- **NEW: Improved Error Handling** - Enhanced error processing and user feedback
+- **NEW: Progress Reporting** - Better search progress updates via signals
+
+#### **🏗️ Architecture Improvements**
+- **Code Extraction** - Moved 340+ lines of complex search logic from main UI class
+- **Method Modularization** - Split `_build_ui()` into focused, manageable sub-methods
+- **Duplicate Removal** - Eliminated duplicate `_connect_signals()` method
+- **Separation of Concerns** - Clear distinction between UI and business logic
+
+#### **🎯 Performance & Stability**
+- **Robust Startup** - Prevents blocking on inaccessible folders at startup
+- **Error Resilience** - Enhanced folder loading with proper error handling
+- **Memory Management** - Better resource cleanup and management
+- **Zero Regressions** - All existing functionality preserved
+
+#### **🛠️ Technical Improvements**
+- **Signal-Slot Architecture** - For async operations and better responsiveness
+- **Centralized Error Processing** - Consistent error handling across search operations
+- **Improved Search Cancellation** - More robust cancellation support
+- **Better Code Organization** - Enhanced testability and maintainability
+
+#### **📦 New Components**
+- `core/search_manager.py` - Dedicated SearchManager class
+- Multiple new signal handlers for search operations
+- Modular UI building methods for better organization
+
+### 📊 Impact
+- **Lines Extracted**: 340+ lines moved from UI to SearchManager
+- **Code Reduction**: Main UI class reduced by ~25%
+- **New Methods**: 10+ new methods for search handling
+- **Backward Compatibility**: 100% - all existing features preserved
+
 ## [3.3.2] - 2025-07-02
 
 ### 🌐 Translation System Improvements
